@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "amVYt5qqNRI=",
+  "dgSpecHash": "U8gGi/Bc48A=",
   "success": true,
-  "projectFilePath": "/Users/andreis/Github/Sasha_app/SashaServer/SashaServer.csproj",
+  "projectFilePath": "C:\\Users\\Octavian\\Documents\\freelancing\\Sasha_app\\SashaServer\\SashaServer.csproj",
   "expectedPackageFiles": [
-    "/Users/andreis/.nuget/packages/microsoft.aspnetcore.openapi/9.0.8/microsoft.aspnetcore.openapi.9.0.8.nupkg.sha512",
-    "/Users/andreis/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512"
+    "C:\\Users\\Octavian\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.8\\microsoft.aspnetcore.openapi.9.0.8.nupkg.sha512",
+    "C:\\Users\\Octavian\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
   ],
   "logs": []
 }

@@ -75,19 +75,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/andreis/.nuget/packages/": {}
+    "C:\\Users\\Octavian\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/andreis/Github/Sasha_app/SashaServer/SashaServer.csproj",
+      "projectUniqueName": "C:\\Users\\Octavian\\Documents\\freelancing\\Sasha_app\\SashaServer\\SashaServer.csproj",
       "projectName": "SashaServer",
-      "projectPath": "/Users/andreis/Github/Sasha_app/SashaServer/SashaServer.csproj",
-      "packagesPath": "/Users/andreis/.nuget/packages/",
-      "outputPath": "/Users/andreis/Github/Sasha_app/SashaServer/obj/",
+      "projectPath": "C:\\Users\\Octavian\\Documents\\freelancing\\Sasha_app\\SashaServer\\SashaServer.csproj",
+      "packagesPath": "C:\\Users\\Octavian\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Octavian\\Documents\\freelancing\\Sasha_app\\SashaServer\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/andreis/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Octavian\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -141,7 +141,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
