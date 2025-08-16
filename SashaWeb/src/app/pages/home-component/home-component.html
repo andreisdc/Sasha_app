@@ -1,1 +1,29 @@
 <p>home-component works!</p>
+
+<div>
+    <h2> Categorii</h2>
+    <button (click)='GetCategory("All Categories")'>
+        All Categories
+    </button>
+    <ul>
+       @for (category of categories; track $index) {
+        <li>
+            <button (click)="GetCategory(category)">
+                {{category}}
+            </button>
+        </li>
+       }
+    </ul>
+</div>
+
+
+<div>
+    <h2> Carduri</h2>
+    <ul>
+       @for (item of cardsWithFilter; track $index) {
+        <li>
+            <strong>{{item.category}}</strong>: {{item.data}}
+        </li>
+       }
+    </ul>
+</div>
