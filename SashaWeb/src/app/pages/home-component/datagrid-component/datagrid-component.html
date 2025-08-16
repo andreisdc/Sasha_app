@@ -1,0 +1,34 @@
+<br />
+    <br />
+    <nz-table #editRowTable nzBordered [nzData]="properties" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" [nzTotal]="total" class="datagrid">
+
+      <thead>
+        <tr>
+          <th nzWidth="30%">Name</th>
+          <th>Price per night</th>
+          <th>Location</th>
+          <th>Type of accomodation</th>
+          <th>Description</th>
+          <th>Facilities</th>
+          <th>Rating</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (data of editRowTable.data; track data) {
+          <tr class="rows">
+            <td>{{ data.name }}</td>
+            <td>{{ data.pricePerNight }}</td>
+            <td>{{ data.location }}</td>
+            <td>{{ data.type }}</td>
+            <td>{{ data.description }}</td>
+            <td>{{ data.facilities }}</td>
+            <td>{{ data.rating }}</td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+
+
+
+    
