@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
   styleUrl: './sign-up-form.less'
 })
 export class SignUpForm {
-
+  
 }
