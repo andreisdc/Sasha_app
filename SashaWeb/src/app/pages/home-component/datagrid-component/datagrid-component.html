@@ -10,16 +10,20 @@
         <p class="price"> <b>{{ property.pricePerNight | currency }}</b>/night</p>
         <p>Located in: <b>{{ property.location }}</b></p>
         <p>{{ property.description }}</p>
-        <p class="rating">Rating: <b>{{property.rating}}</b></p>
+        <p class="rating">Rating: <b>{{property.rating}} ★</b></p>
+        <p>Type: <b>{{property.type}}</b></p>
 
-        <button class="more-button"> More </button>
-        <button class="share-button"> <i nz-icon nzType="share-alt" nzTheme="outline"></i> </button>
+        <div class="card-actions">
+          <button class="more-button"> More </button>
+          <button class="share-button"> <i nz-icon nzType="share-alt" nzTheme="outline"></i> </button>
+        </div>
       </nz-card>
     </ng-container>
   </div>
-  <nz-pagination class="pagination" [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize" [nzSimple]="true"
-    (nzPageIndexChange)="onPageChange($event)">
-  </nz-pagination>
+
+  <div class="pagination"> 
+    <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize" [nzSimple]="true" (nzPageIndexChange)="onPageChange($event)"></nz-pagination>
+  </div>
 </nz-spin>
 
 

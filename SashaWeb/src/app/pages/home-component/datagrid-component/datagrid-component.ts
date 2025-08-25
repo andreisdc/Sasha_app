@@ -4,7 +4,7 @@ import { Component, inject, NgModule, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PropertyService } from '../../../core/services/property.service';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzPaginationComponent } from "ng-zorro-antd/pagination";
+import { NzPaginationModule } from "ng-zorro-antd/pagination";
 import {NzCardModule} from 'ng-zorro-antd/card';
 import {NzGridModule} from 'ng-zorro-antd/grid';
 import {NzIconModule} from 'ng-zorro-antd/icon';
@@ -15,7 +15,7 @@ import {NzSpinModule} from 'ng-zorro-antd/spin';
 @Component({
   selector: 'app-datagrid-component',
   standalone: true,
-  imports: [CommonModule, NzTableModule, NzPaginationComponent, NzCardModule, NzGridModule, NzIconModule, NzButtonModule, NzAvatarModule, NzSpinModule],
+  imports: [CommonModule, NzTableModule, NzPaginationModule, NzCardModule, NzGridModule, NzIconModule, NzButtonModule, NzAvatarModule, NzSpinModule],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less'
 })
