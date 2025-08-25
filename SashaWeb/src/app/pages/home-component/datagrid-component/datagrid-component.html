@@ -1,34 +1,26 @@
-<br />
-    <br />
-    <nz-table #editRowTable nzBordered [nzData]="properties" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" [nzTotal]="total" class="datagrid">
+<nz-spin [nzSpinning]="loading">
+  <div class="datagrid-container">
+    <ng-container *ngFor="let property of properties">
+      <nz-card class="datagrid-card"> 
+        <h3 class="title">{{ property.name }}</h3>
+        <button class="like-button" [class.liked]="property.liked" 
+          (click)="toggleLike(property)"> <i nz-icon nzType="heart" [nzTheme]="property.liked ? 'fill' : 'outline'"></i>
+        </button>
 
-      <thead>
-        <tr>
-          <th nzWidth="30%">Name</th>
-          <th>Price per night</th>
-          <th>Location</th>
-          <th>Type of accomodation</th>
-          <th>Description</th>
-          <th>Facilities</th>
-          <th>Rating</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (data of editRowTable.data; track data) {
-          <tr class="rows">
-            <td>{{ data.name }}</td>
-            <td>{{ data.pricePerNight }}</td>
-            <td>{{ data.location }}</td>
-            <td>{{ data.type }}</td>
-            <td>{{ data.description }}</td>
-            <td>{{ data.facilities }}</td>
-            <td>{{ data.rating }}</td>
-          </tr>
-        }
-      </tbody>
-    </nz-table>
+        <p class="price"> <b>{{ property.pricePerNight | currency }}</b>/night</p>
+        <p>Located in: <b>{{ property.location }}</b></p>
+        <p>{{ property.description }}</p>
+        <p class="rating">Rating: <b>{{property.rating}}</b></p>
 
+        <button class="more-button"> More </button>
+        <button class="share-button"> <i nz-icon nzType="share-alt" nzTheme="outline"></i> </button>
+      </nz-card>
+    </ng-container>
+  </div>
+  <nz-pagination class="pagination" [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize" [nzSimple]="true"
+    (nzPageIndexChange)="onPageChange($event)">
+  </nz-pagination>
+</nz-spin>
 
 
     

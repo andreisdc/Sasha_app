@@ -1,4 +1,5 @@
 interface Property {
+liked: any;
     id: number;
     name: string;
     pricePerNight: string;

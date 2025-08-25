@@ -1,11 +1,102 @@
-.datagrid {
-    display: flex;
-  background-color: #d8a5a5;
-  border-bottom: 1px solid #eee;
-  flex-direction: column;
-  .rows:hover{
-    background-color: darken(#d8a5a5, 5%)
+.datagrid-container{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  font-family: Georgia;
+  font-size: 15px;
+}
+
+.datagrid-card{
+  border-radius: 10px;
+  border-color: rgb(147, 19, 19);
+  border-style: solid;
+  border-width: 2px;
+  margin: 20px;
+  padding: 15px;
+  position: relative;
+  &:hover{  
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.title{
+  text-align: center;
+}
+
+.rating{
+  margin-bottom: 30px;
+} 
+
+.like-button{
+  background: none !important;
+  border: none !important;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  font-size: 25px;
+  transition: transform 0.2s, color 0.2s;
+  color:black;
+  cursor: pointer;
+
+  &:hover{
+    color: darken(rgb(70, 4, 4), 10%);
+    transform: scale(1.2);
+  }
+  &.liked{
+    color: red;
+    animation: pop 0.3s ease;
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1.2); }
+}
+
+.more-button{
+  background: rgb(94, 11, 11);
+  border: none;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  position: absolute;
+  bottom: 9px;
+  font-family: Georgia;
+  border-radius: 7px;
+
+  &:hover{
+    color: darken(rgb(94, 11, 11), 10%);
+    color: white;
+    transform: scale(1.2);
   }
 }
 
 
+
+.share-button{
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  position: absolute;
+  bottom: 9px;
+  left: 210px;
+
+  &:hover{
+    color: darken(rgb(106, 19, 19), 10%);
+    transform: scale(1.2);
+  }
+} 
+
+.ant-pagination{
+  margin: 40px;
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.ant-pagination li {
+  list-style: none;
+}
