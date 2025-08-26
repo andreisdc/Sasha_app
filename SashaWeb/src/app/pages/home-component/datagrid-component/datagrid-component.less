@@ -1,0 +1,104 @@
+.datagrid-container{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  font-family: Georgia;
+  font-size: 1rem;
+}
+
+.datagrid-card{
+  border-radius: 0.6rem;
+  border-color: rgb(147, 19, 19);
+  border-style: solid;
+  margin: clamp(0.5rem, 1.9vw, 1.5rem);
+  padding: clamp(0.5rem, 2vw, 1rem);
+  position: relative;
+  &:hover{  
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
+  }
+}
+
+.title{
+  text-align: center;
+}
+
+.like-button{
+  background: none !important;
+  border: none !important;
+  position: absolute;
+  top: 0.55rem;
+  right: 0.5rem;
+
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  transition: transform 0.2s, color 0.2s;
+  color:black;
+  cursor: pointer;
+
+  &:hover{
+    color: darken(rgb(70, 4, 4), 10%);
+    transform: scale(1.2);
+  }
+  &.liked{
+    color: red;
+    animation: pop 0.3s ease;
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1.2); }
+}
+
+.card-actions{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.more-button{
+  background: rgb(94, 11, 11);
+  border: none;
+  color: white;
+  font-size: clamp(0.9rem, 1vw, 1rem);
+  padding: 0.4rem 0.8rem;
+
+  cursor: pointer;
+  position: static;
+  font-family: Georgia;
+  border-radius: 0.8rem;
+
+  &:hover{
+    color: darken(rgb(94, 11, 11), 10%);
+    color: white;
+    transform: scale(1.2);
+  }
+}
+
+.share-button{
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: clamp(1.5rem, 2vw, 1.8rem);
+  position: static;
+
+  &:hover{
+    color: darken(rgb(106, 19, 19), 10%);
+    transform: scale(1.2);
+  }
+} 
+
+.pagination {
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  list-style: none;
+}
+
+::ng-deep .ant-pagination li {
+  list-style: none;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+}
+
+

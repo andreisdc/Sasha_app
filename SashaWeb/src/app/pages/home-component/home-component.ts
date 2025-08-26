@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { HomeService } from '../../core/home/home-service';
 import { testInterface } from '../../core/home/filter-interface';
+import { DatagridComponent } from './datagrid-component/datagrid-component';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-home-component',
-  imports: [],
+  imports: [DatagridComponent, HttpClientModule],
   templateUrl: './home-component.html',
   styleUrl: './home-component.less',
   standalone: true,
