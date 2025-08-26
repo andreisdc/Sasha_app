@@ -1,41 +1,29 @@
 import { Injectable } from '@angular/core';
-import { testInterface } from './filter-interface';
+import { PropertyService } from '../services/property.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HomeService {
-  private categories: string[] = [
-    "cat1", 
-    "cat2",
-    "cat3",
-    "cat4",
-  ]
-  
-  private cards: testInterface[] = [
-    {data: "data1", category: "cat1"},
-    {data: "data2", category: "cat1"},
-    {data: "data3", category: "cat1"},
-    {data: "data4", category: "cat1"},
-    {data: "data1", category: "cat2"},
-    {data: "data2", category: "cat2"},
-    {data: "data3", category: "cat2"},
-    {data: "data4", category: "cat2"},
-    {data: "data1", category: "cat3"},
-    {data: "data2", category: "cat3"},
-    {data: "data3", category: "cat3"},
-    {data: "data4", category: "cat3"},
-    {data: "data1", category: "cat4"},
-    {data: "data2", category: "cat4"},
-    {data: "data3", category: "cat4"},
-    {data: "data4", category: "cat4"},
-  ]
+  private categories: Set<string>;
 
-  getCategories(): string[] {
-    return this.categories;
+  constructor(private propertyService: PropertyService ) {
+    this.categories = new Set<string>();
+    
+    this.propertyService.getProperties().subscribe(data => {
+      data.forEach(element => {
+        const property = element as Property;
+
+        this.categories.add(property.type);
+      });
+
+    }, error => {
+      console.error('Error fetching properties:', error);
+    });
+
   }
 
-  getCards(): testInterface[] {
-    return this.cards;
+  getCategories(): Set<string> {
+    return this.categories;
   }
 }
