@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SashaServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d34e02c8d3f3b7fc9f902dd188652ebade97a5dc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+01040f6a78d65a5e69e39cd066aa865876738363")]
 [assembly: System.Reflection.AssemblyProductAttribute("SashaServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SashaServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
