@@ -4,7 +4,6 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { provideHttpClient } from '@angular/common/http';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import {HeartOutline, HeartFill, ShareAltOutline} from '@ant-design/icons-angular/icons';
 import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
