@@ -1,0 +1,14 @@
+<div class="categories-wrapper">
+    <button class="nav-btn left" (click)="scrollLeft()" [disabled]="leftDisabled">‹</button>
+
+    <div class="categories-row" #categoriesRow (scroll)="updateButtons()">
+            <button class="chip" (click)="GetCategory('All Categories')" [class.active]="selectedCategory === 'All Categories'">All Categories</button>
+            <ng-container *ngFor="let category of categories; let i = index">
+                <button class="chip" (click)="GetCategory(category)" [class.active]="selectedCategory === category" [style.animationDelay.ms]="i * 35">{{ category }}</button>
+            </ng-container>
+    </div>
+
+    <button class="nav-btn right" (click)="scrollRight()" [disabled]="rightDisabled">›</button>
+</div>
+
+<app-datagrid-component></app-datagrid-component>
