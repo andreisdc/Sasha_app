@@ -26,6 +26,7 @@ export class DatagridComponent implements OnInit {
   constructor(private propertyService: PropertyService) {}
   properties: Property[]=[];
   allProperties: Property[]=[];
+  filteredProperties: Property[] = [];
   
   pageIndex:number = 1;
   pageSize:number = 15; 
@@ -38,18 +39,25 @@ export class DatagridComponent implements OnInit {
 
   updateDisplayData() 
   {
-    this.properties = this.allProperties.slice((this.pageIndex - 1) * this.pageSize, this.pageIndex * this.pageSize);
+    this.properties = this.filteredProperties.slice((this.pageIndex - 1) * this.pageSize, this.pageIndex * this.pageSize);
   }
 
   ngOnInit() {
-    console.log("initializare");
     this.propertyService.getProperties().subscribe(data => {
-      this.allProperties = data;
+      this.allProperties = this.filteredProperties = data;
       this.total = data.length;
       this.updateDisplayData();
       this.loading = false; 
     }, error => {
       console.error('Error fetching properties:', error);
+    });
+
+    this.propertyService.selectedCategory$.subscribe(category => {
+      this.filteredProperties = this.propertyService.getFilteredProperties(this.allProperties, category);
+      this.total = this.filteredProperties.length;
+      this.pageIndex = 1;
+      this.updateDisplayData();
+      this.loading = false;
     });
   }
 
