@@ -7,5 +7,6 @@ import { Component } from '@angular/core';
   styleUrl: './search-section.less'
 })
 export class SearchSection {
-
+  searchImgPath = 'assets/images/search-bar-bg.jpg'
+  
 }
