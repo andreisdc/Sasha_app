@@ -7,6 +7,7 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import {HeartOutline, HeartFill, ShareAltOutline} from '@ant-design/icons-angular/icons';
 import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 
 export const appConfig: ApplicationConfig = {
@@ -14,6 +15,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes), provideClientHydration(withEventReplay()),
-    provideHttpClient(), provideNzIcons([HeartOutline, HeartFill, ShareAltOutline]), provideNzI18n(en_US)
+    provideHttpClient(), provideNzIcons([HeartOutline, HeartFill, ShareAltOutline]), provideNzI18n(en_US), provideAnimations()
   ]
 };

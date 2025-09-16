@@ -1,5 +1,4 @@
 interface Property {
-liked: any;
     id: number;
     name: string;
     pricePerNight: string;
@@ -9,4 +8,6 @@ liked: any;
     rating: number;
     facilities: string[]; // list of facilities
     food: string[]; // list of food options
+    images: string[];
+    liked: boolean;
 }
