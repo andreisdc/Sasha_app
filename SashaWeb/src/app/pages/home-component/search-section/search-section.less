@@ -3,13 +3,14 @@
     background-color: white;
     overflow: hidden;
     position: relative;
+    display: flex;
 }
 
 
 .bg-div {
     position: absolute;
     overflow: hidden;
-    height: 90vh;
+    height: 100vh;
     width: 100vw;
 }
 
@@ -18,8 +19,8 @@
     content: "";
     position: absolute;
     width: 100vw;
-    height: 90vh;
-    background: rgba(38, 87, 192, 0.7);
+    height: 100vh;
+    background: #216bc0b3;
     z-index: 1;
     pointer-events: none; /* optional: let clicks go through */
 }
@@ -110,10 +111,50 @@
     background-color: #ccc;
 }
 
+.scroll-buttons {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;   /* stack text and icon vertically */
+    align-items: center;      /* center horizontally */
+    justify-content: center;  /* center vertically (if container has height) */
+    text-align: center;
+    z-index: 3;
+    cursor: pointer;
+}
+
+
+.scroll-buttons p {
+    margin: 0;
+    color: white;
+}
+
+
+.scroll-arrow {
+    position: relative;
+    color: white;
+    animation: fade;
+    animation-duration: 2s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
 // vreau sa fie ca la AirBnB
 
 @media(max-width: 1500px) {
     .search-bar {
         width: 906px;
+    }
+}
+
+
+@keyframes fade {
+    0% {
+        opacity: 100%;
+    }
+    100% {
+        opacity: 0%;
+        transform: translateY(100%);
     }
 }
