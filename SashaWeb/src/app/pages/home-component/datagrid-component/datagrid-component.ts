@@ -11,17 +11,20 @@ import {NzIconModule} from 'ng-zorro-antd/icon';
 import {NzButtonModule} from 'ng-zorro-antd/button';
 import {NzAvatarModule} from 'ng-zorro-antd/avatar';
 import {NzSpinModule} from 'ng-zorro-antd/spin';
+import { NzCarouselModule, NzCarouselComponent } from 'ng-zorro-antd/carousel';
 
 @Component({
   selector: 'app-datagrid-component',
   standalone: true,
-  imports: [CommonModule, NzTableModule, NzPaginationModule, NzCardModule, NzGridModule, NzIconModule, NzButtonModule, NzAvatarModule, NzSpinModule],
+  imports: [CommonModule, NzTableModule, NzPaginationModule, NzCardModule, NzGridModule, NzIconModule, NzButtonModule, NzAvatarModule, NzSpinModule, NzCarouselModule],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less'
 })
 
 export class DatagridComponent implements OnInit {
+  currentIndex: { [id: number]: number } = {};
   loading: boolean = true;
+  hovered: number | null = null;
 
   constructor(private propertyService: PropertyService) {}
   properties: Property[]=[];
@@ -59,6 +62,20 @@ export class DatagridComponent implements OnInit {
       this.updateDisplayData();
       this.loading = false;
     });
+
+    this.properties.forEach(prop => this.currentIndex[prop.id] = 0);
+  }
+
+  next(prop: Property) {
+    const id = prop.id;
+    this.currentIndex[id] =
+      (this.currentIndex[id] + 1) % prop.images.length;
+  }
+
+  prev(prop: Property) {
+    const id = prop.id;
+    this.currentIndex[id] =
+      (this.currentIndex[id] - 1 + prop.images.length) % prop.images.length;
   }
 
   toggleLike(property: Property) {
