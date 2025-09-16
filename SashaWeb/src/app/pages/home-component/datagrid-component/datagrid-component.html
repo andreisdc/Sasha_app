@@ -1,35 +1,39 @@
 <nz-spin [nzSpinning]="loading">
   <div class="datagrid-container">
-    <ng-container *ngFor="let property of properties">
+    @for(property of properties; track property.id)
+    {
       <nz-card class="datagrid-card" (mouseenter)="hovered = property.id" (mouseleave)="hovered = null">
-
-        <div class="image-container" >
-          <img *ngIf="property.images && currentIndex[property.id] !== undefined;"
-          [src]="property.images[currentIndex[property.id]]" alt="Property Image" class="property-image fade"/>
-          <ng-template #noImage>
-            <div class="no-image-placeholder">
-              No image available
-            </div>
-          </ng-template>
-
+        <div class="image-container">
+          @if(property.images && property.images.length > 0)
+          { 
+            <img [src]="property.images[currentIndex[property.id]]" alt="Property Image" class="property-image fade"/>
+          }
+          @else{
+            <ng-template #noImage>
+              <div class="no-image-placeholder">
+                No image available
+              </div>
+            </ng-template>
+          }
+         
           <p class="type"><b>{{property.type}}</b></p>
           <div class="arrows">
-            <button nz-button nzType="text" class="prev" *ngIf="hovered === property.id" (click)="prev(property)">
-              <i nz-icon nzType="left" nzTheme="outline"></i>
-            </button>
-
-            <button nz-button nzType="text" class="next" *ngIf="hovered === property.id" (click)="next(property)">
+            @if(hovered===property.id)
+            {
+              <button nz-button nzType="text" class="prev" (click)="prev(property)">
+                <i nz-icon nzType="left" nzTheme="outline"></i>
+              </button>
+            }
+            
+            @if(hovered===property.id)
+            {
+              <button nz-button nzType="text" class="next" (click)="next(property)">
                 <i nz-icon nzType="right" nzTheme="outline"></i>
-            </button>
+              </button>
+            }
           </div>
           <p class="price"><b>{{ property.pricePerNight | currency:'EUR':'symbol':'1.0-0' }}</b></p>
         </div>
-
-        <ng-template #loading>
-          <div class="image-placeholder">
-            Loading...
-          </div>
-        </ng-template>
 
         <div class="info">
           <h3 class="title">{{ property.name }}</h3>
@@ -44,19 +48,15 @@
             <b>{{ property.location }}</b>
             <p class="rating"><b>{{property.rating}} ★</b></p>
           </div>
-          <!-- <p>{{ property.description }}</p> -->
-          
-          
-
-          <!-- <div class="card-actions">
-            <button class="more-button"> More </button>
-            <button class="share-button"> <i nz-icon nzType="share-alt" nzTheme="outline"></i> </button>
-          </div> -->
         </div>
-        
       </nz-card>
-    </ng-container>
+    }
   </div>
+
+  <button class="scroll-up" (click)="scrollToTop()">
+    <nz-icon nzType="up" nzTheme="outline" />
+  </button>
+
 
   <div class="pagination"> 
     <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize" [nzSimple]="true" (nzPageIndexChange)="onPageChange($event)"></nz-pagination>

@@ -141,7 +141,8 @@
         "area": "Urban",
         "rating": 5,
         "facilities": ["WiFi", "Kitchen"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 11,
@@ -153,7 +154,8 @@
         "area": "Historic",
         "rating": 5,
         "facilities": ["WiFi", "Restaurant"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 12,
@@ -165,7 +167,8 @@
         "area": "Forest",
         "rating": 4.9,
         "facilities": ["WiFi", "Nature Trails"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 13,
@@ -177,7 +180,8 @@
         "area": "Urban",
         "rating": 4.8,
         "facilities": ["WiFi", "Air Conditioning"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 14,
@@ -189,7 +193,8 @@
         "area": "Urban",
         "rating": 4.7,
         "facilities": ["WiFi", "Playground"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 15,
@@ -201,7 +206,8 @@
         "area": "Urban",
         "rating": 4.9,
         "facilities": ["WiFi", "Spa"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 16,
@@ -213,7 +219,8 @@
         "area": "Seaside",
         "rating": 4.8,
         "facilities": ["WiFi", "Beach Access"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 17,
@@ -225,7 +232,8 @@
         "area": "Mountain",
         "rating": 4.8,
         "facilities": ["WiFi", "Fireplace"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 18,
@@ -237,7 +245,8 @@
         "area": "Urban",
         "rating": 4.7,
         "facilities": ["WiFi", "Kitchen"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 19,
@@ -249,7 +258,8 @@
         "area": "Mountain",
         "rating": 4.9,
         "facilities": ["WiFi", "Pool", "Spa"],
-        "food": ["Breakfast", "Lunch", "Dinner"]
+        "food": ["Breakfast", "Lunch", "Dinner"],
+        "images":[]
     },
     {
         "id": 20,
@@ -261,7 +271,8 @@
         "area": "Rural",
         "rating": 3.9,
         "facilities": ["WiFi", "Restaurant"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 21,
@@ -273,7 +284,8 @@
         "area": "River",
         "rating": 4.3,
         "facilities": ["WiFi", "Boat Rental"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 22,
@@ -285,7 +297,8 @@
         "area": "Urban",
         "rating": 4.3,
         "facilities": ["WiFi", "Air Conditioning"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 23,
@@ -297,7 +310,8 @@
         "area": "Forest",
         "rating": 4.2,
         "facilities": ["WiFi", "Fireplace"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 24,
@@ -309,7 +323,8 @@
         "area": "Urban",
         "rating": 4.7,
         "facilities": ["WiFi", "Shared Kitchen"],
-        "food": ["Breakfast", "Lunch", "Dinner"]
+        "food": ["Breakfast", "Lunch", "Dinner"],
+        "images":[]
     },
     {
         "id": 25,
@@ -321,7 +336,8 @@
         "area": "Urban",
         "rating": 4.6,
         "facilities": ["WiFi", "Jacuzzi", "Gym"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 26,
@@ -333,7 +349,8 @@
         "area": "Seaside",
         "rating": 3.9,
         "facilities": ["WiFi", "Beach Access"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 27,
@@ -345,7 +362,8 @@
         "area": "Urban",
         "rating": 4.1,
         "facilities": ["WiFi", "Air Conditioning"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 28,
@@ -357,7 +375,8 @@
         "area": "Rural",
         "rating": 5,
         "facilities": ["WiFi", "Garden"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 29,
@@ -369,7 +388,8 @@
         "area": "Urban",
         "rating": 3.8,
         "facilities": ["WiFi", "Spa"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 30,
@@ -381,7 +401,8 @@
         "area": "Seaside",
         "rating": 4.7,
         "facilities": ["WiFi", "Beach Access"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 31,
@@ -393,7 +414,8 @@
         "area": "Mountain",
         "rating": 4.8,
         "facilities": ["WiFi", "Fireplace"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 32,
@@ -405,7 +427,8 @@
         "area": "Urban",
         "rating": 4.8,
         "facilities": ["WiFi", "Kitchen"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 33,
@@ -417,7 +440,8 @@
         "area": "Historic",
         "rating": 5,
         "facilities": ["WiFi", "Garden", "Spa"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 34,
@@ -429,7 +453,8 @@
         "area": "Urban",
         "rating": 4.9,
         "facilities": ["WiFi", "Air Conditioning"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 35,
@@ -441,7 +466,8 @@
         "area": "Forest",
         "rating": 2.4,
         "facilities": ["WiFi", "Nature Trails"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 36,
@@ -453,7 +479,8 @@
         "area": "Urban",
         "rating": 4.9,
         "facilities": ["WiFi", "Restaurant"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 37,
@@ -465,7 +492,8 @@
         "area": "Urban",
         "rating": 5,
         "facilities": ["WiFi", "Jacuzzi", "Gym"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 38,
@@ -477,7 +505,8 @@
         "area": "Lake",
         "rating": 4.8,
         "facilities": ["WiFi", "Boat Rental"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 39,
@@ -489,7 +518,8 @@
         "area": "Urban",
         "rating": 4.8,
         "facilities": ["WiFi", "Kitchen"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 40,
@@ -501,7 +531,8 @@
         "area": "Historic",
         "rating": 4.8,
         "facilities": ["WiFi", "Restaurant"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 41,
@@ -513,7 +544,8 @@
         "area": "Urban",
         "rating": 4.9,
         "facilities": ["WiFi", "Garden"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 42,
@@ -525,7 +557,8 @@
         "area": "Rural",
         "rating": 3.8,
         "facilities": ["WiFi", "Restaurant"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 43,
@@ -537,7 +570,8 @@
         "area": "River",
         "rating": 3.9,
         "facilities": ["WiFi", "Boat Rental"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     },
     {
         "id": 44,
@@ -549,7 +583,8 @@
         "area": "Urban",
         "rating": 4.5,
         "facilities": ["WiFi", "Air Conditioning"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 45,
@@ -561,7 +596,8 @@
         "area": "Rural",
         "rating": 4.5,
         "facilities": ["WiFi", "Garden"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 46,
@@ -573,7 +609,8 @@
         "area": "Seaside",
         "rating": 4.6,
         "facilities": ["WiFi", "Beach Access"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 47,
@@ -585,7 +622,8 @@
         "area": "Mountain",
         "rating": 4.5,
         "facilities": ["WiFi", "Fireplace"],
-        "food": ["Breakfast"]
+        "food": ["Breakfast"],
+        "images":[]
     },
     {
         "id": 48,
@@ -597,7 +635,8 @@
         "area": "Urban",
         "rating": 4.7,
         "facilities": ["WiFi", "Shared Kitchen"],
-        "food": ["Breakfast", "Lunch", "Dinner"]
+        "food": ["Breakfast", "Lunch", "Dinner"],
+        "images":[]
     },
     {
         "id": 49,
@@ -609,7 +648,8 @@
         "area": "Historic",
         "rating": 4.9,
         "facilities": ["WiFi", "Garden", "Spa"],
-        "food": ["Breakfast", "Dinner"]
+        "food": ["Breakfast", "Dinner"],
+        "images":[]
     },
     {
         "id": 50,
@@ -621,6 +661,7 @@
         "area": "Mountain",
         "rating": 4.8,
         "facilities": ["WiFi", "Nature Trails"],
-        "food": ["Breakfast", "Lunch"]
+        "food": ["Breakfast", "Lunch"],
+        "images":[]
     }
 ]
