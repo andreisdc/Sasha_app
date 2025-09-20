@@ -1,19 +1,24 @@
 <div class="header-content">
   <h1>Find Your Next Getaway</h1>
-  <p>From dream destinations to authentic experiences, find the perfect place to make memories.</p>
+  <p>
+    From dream destinations to authentic experiences, find the perfect place to
+    make memories.
+  </p>
 </div>
 
 <div class="categories-wrapper">
-    <div class="categories-row" #categoriesRow (scroll)="updateButtons()">
-            @for (category of categoriesArray; track category.key; let i = $index) {
-                <button class="chip"
-                        (click)="GetCategory(category.key)"
-                        [class.active]="selectedCategory === category.key"
-                        [style.animationDelay.ms]="i * 35">
-                    {{ category.key }} {{ category.value }}
-                </button>
-            }
-    </div>
+  <div class="categories-row" #categoriesRow (scroll)="updateButtons()">
+    @for (category of categoriesArray; track category.key; let i = $index) {
+    <button
+      class="chip"
+      (click)="GetCategory(category.key)"
+      [class.active]="selectedCategory === category.key"
+      [style.animationDelay.ms]="i * 35"
+    >
+      {{ category.key }} {{ category.value }}
+    </button>
+    }
+  </div>
 </div>
 
 <app-datagrid-component></app-datagrid-component>
