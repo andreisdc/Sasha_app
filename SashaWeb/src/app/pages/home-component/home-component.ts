@@ -4,10 +4,11 @@ import { DatagridComponent } from './datagrid-component/datagrid-component';
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
+import { SearchSection } from "./search-section/search-section";
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, HttpClientModule],
+  imports: [CommonModule, DatagridComponent, HttpClientModule, SearchSection],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   standalone: true,
