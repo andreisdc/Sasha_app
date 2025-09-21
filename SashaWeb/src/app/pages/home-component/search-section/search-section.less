@@ -40,9 +40,10 @@
 
 .text-search-bar-wrapper {
     position: absolute;
-    display: block;
+    display: inline-block;
     left: 50%;
     top: 50%;
+    width: 60vw;
     transform: translate(-50%, -70%);
     z-index: 20;
 }
@@ -75,12 +76,14 @@
     align-items: center;
     background-color: white;
     border-radius: 25px;
-    width: 60vw;
+    width: 100%;
     height: 70px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     margin-top: 4rem;
+    margin-bottom: 0px;
+    box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.70);
 }
 
 
@@ -115,10 +118,11 @@
     position: absolute;
     bottom: 5%;
     left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    flex-direction: column;   /* stack text and icon vertically */
-    align-items: center;      /* center horizontally */
-    justify-content: center;  /* center vertically (if container has height) */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     z-index: 3;
     cursor: pointer;

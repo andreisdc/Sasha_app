@@ -1,10 +1,12 @@
 import { Component } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { DropdownMenu } from './dropdown-menu/dropdown-menu';
 
 @Component({
   selector: 'app-search-section',
   imports: [
-    NzIconModule
+    NzIconModule,
+    DropdownMenu
   ],
   templateUrl: './search-section.html',
   styleUrl: './search-section.less'
