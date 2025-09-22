@@ -1,10 +1,16 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+} from '@angular/core';
 import { HomeService } from '../../core/home/home-service';
 import { DatagridComponent } from './datagrid-component/datagrid-component';
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
-import { SearchSection } from "./search-section/search-section";
+import { SearchSection } from './search-section/search-section';
 
 @Component({
   selector: 'app-home-component',
@@ -14,7 +20,8 @@ import { SearchSection } from "./search-section/search-section";
   standalone: true,
 })
 export class HomeComponent implements OnInit, AfterViewInit {
-  @ViewChild('categoriesRow', { static: false }) categoriesRow!: ElementRef<HTMLElement>;
+  @ViewChild('categoriesRow', { static: false })
+  categoriesRow!: ElementRef<HTMLElement>;
 
   leftDisabled = true;
   rightDisabled = false;
@@ -31,7 +38,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
     ['🏘️ suite', 3],
   ]);
 
-  constructor(private homeService: HomeService, private propertyService: PropertyService) {}
+  constructor(
+    private homeService: HomeService,
+    private propertyService: PropertyService,
+  ) {}
 
   ngOnInit(): void {
     // Categories are now defined in categoryEmojis
@@ -56,7 +66,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   get categoriesArray() {
-    return [...this.categoryEmojis.entries()].map(([key, value]) => ({ key, value }));
+    return [...this.categoryEmojis.entries()].map(([key, value]) => ({
+      key,
+      value,
+    }));
   }
 
   updateButtons(): void {
@@ -73,7 +86,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     const change = target - start;
     const startTime = performance.now();
 
-    const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const ease = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
     const step = (now: number) => {
       const elapsed = now - startTime;

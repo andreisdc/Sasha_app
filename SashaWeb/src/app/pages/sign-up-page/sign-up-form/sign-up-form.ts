@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-sign-up-form',
   imports: [],
   templateUrl: './sign-up-form.html',
-  styleUrl: './sign-up-form.less'
+  styleUrl: './sign-up-form.less',
 })
-export class SignUpForm {
-  
-}
+export class SignUpForm {}
