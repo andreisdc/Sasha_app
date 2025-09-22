@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -12,10 +17,11 @@ import { LoginService } from '../../core/login/login.service';
 
 @Component({
   selector: 'app-register',
-  standalone: true,
+
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login implements OnInit {
   loginForm!: FormGroup;

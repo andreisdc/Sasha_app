@@ -1,5 +1,12 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { PropertyService } from '../../../core/services/property.service';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
@@ -10,12 +17,14 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
+import { Property } from '../../../core/interfaces/property.interface';
 
 @Component({
   selector: 'app-datagrid-component',
-  standalone: true,
+
   imports: [
     CommonModule,
+    NgOptimizedImage,
     NzTableModule,
     NzPaginationModule,
     NzCardModule,
@@ -28,71 +37,89 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
   ],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DatagridComponent implements OnInit {
-  currentIndex: { [id: number]: number } = {};
-  loading: boolean = true;
-  hovered: number | null = null;
+export class DatagridComponent {
+  private propertyService = inject(PropertyService);
 
-  property!: Property;
-  properties: Property[] = [];
-  allProperties: Property[] = [];
-  filteredProperties: Property[] = [];
+  // local UI state as signals
+  private readonly _currentIndex = signal<Record<number, number>>({});
+  get currentIndex(): Record<number, number> {
+    return this._currentIndex();
+  }
 
-  pageIndex: number = 1;
-  pageSize: number = 15;
-  total: number = 0;
+  private readonly _hovered = signal<number | null>(null);
+  get hovered(): number | null {
+    return this._hovered();
+  }
+  set hovered(value: number | null) {
+    this._hovered.set(value);
+  }
 
-  constructor(private propertyService: PropertyService) {}
+  private readonly _pageIndex = signal(1);
+  private readonly _pageSize = signal(15);
+
+  // data streams bridged to signals
+  private readonly _allProperties = toSignal<Property[] | null>(
+    this.propertyService.getProperties(),
+    { initialValue: null },
+  );
+
+  private readonly _selectedCategory = toSignal(
+    this.propertyService.selectedCategory$,
+    { initialValue: 'All Categories' },
+  );
+
+  // derived state
+  private readonly _filteredProperties = computed(() => {
+    const all = this._allProperties();
+    const category = this._selectedCategory();
+    return all ? this.propertyService.getFilteredProperties(all, category) : [];
+  });
+
+  get properties(): Property[] {
+    const start = (this._pageIndex() - 1) * this._pageSize();
+    const end = this._pageIndex() * this._pageSize();
+    return this._filteredProperties().slice(start, end);
+  }
+
+  get pageIndex(): number {
+    return this._pageIndex();
+  }
+
+  get pageSize(): number {
+    return this._pageSize();
+  }
+
+  get total(): number {
+    return this._filteredProperties().length;
+  }
+
+  get loading(): boolean {
+    return this._allProperties() === null;
+  }
 
   onPageChange(page: number): void {
-    this.pageIndex = page;
-    this.updateDisplayData();
-  }
-
-  updateDisplayData() {
-    this.properties = this.filteredProperties.slice(
-      (this.pageIndex - 1) * this.pageSize,
-      this.pageIndex * this.pageSize,
-    );
-  }
-
-  ngOnInit() {
-    this.propertyService.getProperties().subscribe(
-      (data) => {
-        this.allProperties = this.filteredProperties = data;
-        this.total = data.length;
-        this.updateDisplayData();
-        this.loading = false;
-      },
-      (error) => {
-        console.error('Error fetching properties:', error);
-      },
-    );
-
-    this.propertyService.selectedCategory$.subscribe((category) => {
-      this.filteredProperties = this.propertyService.getFilteredProperties(
-        this.allProperties,
-        category,
-      );
-      this.total = this.filteredProperties.length;
-      this.pageIndex = 1;
-      this.updateDisplayData();
-      this.loading = false;
-    });
-
-    this.properties.forEach((prop) => (this.currentIndex[prop.id] = 0));
+    this._pageIndex.set(page);
   }
 
   next(prop: Property) {
     const id = prop.id;
-    this.currentIndex[id] = (this.currentIndex[id] + 1) % prop.images.length;
+    this._currentIndex.update((ci) => {
+      const cur = ci[id] ?? 0;
+      return { ...ci, [id]: (cur + 1) % prop.images.length };
+    });
   }
 
   prev(prop: Property) {
     const id = prop.id;
-    this.currentIndex[id] =
-      (this.currentIndex[id] - 1 + prop.images.length) % prop.images.length;
+    this._currentIndex.update((ci) => {
+      const cur = ci[id] ?? 0;
+      return {
+        ...ci,
+        [id]: (cur - 1 + prop.images.length) % prop.images.length,
+      };
+    });
   }
 
   toggleLike(property: Property) {

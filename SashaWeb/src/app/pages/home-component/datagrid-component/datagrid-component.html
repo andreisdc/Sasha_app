@@ -9,7 +9,7 @@
       <div class="image-container">
         @if(property.images && property.images.length > 0) {
         <img
-          [src]="property.images[currentIndex[property.id]]"
+          [ngSrc]="property.images[currentIndex[property.id]]"
           alt="Property Image"
           class="property-image fade"
         />
