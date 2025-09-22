@@ -7,4 +7,6 @@ import { SignUpForm } from './sign-up-form/sign-up-form';
   templateUrl: './sign-up-page.html',
   styleUrl: './sign-up-page.less',
 })
-export class SignUpPage {}
+export class SignUpPage {
+  imagePath: string = "assets/images/sign-up-bg.jpg"
+}
