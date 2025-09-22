@@ -8,5 +8,5 @@ import { SignUpForm } from './sign-up-form/sign-up-form';
   styleUrl: './sign-up-page.less',
 })
 export class SignUpPage {
-  imagePath: string = "assets/images/sign-up-bg.jpg"
+  imagePath = 'assets/images/sign-up-bg.jpg';
 }

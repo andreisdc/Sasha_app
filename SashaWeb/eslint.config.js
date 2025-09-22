@@ -4,11 +4,14 @@ const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
 const eslintConfigPrettier = require("eslint-config-prettier");
 
+// TODO: Migrate this to the new eslint format.
+
 module.exports = tseslint.config(
   {
     files: ["**/*.ts"],
     extends: [
       eslint.configs.recommended,
+      // TODO: This should be set to "recommendedTypeChecked", but icba to do it atm :D
       ...tseslint.configs.recommended,
       ...tseslint.configs.stylistic,
       ...angular.configs.tsRecommended,

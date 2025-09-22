@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -21,11 +21,9 @@ export class Login implements OnInit {
   loginForm!: FormGroup;
   showPassword = false;
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router,
-    private loginService: LoginService,
-  ) {}
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private loginService = inject(LoginService);
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
