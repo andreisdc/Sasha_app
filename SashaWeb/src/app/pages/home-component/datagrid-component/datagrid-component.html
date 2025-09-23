@@ -2,7 +2,7 @@
   <div class="datagrid-container">
     @for(property of properties; track property.id)
     {
-      <nz-card class="datagrid-card" (mouseenter)="hovered = property.id" (mouseleave)="hovered = null">
+      <nz-card class="datagrid-card" (mouseenter)="hovered = property.id" (mouseleave)="hovered = null" [routerLink]="['/property', property.id]">
         <div class="image-container">
           @if(property.images && property.images.length > 0)
           { 
@@ -20,14 +20,14 @@
           <div class="arrows">
             @if(hovered===property.id)
             {
-              <button nz-button nzType="text" class="prev" (click)="prev(property)">
+              <button nz-button nzType="text" class="prev" (click)="prev(property); $event.stopPropagation()">
                 <i nz-icon nzType="left" nzTheme="outline"></i>
               </button>
             }
             
             @if(hovered===property.id)
             {
-              <button nz-button nzType="text" class="next" (click)="next(property)">
+              <button nz-button nzType="text" class="next" (click)="next(property); $event.stopPropagation()">
                 <i nz-icon nzType="right" nzTheme="outline"></i>
               </button>
             }
@@ -37,8 +37,8 @@
 
         <div class="info">
           <h3 class="title">{{ property.name }}</h3>
-          <button class="like-button" [class.liked]="property.liked" 
-            (click)="toggleLike(property)"> <i nz-icon nzType="heart" [nzTheme]="property.liked ? 'fill' : 'outline'"></i>
+          <button class="like-button" [class.liked]="property.liked" (click)="toggleLike(property); $event.stopPropagation()"> 
+            <i nz-icon nzType="heart" [nzTheme]="property.liked ? 'fill' : 'outline'"></i>
           </button>
 
           <div class="location-container"> 

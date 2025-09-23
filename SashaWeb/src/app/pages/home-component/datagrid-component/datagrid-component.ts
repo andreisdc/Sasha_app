@@ -10,16 +10,19 @@ import {NzButtonModule} from 'ng-zorro-antd/button';
 import {NzAvatarModule} from 'ng-zorro-antd/avatar';
 import {NzSpinModule} from 'ng-zorro-antd/spin';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
+import { RouterModule } from '@angular/router';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-datagrid-component',
   standalone: true,
-  imports: [CommonModule, NzTableModule, NzPaginationModule, NzCardModule, NzGridModule, NzIconModule, NzButtonModule, NzAvatarModule, NzSpinModule, NzCarouselModule],
+  imports: [CommonModule, NzTableModule, NzPaginationModule, NzCardModule, NzGridModule, NzIconModule, NzButtonModule, NzAvatarModule, NzSpinModule, NzCarouselModule, RouterModule],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less'
 })
 
 export class DatagridComponent implements OnInit {
+
   currentIndex: { [id: number]: number } = {};
   loading: boolean = true;
   hovered: number | null = null;
@@ -33,7 +36,7 @@ export class DatagridComponent implements OnInit {
   pageSize: number = 15; 
   total: number = 0;
 
-  constructor(private propertyService: PropertyService) {}
+  constructor(private propertyService: PropertyService, private router: Router) {}
 
   onPageChange(page: number): void {
     this.pageIndex = page;
@@ -64,6 +67,12 @@ export class DatagridComponent implements OnInit {
     });
 
     this.properties.forEach(prop => this.currentIndex[prop.id] = 0);
+  }
+
+  onCardClick(id: number) 
+  {
+    this.router.navigate(['/property', id]);
+    console.log('Navigating to property with ID: ${id}');
   }
 
   next(prop: Property) {
