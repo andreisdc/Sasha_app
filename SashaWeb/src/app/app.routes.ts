@@ -13,10 +13,10 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'sign-up',
+    path: 'signup',
     loadComponent: () =>
       import('./pages/sign-up-page/sign-up-page').then((m) => m.SignUpPage),
   },
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: '**', redirectTo: 'home', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: 'login', pathMatch: 'full' },
 ];
