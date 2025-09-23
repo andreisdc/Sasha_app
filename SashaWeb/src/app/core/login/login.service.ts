@@ -10,7 +10,7 @@ import { catchError, tap } from 'rxjs/operators';
 })
 export class LoginService {
   // Facem asta constanta globala in ceva fisier pt a o importa toti (mai usor de modificat).
-  private readonly apiUrl = 'https://localhost:3000/api'; 
+  private readonly apiUrl = 'https://localhost:3000/api';
 
   constructor(private http: HttpClient) {}
 
@@ -23,7 +23,7 @@ export class LoginService {
             localStorage.setItem('token', response.token);
           }
         }),
-        catchError(this.handleError)
+        catchError(this.handleError),
       );
   }
 

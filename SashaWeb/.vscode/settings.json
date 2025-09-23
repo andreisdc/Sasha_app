@@ -1,0 +1,8 @@
+{
+  "editor.formatOnSave": true,
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "eslint.validate": ["typescript", "html"],
+  "eslint.alwaysShowStatus": true
+}
