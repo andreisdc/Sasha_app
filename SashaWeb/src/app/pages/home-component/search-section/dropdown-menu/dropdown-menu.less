@@ -1,0 +1,59 @@
+.component-body {
+  position: relative;
+
+  padding: 0px;
+  margin: 0px;
+  margin-top: 0.3rem;
+}
+
+.show {
+}
+
+.guests-dropdown {
+  position: absolute;
+  right: 0;
+
+  display: block;
+
+  width: 15vw;
+
+  padding-top: 20px;
+  padding-bottom: 20px;
+
+  background-color: white;
+
+  border-radius: 50px;
+  box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.7);
+}
+
+.guests-list {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+
+  list-style-type: none;
+
+  margin: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.guests-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.guests-list li input {
+  width: 40px;
+}
+
+@media (max-width: 1500px) {
+  .guests-dropdown {
+    width: 185px;
+  }
+}
