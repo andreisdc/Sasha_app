@@ -1,31 +1,14 @@
-<div class="page-body">
-  <div class="bg-div">
-    <img [ngSrc]="searchImgPath" alt="Search background" />
-    <div class="text-search-bar-wrapper">
-      <p class="motto-text">Find the place that feels</p>
-      <form class="search-bar">
-        <div class="field">
-          <input type="text" placeholder="Search place..." />
+<div class="page-body" >
+    <div class="bg-div">
+        <img [src] = "searchImgPath" />
+        <div class="text-search-bar-wrapper">
+            <p class="motto-text">Find the place that feels </p>
+            <form class="search-bar">
+                <div class="field"><input type="text" placeholder="Search place..." /></div>
+                <div class="field"><input type="date" /></div>
+                <div class="field"><input type="date" /></div>
+                <div class="field"><input type="text" placeholder="How many guests..." /></div>
+            </form>
+            <app-dropdown-menu></app-dropdown-menu>
         </div>
-        <div class="field"><input type="date" /></div>
-        <div class="field"><input type="date" /></div>
-        <div class="field">
-          <input type="text" placeholder="How many guests..." />
-        </div>
-      </form>
-      <app-dropdown-menu></app-dropdown-menu>
-    </div>
-
-    <button
-      type="button"
-      class="scroll-buttons"
-      (click)="scrollDown()"
-      (keyup.enter)="scrollDown()"
-      (keyup.space)="scrollDown()"
-      aria-label="Scroll down for more"
-    >
-      <p>Scroll for more</p>
-      <nz-icon nzType="caret-down" nzTheme="outline" class="scroll-arrow" />
-    </button>
-  </div>
 </div>
