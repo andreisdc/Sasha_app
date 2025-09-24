@@ -1,33 +1,44 @@
 import {
   Component,
-  OnInit,
   ViewChild,
   ElementRef,
   AfterViewInit,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
 } from '@angular/core';
 import { HomeService } from '../../core/home/home-service';
 import { DatagridComponent } from './datagrid-component/datagrid-component';
-import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, HttpClientModule, SearchSection],
+  imports: [CommonModule, DatagridComponent, SearchSection],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
-  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnInit, AfterViewInit {
+export class HomeComponent implements AfterViewInit {
   @ViewChild('categoriesRow', { static: false })
   categoriesRow!: ElementRef<HTMLElement>;
 
-  leftDisabled = true;
-  rightDisabled = false;
-  selectedCategory: string | null = 'All Categories';
+  private readonly _leftDisabled = signal(true);
+  private readonly _rightDisabled = signal(false);
+  private readonly _selectedCategory = signal<string>('All Categories');
 
-  private categoryEmojis: Map<string, number> = new Map([
+  get leftDisabled(): boolean {
+    return this._leftDisabled();
+  }
+  get rightDisabled(): boolean {
+    return this._rightDisabled();
+  }
+  get selectedCategory(): string {
+    return this._selectedCategory();
+  }
+
+  private categoryEmojis: Map<string, number> = new Map<string, number>([
     ['🏖️ apartament', 6],
     ['🏔️ villa', 4],
     ['🏙️ house', 4],
@@ -38,14 +49,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     ['🏘️ suite', 3],
   ]);
 
-  constructor(
-    private homeService: HomeService,
-    private propertyService: PropertyService,
-  ) {}
-
-  ngOnInit(): void {
-    // Categories are now defined in categoryEmojis
-  }
+  private readonly homeService = inject(HomeService);
+  private readonly propertyService = inject(PropertyService);
 
   originalOrder = (): number => 0;
 
@@ -75,8 +80,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
   updateButtons(): void {
     const el = this.categoriesRow?.nativeElement;
     if (!el) return;
-    this.leftDisabled = el.scrollLeft <= 0;
-    this.rightDisabled = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+    this._leftDisabled.set(el.scrollLeft <= 0);
+    this._rightDisabled.set(
+      el.scrollLeft + el.clientWidth >= el.scrollWidth - 1,
+    );
   }
 
   private scrollBySmooth(el: HTMLElement, delta: number, duration = 360): void {
@@ -105,7 +112,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   GetCategory(category: string): void {
-    this.selectedCategory = category;
+    this._selectedCategory.set(category);
     this.propertyService.setSelectedCategory(category);
   }
 }

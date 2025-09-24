@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { PropertyService } from '../services/property.service';
+import { Property } from '../interfaces/property.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class HomeService {
   private categories: Map<string, number>;
+  private propertyService = inject(PropertyService);
 
-  constructor(private propertyService: PropertyService) {
+  constructor() {
     //todo: remove the hardcoded data after the real logic is implemented XD
     const maximumCategories = 8;
     this.categories = new Map<string, number>();
