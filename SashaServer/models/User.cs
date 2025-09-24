@@ -1,6 +1,6 @@
 using System;
 
-namespace SashaServer.Data
+namespace SashaServer.Models
 {
     public class User
     {

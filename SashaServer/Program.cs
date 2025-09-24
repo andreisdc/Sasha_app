@@ -3,28 +3,43 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using SashaServer.Data;
+using SashaServer.Services;
+using SashaServer.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add logging
+// Logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// Add DataMap as a service
-builder.Services.AddScoped<DataMap>();
+// Services
+builder.Services.AddSingleton<DataMap>();
+builder.Services.AddSingleton<AuthService>();
 
-// Add controllers
+// Controllers
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
 var logger = app.Logger;
-logger.LogInformation("[{Time}] Backend starting...", DateTime.Now);
+logger.LogInformation("[{Time}] SashaServer starting...", DateTime.Now);
 
 // Middleware
 app.UseHttpsRedirection();
+app.UseMiddleware<AuthMiddleware>();
 
 // Map controllers
 app.MapControllers();
+
+// Startup and shutdown logging
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    logger.LogInformation("[{Time}] SashaServer started successfully!", DateTime.Now);
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    logger.LogInformation("[{Time}] SashaServer is stopping...", DateTime.Now);
+});
 
 app.Run();
