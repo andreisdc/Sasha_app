@@ -13,29 +13,29 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { LoginService } from '../../core/login/login.service';
+import { AuthService } from '../../core/services/auth-service';
 
 @Component({
-  selector: 'app-register',
-
+  selector: 'app-login',
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
-  styleUrl: './login.less',
+  styleUrls: ['./login.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true
 })
-export class Login implements OnInit {
+export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   showPassword = false;
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private loginService = inject(LoginService);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
+      rememberMe: [false]
     });
   }
 
@@ -45,27 +45,14 @@ export class Login implements OnInit {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      console.log('Form submitted:', this.loginForm.value);
-      this.loginService.login(this.loginForm.value).subscribe({
-        next: (response) => {
-          console.log('Login successful:', response);
-          this.router.navigate(['/home']);
-        },
-        error: (error) => {
-          console.error('Login failed:', error);
-          // TODO: Show error message or smth
-          this.loginForm.reset(); // Reset the form on error
-        },
+      const { email, password, rememberMe } = this.loginForm.value;
+      this.authService.login(email, password, rememberMe).subscribe({
+        next: () => this.router.navigate(['/home']),
+        error: () => this.loginForm.reset(),
       });
     } else {
-      console.log('Form is invalid');
       this.markFormGroupTouched();
     }
-  }
-
-  onGoogleSignin() {
-    console.log('Google signup clicked :P');
-    // TODO: Login prin google (nu e necesar).
   }
 
   private markFormGroupTouched() {

@@ -10,6 +10,8 @@ export interface AuthUser {
   token?: string;
 }
 
+const isBrowser = typeof window !== 'undefined';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -19,9 +21,11 @@ export class AuthService {
   currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      this.currentUserSubject.next(JSON.parse(storedUser));
+    if (isBrowser) {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        this.currentUserSubject.next(JSON.parse(storedUser));
+      }
     }
   }
 
@@ -30,7 +34,7 @@ export class AuthService {
       .pipe(
         tap(user => {
           this.currentUserSubject.next(user);
-          if (rememberMe) {
+          if (rememberMe && isBrowser) {
             localStorage.setItem('user', JSON.stringify(user));
           }
         })
@@ -43,10 +47,20 @@ export class AuthService {
 
   logout() {
     this.currentUserSubject.next(null);
-    localStorage.removeItem('user');
+    if (isBrowser) {
+      localStorage.removeItem('user');
+    }
   }
 
   isLoggedIn(): boolean {
     return !!this.currentUserSubject.value;
+  }
+
+  getToken(): string | null {
+    return this.currentUserSubject.value?.token || null;
+  }
+
+  getCurrentUser(): AuthUser | null {
+    return this.currentUserSubject.value;
   }
 }
