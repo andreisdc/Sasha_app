@@ -12,10 +12,11 @@ import { DatagridComponent } from './datagrid-component/datagrid-component';
 import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
+import { Navbar } from "../../components/navbar/navbar";
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, SearchSection],
+  imports: [CommonModule, DatagridComponent, SearchSection, Navbar],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
