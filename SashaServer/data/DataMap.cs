@@ -17,14 +17,20 @@ namespace SashaServer.Data
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
             var cmd = new NpgsqlCommand(
-                "INSERT INTO t_users (id, username, email, password_hash, is_active, created_at) VALUES (@id, @username, @email, @password_hash, @is_active, @created_at)", 
+                @"INSERT INTO t_users 
+                  (id, first_name, last_name, username, email, password_hash, rating, created_at) 
+                  VALUES (@id, @first_name, @last_name, @username, @email, @password_hash, @rating, @created_at)", 
                 conn);
+
             cmd.Parameters.AddWithValue("id", user.Id);
+            cmd.Parameters.AddWithValue("first_name", user.FirstName);
+            cmd.Parameters.AddWithValue("last_name", user.LastName);
             cmd.Parameters.AddWithValue("username", user.Username);
             cmd.Parameters.AddWithValue("email", user.Email);
             cmd.Parameters.AddWithValue("password_hash", user.PasswordHash);
-            cmd.Parameters.AddWithValue("is_active", user.IsActive);
+            cmd.Parameters.AddWithValue("rating", user.Rating);
             cmd.Parameters.AddWithValue("created_at", user.CreatedAt);
+            
             cmd.ExecuteNonQuery();
         }
 
@@ -33,18 +39,23 @@ namespace SashaServer.Data
             var users = new List<User>();
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, username, email, password_hash, is_active, created_at FROM t_users", conn);
+            var cmd = new NpgsqlCommand(
+                "SELECT id, first_name, last_name, username, email, password_hash, rating, created_at FROM t_users", 
+                conn);
+
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
                 users.Add(new User
                 {
                     Id = reader.GetGuid(0),
-                    Username = reader.GetString(1),
-                    Email = reader.GetString(2),
-                    PasswordHash = reader.GetString(3),
-                    IsActive = reader.GetBoolean(4),
-                    CreatedAt = reader.GetDateTime(5)
+                    FirstName = reader.GetString(1),
+                    LastName = reader.GetString(2),
+                    Username = reader.GetString(3),
+                    Email = reader.GetString(4),
+                    PasswordHash = reader.GetString(5),
+                    Rating = reader.GetInt32(6),
+                    CreatedAt = reader.GetDateTime(7)
                 });
             }
             return users;
@@ -72,7 +83,10 @@ namespace SashaServer.Data
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            var cmd = new NpgsqlCommand("INSERT INTO user_sessions (id, user_id, token, expires_at) VALUES (@id, @user_id, @token, @expires_at)", conn);
+            var cmd = new NpgsqlCommand(
+                "INSERT INTO user_sessions (id, user_id, token, expires_at) VALUES (@id, @user_id, @token, @expires_at)", 
+                conn);
+
             cmd.Parameters.AddWithValue("id", Guid.NewGuid());
             cmd.Parameters.AddWithValue("user_id", userId);
             cmd.Parameters.AddWithValue("token", token);
@@ -84,21 +98,27 @@ namespace SashaServer.Data
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            var cmd = new NpgsqlCommand(@"SELECT u.id, u.username, u.email, u.password_hash, u.is_active, u.created_at
-                                           FROM t_users u
-                                           JOIN user_sessions s ON s.user_id = u.id
-                                           WHERE s.token = @token AND s.expires_at > NOW()", conn);
+            var cmd = new NpgsqlCommand(
+                @"SELECT u.id, u.first_name, u.last_name, u.username, u.email, u.password_hash, u.rating, u.created_at
+                  FROM t_users u
+                  JOIN user_sessions s ON s.user_id = u.id
+                  WHERE s.token = @token AND s.expires_at > NOW()", 
+                conn);
+
             cmd.Parameters.AddWithValue("token", token);
             using var reader = cmd.ExecuteReader();
             if (!reader.Read()) return null;
+
             return new User
             {
                 Id = reader.GetGuid(0),
-                Username = reader.GetString(1),
-                Email = reader.GetString(2),
-                PasswordHash = reader.GetString(3),
-                IsActive = reader.GetBoolean(4),
-                CreatedAt = reader.GetDateTime(5)
+                FirstName = reader.GetString(1),
+                LastName = reader.GetString(2),
+                Username = reader.GetString(3),
+                Email = reader.GetString(4),
+                PasswordHash = reader.GetString(5),
+                Rating = reader.GetInt32(6),
+                CreatedAt = reader.GetDateTime(7)
             };
         }
 

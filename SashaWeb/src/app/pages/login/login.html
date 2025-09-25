@@ -1,6 +1,10 @@
 <div class="signin-container">
   <div class="signin-form">
     <h2>Log in</h2>
+
+    <!-- Server error message -->
+    <div *ngIf="serverError" class="alert error">{{ serverError }}</div>
+
     <form class="form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
         <input
@@ -8,7 +12,7 @@
           placeholder="Email"
           class="form-input"
           formControlName="email"
-          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          [class.error]="email.invalid && email.touched"
         />
       </div>
 
@@ -18,9 +22,13 @@
           placeholder="Password"
           class="form-input"
           formControlName="password"
-          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          [class.error]="password.invalid && password.touched"
         />
-        <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePasswordVisibility()"
+        >
           <span *ngIf="!showPassword">Show</span>
           <span *ngIf="showPassword">Hide</span>
         </button>
@@ -32,7 +40,9 @@
         </label>
       </div>
 
-      <button type="submit" class="btn-primary" [disabled]="loginForm.invalid">Log In</button>
+      <button type="submit" class="btn-primary" [disabled]="loginForm.invalid">
+        Log In
+      </button>
 
       <div class="login-link">
         <span>Don't have an account? </span>

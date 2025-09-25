@@ -199,3 +199,60 @@
     padding: 30px 20px;
   }
 }
+
+/* Container for alerts */
+.alert {
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  position: relative;
+  transition: all 0.3s ease;
+
+  &.success {
+    background-color: #d4edda;     /* light green */
+    color: #155724;               /* dark green text */
+    border: 1px solid #c3e6cb;   /* green border */
+  }
+
+  &.error {
+    background-color: #f8d7da;    /* light red/pink */
+    color: #721c24;               /* dark red text */
+    border: 1px solid #f5c6cb;   /* red border */
+  }
+
+  /* Optional: add a small close button */
+  &::after {
+    content: '×';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-weight: bold;
+    display: inline-block;
+    color: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  &.success::after:hover,
+  &.error::after:hover {
+    opacity: 0.7;
+  }
+}
+
+/* Optional: fade-in animation */
+.alert {
+  opacity: 0;
+  animation: fadeIn 0.4s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}

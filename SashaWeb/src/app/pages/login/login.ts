@@ -21,11 +21,13 @@ import { AuthService } from '../../core/services/auth-service';
   templateUrl: './login.html',
   styleUrls: ['./login.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true
+  standalone: true,
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   showPassword = false;
+
+  serverError = ''; // <-- store server error
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -35,7 +37,7 @@ export class LoginComponent implements OnInit {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      rememberMe: [false]
+      rememberMe: [false],
     });
   }
 
@@ -44,11 +46,22 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
+    // Clear previous server error
+    this.serverError = '';
+
     if (this.loginForm.valid) {
       const { email, password, rememberMe } = this.loginForm.value;
+
       this.authService.login(email, password, rememberMe).subscribe({
-        next: () => this.router.navigate(['/home']),
-        error: () => this.loginForm.reset(),
+        next: () => {
+          this.router.navigate(['/home']);
+        },
+        error: (err) => {
+          // Show server error message
+          this.serverError = err?.error?.message || 'Login failed';
+          // Optionally reset password field
+          this.loginForm.get('password')?.reset();
+        },
       });
     } else {
       this.markFormGroupTouched();
@@ -60,5 +73,16 @@ export class LoginComponent implements OnInit {
       const control = this.loginForm.get(key);
       control?.markAsTouched();
     });
+  }
+
+  // Shortcuts for template
+  get email() {
+    return this.loginForm.get('email')!;
+  }
+  get password() {
+    return this.loginForm.get('password')!;
+  }
+  get rememberMe() {
+    return this.loginForm.get('rememberMe')!;
   }
 }

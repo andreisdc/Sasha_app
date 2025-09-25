@@ -10,7 +10,8 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { SignupService } from '../../core/services/signup-service';
+import { AuthService } from '../../core/services/auth-service';
+import { SignupRequest } from '../../core/interfaces/signupRequest';
 
 @Component({
   selector: 'app-signup',
@@ -19,15 +20,19 @@ import { SignupService } from '../../core/services/signup-service';
   templateUrl: './sign-up-page.html',
   styleUrls: ['./sign-up-page.less'],
 })
-export class SignUp implements OnInit {
+export class SignUpComponent implements OnInit {
   signupForm!: FormGroup;
   showPassword = false;
+
   signupSuccess = false;
+  successMessage = '';
+  errorMessage = '';
   successEmail = '';
+  countdown = 5;
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private signupService = inject(SignupService);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.signupForm = this.fb.group(
@@ -63,47 +68,59 @@ export class SignUp implements OnInit {
     );
   }
 
-  // Toggle password visibility
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }
 
-  // Submit form
   onSubmit() {
-    if (this.signupForm.valid) {
-      const { firstName, lastName, email, password } = this.signupForm.value;
+  if (this.signupForm.valid) {
+    const { firstName, lastName, email, password } = this.signupForm.value;
+    const username = `${firstName} ${lastName}`; // generate username
 
-      this.signupService
-        .signup({ firstName, lastName, email, password })
-        .subscribe({
-          next: () => {
-            this.successEmail = email;
-            this.signupSuccess = true;
-            this.sendConfirmationEmail(email);
-            this.signupForm.reset();
-          },
-          error: (err) => {
-            console.error('Signup failed:', err);
-            this.signupForm.reset();
-          },
-        });
-    } else {
-      this.markAllAsTouched();
-    }
+    const payload: SignupRequest = {
+      firstName,
+      lastName,
+      username,   // include username in the payload
+      email,
+      password,
+    };
+
+    this.authService.signup(payload).subscribe({
+      next: (res: any) => {
+        this.signupSuccess = true;
+        this.successMessage = res?.message || 'User registered successfully';
+        this.successEmail = email;
+        this.errorMessage = '';
+
+        this.signupForm.reset();
+
+        // Countdown redirect
+        this.countdown = 3;
+        const interval = setInterval(() => {
+          this.countdown--;
+          if (this.countdown <= 0) {
+            clearInterval(interval);
+            this.router.navigate(['/home']);
+          }
+        }, 1000);
+      },
+      error: (err) => {
+        this.signupSuccess = false;
+        this.errorMessage = err?.error?.message || 'Signup failed';
+      },
+    });
+  } else {
+    this.markAllAsTouched();
   }
+}
 
-  onGoogleSignup() {
-    console.log('Google signup clicked');
-  }
 
-  // Mark all fields as touched to show validation errors
   private markAllAsTouched() {
     Object.values(this.signupForm.controls).forEach((control) =>
       control.markAsTouched(),
     );
   }
 
-  // Password match validator
   private passwordMatchValidator(
     group: AbstractControl,
   ): ValidationErrors | null {
@@ -114,26 +131,15 @@ export class SignUp implements OnInit {
       : { mismatch: true };
   }
 
-  // Password strength validator
   private passwordStrengthValidator(
     control: AbstractControl,
   ): ValidationErrors | null {
     const value = control.value || '';
     const hasUpperCase = /[A-Z]/.test(value);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const hasMinLength = value.length >= 8;
-    return hasUpperCase && hasSpecialChar && hasMinLength
-      ? null
-      : { weakPassword: true };
+    return hasUpperCase && hasSpecialChar ? null : { weakPassword: true };
   }
 
-  // Send confirmation email (mock)
-  private sendConfirmationEmail(email: string) {
-    console.log(`Sending confirmation email to ${email}`);
-    // TODO: integrate real email service
-  }
-
-  // Getter shortcuts
   get firstName() {
     return this.signupForm.get('firstName')!;
   }

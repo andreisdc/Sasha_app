@@ -11,18 +11,30 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Logging
+// ---------------- LOGGING ----------------
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// Services
+// ---------------- SERVICES ----------------
 builder.Services.AddSingleton<DataMap>();
 builder.Services.AddSingleton<AuthService>();
 
 // Controllers
 builder.Services.AddControllers();
 
-// JWT Authentication
+// ✅ Add CORS policy for Angular frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Angular dev server
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// ✅ JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,19 +57,31 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+// ---------------- PIPELINE ----------------
 var logger = app.Logger;
 logger.LogInformation("[{Time}] SashaServer starting...", DateTime.Now);
 
-// Middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+// ✅ Enable HTTPS redirection
 app.UseHttpsRedirection();
+
+// ✅ Enable CORS before auth
+app.UseCors("AllowAngular");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Custom middleware
 app.UseMiddleware<AuthMiddleware>();
 
-// Map controllers
+// Controllers
 app.MapControllers();
 
-// Startup and shutdown logging
+// ---------------- LIFETIME LOGGING ----------------
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     logger.LogInformation("[{Time}] SashaServer started successfully!", DateTime.Now);

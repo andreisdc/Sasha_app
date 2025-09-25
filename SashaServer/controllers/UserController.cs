@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using SashaServer.Data;
 using SashaServer.Models;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
+using BCrypt.Net;
 
 namespace SashaServer.Controllers
 {
@@ -24,8 +23,13 @@ namespace SashaServer.Controllers
             if (_data.UserExists(user.Email))
                 return Conflict(new { message = "Email already registered" });
 
-            user.PasswordHash = HashPassword(user.PasswordHash);
-            user.IsActive = true;
+            // Hash the password properly with BCrypt
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+
+            // Ensure default values
+            user.Rating = 0;
+            user.CreatedAt = DateTime.UtcNow;
+
             _data.AddUser(user);
 
             return Ok(new { message = "User created successfully" });
@@ -35,7 +39,15 @@ namespace SashaServer.Controllers
         public IActionResult GetUsers()
         {
             var users = _data.GetUsers();
-            return Ok(users.Select(u => new { u.Username, u.Email, u.IsActive, u.CreatedAt }));
+            return Ok(users.Select(u => new 
+            { 
+                u.FirstName,
+                u.LastName,
+                u.Username, 
+                u.Email, 
+                u.Rating, 
+                u.CreatedAt 
+            }));
         }
 
         [HttpGet("search")]
@@ -48,7 +60,18 @@ namespace SashaServer.Controllers
             if (user == null)
                 return NotFound(new { message = "User not found" });
 
-            return Ok(new { message = "User found", user = new { user.Username, user.Email, user.IsActive } });
+            return Ok(new 
+            { 
+                message = "User found", 
+                user = new 
+                { 
+                    user.FirstName,
+                    user.LastName,
+                    user.Username, 
+                    user.Email, 
+                    user.Rating 
+                } 
+            });
         }
 
         [HttpDelete("{email}")]
@@ -61,13 +84,6 @@ namespace SashaServer.Controllers
                 return NotFound(new { message = "User not found" });
 
             return Ok(new { message = $"User {email} deleted successfully" });
-        }
-
-        private static string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(bytes).ToLower();
         }
 
         private static bool IsValidEmail(string email)

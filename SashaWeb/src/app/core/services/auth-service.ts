@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { SERVER } from '../../const/constants';
 import { tap } from 'rxjs/operators';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { SignupRequest } from '../interfaces/signupRequest';
 
 export interface AuthUser {
   username: string;
@@ -13,7 +14,7 @@ export interface AuthUser {
 const isBrowser = typeof window !== 'undefined';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private baseUrl = SERVER.BASE_URL + SERVER.AUTH_PATH;
@@ -29,23 +30,30 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string, rememberMe: boolean = false): Observable<AuthUser> {
-    return this.http.post<AuthUser>(`${this.baseUrl}/login`, { email, password, rememberMe })
+  login(
+    email: string,
+    password: string,
+    rememberMe: boolean = false,
+  ): Observable<AuthUser> {
+    return this.http
+      .post<AuthUser>(`${this.baseUrl}/login`, { email, password, rememberMe })
       .pipe(
-        tap(user => {
+        tap((user) => {
           this.currentUserSubject.next(user);
           if (rememberMe && isBrowser) {
             localStorage.setItem('user', JSON.stringify(user));
           }
-        })
+        }),
       );
   }
 
-  signup(user: { username: string; email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/signup`, user);
+  signup(user: SignupRequest) {
+    return this.http.post(`${this.baseUrl}/signup`, user, {
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  logout() {
+  logout(): void {
     this.currentUserSubject.next(null);
     if (isBrowser) {
       localStorage.removeItem('user');
