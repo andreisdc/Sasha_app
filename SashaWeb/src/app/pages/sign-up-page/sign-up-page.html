@@ -2,74 +2,43 @@
   <div class="signup-form">
     <h2>Sign Up</h2>
 
-    <!-- Success message -->
     <div *ngIf="signupSuccess" class="alert success">
       {{ successMessage }} (Redirecting in {{ countdown }}s…)
     </div>
-
-    <!-- Error message -->
     <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
 
     <form class="form" [formGroup]="signupForm" (ngSubmit)="onSubmit()">
-      <!-- Name fields -->
       <div class="form-group name-row">
-        <input
-          type="text"
-          placeholder="First Name"
-          class="form-input"
-          formControlName="firstName"
-          [class.error]="firstName.invalid && firstName.touched"
-        />
-        <input
-          type="text"
-          placeholder="Last Name"
-          class="form-input"
-          formControlName="lastName"
-          [class.error]="lastName.invalid && lastName.touched"
-        />
+        <input type="text" placeholder="First Name" class="form-input" formControlName="firstName"
+          [class.error]="firstName.invalid && firstName.touched" />
+        <input type="text" placeholder="Last Name" class="form-input" formControlName="lastName"
+          [class.error]="lastName.invalid && lastName.touched" />
       </div>
 
       <div class="form-group">
-        <input
-          type="email"
-          placeholder="Email"
-          class="form-input"
-          formControlName="email"
-          [class.error]="email.invalid && email.touched"
-        />
+        <input type="email" placeholder="Email" class="form-input" formControlName="email"
+          [class.error]="email.invalid && email.touched" />
       </div>
 
-      <!-- Password fields -->
+      <div class="form-group">
+        <input type="tel" placeholder="Phone Number" class="form-input" formControlName="phoneNumber"
+          [class.error]="phoneNumber.invalid && phoneNumber.touched" />
+      </div>
+
       <div class="form-group password-group">
-        <input
-          [type]="showPassword ? 'text' : 'password'"
-          placeholder="Password"
-          class="form-input"
-          formControlName="password"
-          [class.error]="password.invalid && password.touched"
-        />
-        <button
-          type="button"
-          class="password-toggle"
-          (click)="togglePasswordVisibility()"
-        >
+        <input [type]="showPassword ? 'text' : 'password'" placeholder="Password" class="form-input"
+          formControlName="password" [class.error]="password.invalid && password.touched" />
+        <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
           {{ showPassword ? 'Hide' : 'Show' }}
         </button>
       </div>
 
       <div class="form-group">
-        <input
-          [type]="showPassword ? 'text' : 'password'"
-          placeholder="Confirm Password"
-          class="form-input"
-          formControlName="confirmPassword"
-          [class.error]="confirmPassword.invalid && confirmPassword.touched"
-        />
+        <input [type]="showPassword ? 'text' : 'password'" placeholder="Confirm Password" class="form-input"
+          formControlName="confirmPassword" [class.error]="confirmPassword.invalid && confirmPassword.touched" />
       </div>
 
-      <button type="submit" class="btn-primary" [disabled]="signupForm.invalid">
-        Sign Up
-      </button>
+      <button type="submit" class="btn-primary" [disabled]="signupForm.invalid">Sign Up</button>
 
       <div class="login-link">
         <span>Already have an account? </span>

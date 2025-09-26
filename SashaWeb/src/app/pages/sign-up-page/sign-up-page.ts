@@ -54,6 +54,10 @@ export class SignUpComponent implements OnInit {
           ],
         ],
         email: ['', [Validators.required, Validators.email]],
+        phoneNumber: [
+          '',
+          [Validators.required, Validators.pattern(/^\+?\d{7,15}$/)],
+        ],
         password: [
           '',
           [
@@ -73,47 +77,46 @@ export class SignUpComponent implements OnInit {
   }
 
   onSubmit() {
-  if (this.signupForm.valid) {
-    const { firstName, lastName, email, password } = this.signupForm.value;
-    const username = `${firstName} ${lastName}`; // generate username
+    if (this.signupForm.valid) {
+      const { firstName, lastName, email, password, phoneNumber } =
+        this.signupForm.value;
+      const username = `${firstName} ${lastName}`;
 
-    const payload: SignupRequest = {
-      firstName,
-      lastName,
-      username,   // include username in the payload
-      email,
-      password,
-    };
+      const payload: SignupRequest = {
+        firstName,
+        lastName,
+        username,
+        email,
+        password,
+        phoneNumber,
+      };
 
-    this.authService.signup(payload).subscribe({
-      next: (res: any) => {
-        this.signupSuccess = true;
-        this.successMessage = res?.message || 'User registered successfully';
-        this.successEmail = email;
-        this.errorMessage = '';
+      this.authService.signup(payload).subscribe({
+        next: (res: any) => {
+          this.signupSuccess = true;
+          this.successMessage = res?.message || 'User registered successfully';
+          this.successEmail = email;
+          this.errorMessage = '';
+          this.signupForm.reset();
 
-        this.signupForm.reset();
-
-        // Countdown redirect
-        this.countdown = 3;
-        const interval = setInterval(() => {
-          this.countdown--;
-          if (this.countdown <= 0) {
-            clearInterval(interval);
-            this.router.navigate(['/home']);
-          }
-        }, 1000);
-      },
-      error: (err) => {
-        this.signupSuccess = false;
-        this.errorMessage = err?.error?.message || 'Signup failed';
-      },
-    });
-  } else {
-    this.markAllAsTouched();
+          this.countdown = 3;
+          const interval = setInterval(() => {
+            this.countdown--;
+            if (this.countdown <= 0) {
+              clearInterval(interval);
+              this.router.navigate(['/home']);
+            }
+          }, 1000);
+        },
+        error: (err) => {
+          this.signupSuccess = false;
+          this.errorMessage = err?.error?.message || 'Signup failed';
+        },
+      });
+    } else {
+      this.markAllAsTouched();
+    }
   }
-}
-
 
   private markAllAsTouched() {
     Object.values(this.signupForm.controls).forEach((control) =>
@@ -148,6 +151,9 @@ export class SignUpComponent implements OnInit {
   }
   get email() {
     return this.signupForm.get('email')!;
+  }
+  get phoneNumber() {
+    return this.signupForm.get('phoneNumber')!;
   }
   get password() {
     return this.signupForm.get('password')!;

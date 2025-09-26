@@ -1,33 +1,21 @@
-import {
-  Component,
-  inject,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormsModule,
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth-service';
 
 @Component({
   selector: 'app-login',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrls: ['./login.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   showPassword = false;
-
-  serverError = ''; // <-- store server error
+  serverError = '';
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -46,7 +34,6 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
-    // Clear previous server error
     this.serverError = '';
 
     if (this.loginForm.valid) {
@@ -57,9 +44,7 @@ export class LoginComponent implements OnInit {
           this.router.navigate(['/home']);
         },
         error: (err) => {
-          // Show server error message
           this.serverError = err?.error?.message || 'Login failed';
-          // Optionally reset password field
           this.loginForm.get('password')?.reset();
         },
       });
@@ -75,7 +60,6 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // Shortcuts for template
   get email() {
     return this.loginForm.get('email')!;
   }
