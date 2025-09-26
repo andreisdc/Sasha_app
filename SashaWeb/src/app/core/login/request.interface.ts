@@ -1,5 +1,5 @@
-export interface LoginRequest {
-  name: string;
-  email: string;
-  password: string;
+export interface LoginRequest{
+    name: string;
+    email: string;
+    password: string;
 }

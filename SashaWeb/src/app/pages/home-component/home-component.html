@@ -1,26 +1,16 @@
 <app-search-section></app-search-section>
 
-<div class="header-content">
-  <h1>Find Your Next Getaway</h1>
-  <p>
-    From dream destinations to authentic experiences, find the perfect place to
-    make memories.
-  </p>
-</div>
-
 <div class="categories-wrapper">
-  <div class="categories-row" #categoriesRow (scroll)="updateButtons()">
-    @for (category of categoriesArray; track category.key; let i = $index) {
-    <button
-      class="chip"
-      (click)="GetCategory(category.key)"
-      [class.active]="selectedCategory === category.key"
-      [style.animationDelay.ms]="i * 35"
-    >
-      {{ category.key }} {{ category.value }}
-    </button>
-    }
-  </div>
+    <button class="nav-btn left" (click)="scrollLeft()" [disabled]="leftDisabled">‹</button>
+
+    <div class="categories-row" #categoriesRow (scroll)="updateButtons()">
+            <button class="chip" (click)="GetCategory('All Categories')" [class.active]="selectedCategory === 'All Categories'">All Categories</button>
+            <ng-container *ngFor="let category of categories; let i = index">
+                <button class="chip" (click)="GetCategory(category)" [class.active]="selectedCategory === category" [style.animationDelay.ms]="i * 35">{{ category }}</button>
+            </ng-container>
+    </div>
+
+    <button class="nav-btn right" (click)="scrollRight()" [disabled]="rightDisabled">›</button>
 </div>
 
 <app-datagrid-component></app-datagrid-component>

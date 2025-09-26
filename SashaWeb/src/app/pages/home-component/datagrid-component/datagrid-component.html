@@ -1,84 +1,30 @@
 <nz-spin [nzSpinning]="loading">
   <div class="datagrid-container">
-    @for(property of properties; track property.id) {
-    <nz-card
-      class="datagrid-card"
-      (mouseenter)="hovered = property.id"
-      (mouseleave)="hovered = null"
-    >
-      <div class="image-container">
-        @if(property.images && property.images.length > 0) {
-        <img
-          [src]="property.images[currentIndex[property.id]]"
-          alt="Property Image"
-          class="property-image fade"
-        />
-        } @else{
-        <ng-template #noImage>
-          <div class="no-image-placeholder">No image available</div>
-        </ng-template>
-        }
-
-        <p class="type"><b>{{property.type}}</b></p>
-        <div class="arrows">
-          @if(hovered===property.id) {
-          <button nz-button nzType="text" class="prev" (click)="prev(property)">
-            <i nz-icon nzType="left" nzTheme="outline"></i>
-          </button>
-          } @if(hovered===property.id) {
-          <button nz-button nzType="text" class="next" (click)="next(property)">
-            <i nz-icon nzType="right" nzTheme="outline"></i>
-          </button>
-          }
-        </div>
-        <p class="price">
-          <b>{{ property.pricePerNight | currency:'EUR':'symbol':'1.0-0' }}</b>
-        </p>
-      </div>
-
-      <div class="info">
+    <ng-container *ngFor="let property of properties">
+      <nz-card class="datagrid-card"> 
         <h3 class="title">{{ property.name }}</h3>
-        <button
-          class="like-button"
-          [class.liked]="property.liked"
-          (click)="toggleLike(property)"
-        >
-          <i
-            nz-icon
-            nzType="heart"
-            [nzTheme]="property.liked ? 'fill' : 'outline'"
-          ></i>
+        <button class="like-button" [class.liked]="property.liked" 
+          (click)="toggleLike(property)"> <i nz-icon nzType="heart" [nzTheme]="property.liked ? 'fill' : 'outline'"></i>
         </button>
 
-        <div class="location-container">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 384 512"
-            class="location"
-          >
-            <path
-              d="M0 188.6C0 84.4 86 0 192 0S384 84.4 384 188.6c0 119.3-120.2 262.3-170.4 316.8-11.8 12.8-31.5 12.8-43.3 0-50.2-54.5-170.4-197.5-170.4-316.8zM192 256a64 64 0 1 0 0-128 64 64 0 1 0 0 128z"
-            />
-          </svg>
-          <b>{{ property.location }}</b>
-          <p class="rating"><b>{{property.rating}} ★</b></p>
+        <p class="price"> <b>{{ property.pricePerNight | currency }}</b>/night</p>
+        <p>Located in: <b>{{ property.location }}</b></p>
+        <p>{{ property.description }}</p>
+        <p class="rating">Rating: <b>{{property.rating}} ★</b></p>
+        <p>Type: <b>{{property.type}}</b></p>
+
+        <div class="card-actions">
+          <button class="more-button"> More </button>
+          <button class="share-button"> <i nz-icon nzType="share-alt" nzTheme="outline"></i> </button>
         </div>
-      </div>
-    </nz-card>
-    }
+      </nz-card>
+    </ng-container>
   </div>
 
-  <button class="scroll-up" (click)="scrollToTop()">
-    <nz-icon nzType="up" nzTheme="outline" />
-  </button>
-
-  <div class="pagination">
-    <nz-pagination
-      [nzPageIndex]="pageIndex"
-      [nzTotal]="total"
-      [nzPageSize]="pageSize"
-      [nzSimple]="true"
-      (nzPageIndexChange)="onPageChange($event)"
-    ></nz-pagination>
+  <div class="pagination"> 
+    <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize" [nzSimple]="true" (nzPageIndexChange)="onPageChange($event)"></nz-pagination>
   </div>
 </nz-spin>
+
+
+    

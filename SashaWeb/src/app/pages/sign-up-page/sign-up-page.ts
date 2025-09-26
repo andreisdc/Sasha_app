@@ -5,8 +5,8 @@ import { SignUpForm } from './sign-up-form/sign-up-form';
   selector: 'app-sign-up-page',
   imports: [SignUpForm],
   templateUrl: './sign-up-page.html',
-  styleUrl: './sign-up-page.less',
+  styleUrl: './sign-up-page.less'
 })
 export class SignUpPage {
-  imagePath = 'assets/images/sign-up-bg.jpg';
+  imagePath: string = "assets/images/sign-up-bg.jpg" 
 }
