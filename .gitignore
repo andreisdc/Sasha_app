@@ -715,4 +715,3 @@ obj/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,csharp,dotnetcore,aspnetcore
 SashaServer/appsettings.Development.json
-SashaServer/appsettings.json
