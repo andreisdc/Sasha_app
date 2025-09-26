@@ -1,0 +1,57 @@
+<div class="signin-container">
+  <div class="signin-form">
+    <h2>Log in</h2>
+
+    <!-- Server error message -->
+    <div *ngIf="serverError" class="alert error">{{ serverError }}</div>
+
+    <form class="form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <input
+          type="email"
+          placeholder="Email"
+          class="form-input"
+          formControlName="email"
+          [class.error]="email.invalid && email.touched"
+        />
+      </div>
+
+      <div class="form-group password-group">
+        <input
+          [type]="showPassword ? 'text' : 'password'"
+          placeholder="Password"
+          class="form-input"
+          formControlName="password"
+          [class.error]="password.invalid && password.touched"
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePasswordVisibility()"
+        >
+          <span *ngIf="!showPassword">Show</span>
+          <span *ngIf="showPassword">Hide</span>
+        </button>
+      </div>
+
+      <div class="form-group remember-me">
+        <label>
+          <input type="checkbox" formControlName="rememberMe" /> Remember Me
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loginForm.invalid">
+        Log In
+      </button>
+
+      <div class="login-link">
+        <span>Don't have an account? </span>
+        <a routerLink="/signup" class="link">Sign up</a>
+      </div>
+
+      <div class="divider"><span>or</span></div>
+
+      <button type="button" class="btn-google">Sign up with Google</button>
+    </form>
+  </div>
+</div>
