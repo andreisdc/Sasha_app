@@ -1,19 +1,27 @@
 using Microsoft.AspNetCore.Http;
-using SashaServer.Services;
+using SashaServer.Data;
+using SashaServer.Models;
+using System.Threading.Tasks;
 
 namespace SashaServer.Middleware
 {
     public class AuthMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly DataMap _data;
 
-        public AuthMiddleware(RequestDelegate next) => _next = next;
+        public AuthMiddleware(RequestDelegate next, DataMap data)
+        {
+            _next = next;
+            _data = data;
+        }
 
-        public async Task InvokeAsync(HttpContext context, AuthService auth)
+        public async Task InvokeAsync(HttpContext context)
         {
             if (context.Request.Cookies.TryGetValue("AuthToken", out var token))
             {
-                if (auth.ValidateToken(token, out var user))
+                var user = _data.GetUserByToken(token);
+                if (user != null)
                 {
                     context.Items["User"] = user;
                 }
