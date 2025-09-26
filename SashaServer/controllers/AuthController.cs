@@ -1,11 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using SashaServer.Data;
 using SashaServer.Models;
-using BCrypt.Net;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Text;
-using System.Security.Claims;
 
 namespace SashaServer.Controllers
 {
@@ -14,75 +11,131 @@ namespace SashaServer.Controllers
     public class AuthController : ControllerBase
     {
         private readonly DataMap _data;
-        private readonly IConfiguration _config;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(DataMap data, IConfiguration config)
+        public AuthController(DataMap data, ILogger<AuthController> logger)
         {
             _data = data;
-            _config = config;
+            _logger = logger;
         }
 
         [HttpPost("signup")]
         public IActionResult Signup([FromBody] SignupRequest req)
         {
-            if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
-                return BadRequest(new { message = "Email and password are required" });
+            _logger.LogInformation("[{Time}] Signup attempt for email: {Email}", DateTime.UtcNow, req.Email);
 
-            var existing = _data.GetUsers().FirstOrDefault(u => u.Email == req.Email);
-            if (existing != null)
+            if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
+            {
+                _logger.LogWarning("[{Time}] Signup failed: missing email or password", DateTime.UtcNow);
+                return BadRequest(new { message = "Email and password are required" });
+            }
+
+            if (_data.UserExists(req.Email))
+            {
+                _logger.LogWarning("[{Time}] Signup failed: email already registered: {Email}", DateTime.UtcNow, req.Email);
                 return Conflict(new { message = "Email already registered" });
+            }
 
             var user = new User
             {
+                Id = Guid.NewGuid(),
                 FirstName = req.FirstName,
-                LastName  = req.LastName,
-                Username  = req.Username,
-                Email     = req.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-                Rating    = 0, // always start at 0
+                LastName = req.LastName,
+                Username = req.Username,
+                Email = req.Email,
+                PhoneNumber = req.PhoneNumber,
+                PasswordHash = HashPassword(req.Password),
+                Rating = 0,
                 CreatedAt = DateTime.UtcNow
             };
 
             _data.AddUser(user);
 
+            _logger.LogInformation("[{Time}] User registered successfully: {Email}", DateTime.UtcNow, req.Email);
             return Ok(new { message = "User registered successfully" });
         }
 
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
+            _logger.LogInformation("[{Time}] Login attempt for email: {Email}", DateTime.UtcNow, req.Email);
+
             var user = _data.GetUsers().FirstOrDefault(u => u.Email == req.Email);
-            if (user == null) 
+            if (user == null || user.PasswordHash != HashPassword(req.Password))
+            {
+                _logger.LogWarning("[{Time}] Login failed: invalid credentials for email: {Email}", DateTime.UtcNow, req.Email);
                 return Unauthorized(new { message = "Invalid credentials" });
+            }
 
-            if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-                return Unauthorized(new { message = "Invalid credentials" });
+            var token = Guid.NewGuid().ToString();
+            var expiresAt = DateTime.UtcNow.AddDays(1);
 
-            var token = GenerateJwt(user);
-            return Ok(new { token, username = user.Username, email = user.Email });
+            _data.AddSession(user.Id, token, expiresAt);
+
+            Response.Cookies.Append("AuthToken", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                Expires = expiresAt
+            });
+
+            _logger.LogInformation("[{Time}] Login successful: {Email}, Token issued", DateTime.UtcNow, req.Email);
+
+            return Ok(new
+            {
+                token,
+                username = user.Username,
+                email = user.Email,
+                phoneNumber = user.PhoneNumber,
+                expiresAt
+            });
         }
 
-        private string GenerateJwt(User user)
+        [HttpPost("logout")]
+        public IActionResult Logout()
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            _logger.LogInformation("[{Time}] Logout attempt", DateTime.UtcNow);
 
-            var claims = new[]
+            if (!Request.Cookies.TryGetValue("AuthToken", out var token))
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.Username)
-            };
+                _logger.LogWarning("[{Time}] Logout failed: no token provided", DateTime.UtcNow);
+                return BadRequest(new { message = "No token provided" });
+            }
 
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(double.Parse(_config["Jwt:ExpireHours"]!)),
-                signingCredentials: creds
-            );
+            _data.DeleteSession(token);
+            Response.Cookies.Delete("AuthToken");
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            _logger.LogInformation("[{Time}] Logout successful, token deleted", DateTime.UtcNow);
+            return Ok(new { message = "Logged out successfully" });
+        }
+
+        [HttpGet("me")]
+        public IActionResult Me()
+        {
+            if (!HttpContext.Items.TryGetValue("User", out var userObj) || userObj is not User user)
+            {
+                _logger.LogWarning("[{Time}] Me request failed: user not logged in", DateTime.UtcNow);
+                return Unauthorized(new { message = "Not logged in" });
+            }
+
+            _logger.LogInformation("[{Time}] Me request success: {Email}", DateTime.UtcNow, user.Email);
+            return Ok(new
+            {
+                user.Id,
+                user.Username,
+                user.Email,
+                user.PhoneNumber,
+                user.FirstName,
+                user.LastName,
+                user.Rating
+            });
+        }
+
+        private static string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToHexString(bytes).ToLower();
         }
     }
 }

@@ -4,12 +4,8 @@ import { SERVER } from '../../const/constants';
 import { tap } from 'rxjs/operators';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { SignupRequest } from '../interfaces/signupRequest';
-
-export interface AuthUser {
-  username: string;
-  email: string;
-  token?: string;
-}
+import { AuthUser } from '../interfaces/authUser';
+import { LoginRequest } from '../interfaces/loginRequest';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -30,24 +26,19 @@ export class AuthService {
     }
   }
 
-  login(
-    email: string,
-    password: string,
-    rememberMe: boolean = false,
-  ): Observable<AuthUser> {
-    return this.http
-      .post<AuthUser>(`${this.baseUrl}/login`, { email, password, rememberMe })
-      .pipe(
-        tap((user) => {
-          this.currentUserSubject.next(user);
-          if (rememberMe && isBrowser) {
-            localStorage.setItem('user', JSON.stringify(user));
-          }
-        }),
-      );
+  login(email: string, password: string, rememberMe: boolean = false): Observable<AuthUser> {
+    const payload: LoginRequest = { email, password, rememberMe };
+    return this.http.post<AuthUser>(`${this.baseUrl}/login`, payload).pipe(
+      tap((user) => {
+        this.currentUserSubject.next(user);
+        if (isBrowser && rememberMe) {
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+      }),
+    );
   }
 
-  signup(user: SignupRequest) {
+  signup(user: SignupRequest): Observable<any> {
     return this.http.post(`${this.baseUrl}/signup`, user, {
       headers: { 'Content-Type': 'application/json' },
     });
@@ -58,6 +49,22 @@ export class AuthService {
     if (isBrowser) {
       localStorage.removeItem('user');
     }
+    // Optionally call backend logout
+    this.http.post(`${this.baseUrl}/logout`, {}).subscribe({
+      next: () => console.log('Logged out on server'),
+      error: (err) => console.error('Logout error', err)
+    });
+  }
+
+  me(): Observable<AuthUser> {
+    return this.http.get<AuthUser>(`${this.baseUrl}/me`).pipe(
+      tap((user) => {
+        this.currentUserSubject.next(user);
+        if (isBrowser) {
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+      }),
+    );
   }
 
   isLoggedIn(): boolean {
