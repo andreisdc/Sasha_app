@@ -6,6 +6,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { SignupRequest } from '../interfaces/signupRequest';
 import { AuthUser } from '../interfaces/authUser';
 import { LoginRequest } from '../interfaces/loginRequest';
+import { UpdateUserRequest } from '../interfaces/UpdateUserRequest';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -26,17 +27,42 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string, rememberMe: boolean = false): Observable<AuthUser> {
-    const payload: LoginRequest = { email, password, rememberMe };
-    return this.http.post<AuthUser>(`${this.baseUrl}/login`, payload).pipe(
-      tap((user) => {
-        this.currentUserSubject.next(user);
-        if (isBrowser && rememberMe) {
+login(email: string, password: string, rememberMe: boolean = false): Observable<AuthUser> {
+  const payload: LoginRequest = { email, password, rememberMe };
+  return this.http.post<AuthUser>(`${this.baseUrl}/login`, payload).pipe(
+    tap((user) => {
+      this.currentUserSubject.next(user);
+
+      if (isBrowser) {
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+
+        if (rememberMe) {
           localStorage.setItem('user', JSON.stringify(user));
+        } else {
+          sessionStorage.setItem('user', JSON.stringify(user));
         }
-      }),
+      }
+    }),
+  );
+}
+
+updateUser(data: UpdateUserRequest): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update`, data, {
+      headers: { 'Content-Type': 'application/json' },
+    }).pipe(
+      tap((updatedUser: any) => {
+        // actualizează BehaviorSubject și localStorage
+        this.currentUserSubject.next(updatedUser.user);
+        if (isBrowser) {
+          localStorage.setItem('user', JSON.stringify(updatedUser.user));
+          sessionStorage.setItem('user', JSON.stringify(updatedUser.user));
+        }
+      })
     );
   }
+
+
 
   signup(user: SignupRequest): Observable<any> {
     return this.http.post(`${this.baseUrl}/signup`, user, {

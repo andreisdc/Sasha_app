@@ -6,15 +6,43 @@
 
   <!-- Mijloc: Navigație -->
   <div class="navbar-center">
-    <a href="#" class="nav-link"> <i class="fas fa-home"></i> Home </a>
-    <a href="#" class="nav-link">
+    <a routerLink="/home" class="nav-link">
+      <i class="fas fa-home"></i> Home
+    </a>
+    <a routerLink="/destinations" class="nav-link">
       <i class="fas fa-map-marked-alt"></i> Destinations
     </a>
-    <a href="#" class="nav-link"> <i class="fas fa-star"></i> Experiences </a>
+    <a routerLink="/experiences" class="nav-link">
+      <i class="fas fa-star"></i> Experiences
+    </a>
   </div>
 
   <!-- Dreapta: Login / Avatar -->
   <div class="navbar-right">
-    <button class="login-btn" (click)="goToLogin()">Login</button>
+    <ng-container *ngIf="!isLoggedIn; else loggedBlock">
+      <button class="login-btn" (click)="goToLogin()">Login</button>
+    </ng-container>
+
+    <ng-template #loggedBlock>
+      <div class="user-info">
+        <span class="username" (click)="goToProfile()">{{ user?.username }}</span>
+        <div
+          class="avatar"
+          [style.background-color]="avatarColor"
+          (click)="toggleDropdown()"
+        >
+          {{ userInitial }}
+        </div>
+
+        <div class="dropdown" *ngIf="dropdownOpen">
+          <a *ngIf="!user?.isSeller" (click)="becomeSeller()">Become Seller</a>
+          <ng-container *ngIf="user?.isSeller">
+            <a (click)="goToProperties()">Properties</a>
+            <a (click)="goToHistory()">History</a>
+          </ng-container>
+          <a (click)="logout()">Logout</a>
+        </div>
+      </div>
+    </ng-template>
   </div>
 </nav>

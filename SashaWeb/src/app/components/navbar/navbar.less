@@ -1,75 +1,134 @@
 .navbar {
-  position: fixed;   // rămâne sus mereu
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  background: white;
+  z-index: 10000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  z-index: 1000;
-}
+  padding: 12px 40px; // gap mai mare la padding
+  background: #fff;
+  border-bottom: 1px solid #e1e5e9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
-.navbar-left {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-  cursor: pointer;
-}
-
-.navbar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 2rem;
-}
-
-.nav-link {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e40af;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  transition: color 0.2s;
-
-  i {
-    font-size: 14px;
+  .navbar-left .logo {
+    margin-top:8px;
+    height: 40px;
+    cursor: pointer;
   }
 
-  &:hover {
-    color: #2563eb;
+  .navbar-center {
+    display: flex;
+    gap: 40px; // mai mare
+    align-items: center;
+
+    .nav-link {
+      color: #1ea7fd; // text albastru
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: transform 0.2s ease, color 0.2s ease;
+
+      i {
+        color: #ff8c00; // icon portocaliu
+        transition: transform 0.2s ease;
+      }
+
+      &:hover {
+        color: #0d6efd; // text albastru mai închis
+        transform: scale(1.1);
+        i {
+          animation: shake 0.5s infinite;
+        }
+      }
+    }
+  }
+
+  .navbar-right {
+    display: flex;
+    align-items: center;
+  }
+
+  .login-btn {
+    background: #ff8c00; // portocaliu
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+
+    &:hover {
+      background: #e07b00;
+      transform: scale(1.05);
+    }
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+
+    .username {
+      font-weight: 500;
+      color: #1ea7fd;
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: white;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 48px;
+      right: 0;
+      background: white;
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      min-width: 160px;
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+
+      a {
+        padding: 10px 15px;
+        text-decoration: none;
+        color: #333;
+        cursor: pointer;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: #f8f9fa;
+        }
+      }
+    }
   }
 }
 
-.navbar-right {
-  display: flex;
-  align-items: center;
-}
-
-.login-btn {
-  padding: 0.45rem 1rem;
-  background: #f97316;
-  width: 70px;
-  height: 30px;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #ea580c;
-  }
+// animație shake pentru iconițe
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
 }

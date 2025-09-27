@@ -20,7 +20,10 @@
           [class.error]="email.invalid && email.touched" />
       </div>
 
-      <div class="form-group">
+      <div class="form-group phone-row">
+        <select class="form-input country-code" formControlName="countryCode">
+          <option *ngFor="let code of countryCodes" [value]="code">{{ code }}</option>
+        </select>
         <input type="tel" placeholder="Phone Number" class="form-input" formControlName="phoneNumber"
           [class.error]="phoneNumber.invalid && phoneNumber.touched" />
       </div>

@@ -7,36 +7,42 @@ namespace SashaServer.Data
     {
         private readonly string _connectionString;
 
-        public DataMap(IConfiguration configuration)
+  public DataMap(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("Postgres")!;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(_connectionString))
+                throw new InvalidOperationException("Database connection string is not set in configuration.");
         }
 
         // ================================
         // 1️⃣ Users
         // ================================
         public void AddUser(User user)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_users 
-                  (id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, created_at) 
-                  VALUES (@id, @first_name, @last_name, @username, @email, @password_hash, @rating, @is_seller, @profile_picture, @created_at)",
-                conn);
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
 
-            cmd.Parameters.AddWithValue("id", user.Id);
-            cmd.Parameters.AddWithValue("first_name", user.FirstName);
-            cmd.Parameters.AddWithValue("last_name", user.LastName);
-            cmd.Parameters.AddWithValue("username", user.Username);
-            cmd.Parameters.AddWithValue("email", user.Email);
-            cmd.Parameters.AddWithValue("password_hash", user.PasswordHash);
-            cmd.Parameters.AddWithValue("rating", user.Rating);
-            cmd.Parameters.AddWithValue("is_seller", user.IsSeller);
-            cmd.Parameters.AddWithValue("profile_picture", (object?)user.ProfilePicture ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", user.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
+    var cmd = new NpgsqlCommand(
+        @"INSERT INTO t_users 
+          (id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at) 
+          VALUES (@id, @first_name, @last_name, @username, @email, @password_hash, @rating, @is_seller, @profile_picture, @phone_number, @created_at)",
+        conn);
+
+    cmd.Parameters.AddWithValue("id", user.Id);
+    cmd.Parameters.AddWithValue("first_name", user.FirstName);
+    cmd.Parameters.AddWithValue("last_name", user.LastName);
+    cmd.Parameters.AddWithValue("username", user.Username);
+    cmd.Parameters.AddWithValue("email", user.Email);
+    cmd.Parameters.AddWithValue("password_hash", user.PasswordHash);
+    cmd.Parameters.AddWithValue("rating", user.Rating);
+    cmd.Parameters.AddWithValue("is_seller", user.IsSeller);
+    cmd.Parameters.AddWithValue("profile_picture", (object?)user.ProfilePicture ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("phone_number", user.PhoneNumber);  // <-- nou
+    cmd.Parameters.AddWithValue("created_at", user.CreatedAt);
+
+    cmd.ExecuteNonQuery();
+}
+
 
         public User? GetUserByEmail(string email)
         {
@@ -628,7 +634,7 @@ public List<User> GetUsers()
             rating=@rating,
             is_seller=@is_seller,
             profile_picture=@profile_picture
-          WHERE id=@id", conn);
+            WHERE id=@id", conn);
 
             cmd.Parameters.AddWithValue("id", user.Id);
             cmd.Parameters.AddWithValue("first_name", user.FirstName);

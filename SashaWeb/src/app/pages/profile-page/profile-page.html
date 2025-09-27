@@ -1,0 +1,43 @@
+<div class="profile-container" *ngIf="user">
+  <div class="profile-card">
+    <div class="avatar-wrapper" (mouseenter)="showUpload = true" (mouseleave)="showUpload = false">
+      <img *ngIf="user.profilePicture; else defaultAvatar" [src]="user.profilePicture" class="avatar" (click)="openModal()" />
+      <ng-template #defaultAvatar>
+        <div class="avatar" (click)="openModal()">{{ user.username?.charAt(0).toUpperCase() }}</div>
+      </ng-template>
+
+      <label class="upload-overlay" *ngIf="showUpload">
+        <input type="file" (change)="onFileChange($event)" />
+        <span>Change Photo</span>
+      </label>
+    </div>
+
+    <div class="info">
+      <label>Username</label>
+      <input type="text" [(ngModel)]="user.username" />
+
+      <label>Email</label>
+      <input type="email" [value]="user.email" disabled />
+
+      <label>Phone Number</label>
+      <input type="text" [(ngModel)]="user.phoneNumber" />
+
+      <label>Rating</label>
+      <input type="number" [value]="user.rating" disabled />
+
+      <button class="btn-save" (click)="saveChanges()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pentru ajustarea pozei -->
+<div class="modal" *ngIf="modalOpen">
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal-content">
+    <h3>Adjust Profile Picture</h3>
+    <div class="avatar-preview">
+      <img [src]="user.profilePicture" alt="Preview" />
+    </div>
+    <button (click)="closeModal()">Done</button>
+  </div>
+</div>
