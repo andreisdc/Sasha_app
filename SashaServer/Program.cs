@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-// --- Build the app ---
+// --- Build the WebApplication ---
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Logging ---
@@ -24,11 +24,10 @@ if (string.IsNullOrEmpty(jwtKey))
     throw new InvalidOperationException("JWT Key is not configured.");
 
 // --- Services ---
-builder.Services.AddSingleton<DataMap>();
-
+builder.Services.AddSingleton<DataMap>(); // In-memory data store
 builder.Services.AddControllers();
 
-// Configure JWT Authentication (optional, for token verification)
+// JWT Authentication setup (optional, if you use JWT)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -48,15 +47,15 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Configure CORS
+// --- Configure CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins("http://localhost:4200") // front-end Angular
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowCredentials(); // must allow credentials for cookie
     });
 });
 
@@ -74,13 +73,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Apply CORS
 app.UseCors("AllowAngular");
 
+// --- Important: AuthMiddleware must run BEFORE Authorization ---
+app.UseMiddleware<AuthMiddleware>();
+
+// Apply Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<AuthMiddleware>();
-
+// Map controllers
 app.MapControllers();
 
 // --- Application Lifetime Events ---
@@ -94,4 +98,5 @@ app.Lifetime.ApplicationStopping.Register(() =>
     logger.LogInformation("[{Time}] SashaServer is stopping...", DateTime.Now);
 });
 
+// --- Run the app ---
 app.Run();

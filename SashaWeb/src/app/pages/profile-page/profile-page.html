@@ -1,43 +1,60 @@
-<div class="profile-container" *ngIf="user">
+<div class="profile-container" *ngIf="user; else loadingTemplate">
   <div class="profile-card">
-    <div class="avatar-wrapper" (mouseenter)="showUpload = true" (mouseleave)="showUpload = false">
-      <img *ngIf="user.profilePicture; else defaultAvatar" [src]="user.profilePicture" class="avatar" (click)="openModal()" />
-      <ng-template #defaultAvatar>
-        <div class="avatar" (click)="openModal()">{{ user.username?.charAt(0).toUpperCase() }}</div>
-      </ng-template>
-
-      <label class="upload-overlay" *ngIf="showUpload">
-        <input type="file" (change)="onFileChange($event)" />
-        <span>Change Photo</span>
-      </label>
+    <!-- Stânga: Avatar -->
+    <div class="avatar-section">
+      <div class="avatar-wrapper" 
+           (mouseenter)="showUpload = true" 
+           (mouseleave)="showUpload = false">
+        <img *ngIf="user.profilePicture; else defaultAvatar" 
+             [src]="user.profilePicture" 
+             class="avatar" />
+        <ng-template #defaultAvatar>
+          <div class="avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+        </ng-template>
+        <input *ngIf="showUpload" type="file" (change)="onFileChange($event)" class="file-input" />
+      </div>
     </div>
 
-    <div class="info">
-      <label>Username</label>
-      <input type="text" [(ngModel)]="user.username" />
+    <!-- Dreapta: Info -->
+    <div class="info-section">
+      <h2>{{ user.firstName }} {{ user.lastName }}</h2>
 
-      <label>Email</label>
-      <input type="email" [value]="user.email" disabled />
+      <div class="field">
+        <label>Username</label>
+        <div class="editable">
+          <input *ngIf="editingUsername" type="text" [(ngModel)]="user.username" />
+          <span *ngIf="!editingUsername">{{ user.username }}</span>
+          <i class="fas fa-pencil-alt edit-icon" (click)="toggleUsernameEdit()"></i>
+        </div>
+      </div>
 
-      <label>Phone Number</label>
-      <input type="text" [(ngModel)]="user.phoneNumber" />
+      <div class="field">
+        <label>Email</label>
+        <span>{{ user.email }}</span>
+      </div>
 
-      <label>Rating</label>
-      <input type="number" [value]="user.rating" disabled />
+      <div class="field">
+        <label>Phone Number</label>
+        <div class="editable">
+          <input *ngIf="editingPhone" type="text" [(ngModel)]="user.phoneNumber" />
+          <span *ngIf="!editingPhone">{{ user.phoneNumber }}</span>
+          <i class="fas fa-pencil-alt edit-icon" (click)="togglePhoneEdit()"></i>
+        </div>
+      </div>
 
-      <button class="btn-save" (click)="saveChanges()">Save Changes</button>
+      <div class="field rating">
+        <label>Rating</label>
+        <span *ngFor="let _ of getFilledStars()"><i class="fas fa-star filled-star"></i></span>
+        <span *ngFor="let _ of getEmptyStars()"><i class="far fa-star empty-star"></i></span>
+      </div>
+
+      <button class="save-btn" (click)="saveChanges()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- Modal pentru ajustarea pozei -->
-<div class="modal" *ngIf="modalOpen">
-  <div class="modal-backdrop" (click)="closeModal()"></div>
-  <div class="modal-content">
-    <h3>Adjust Profile Picture</h3>
-    <div class="avatar-preview">
-      <img [src]="user.profilePicture" alt="Preview" />
-    </div>
-    <button (click)="closeModal()">Done</button>
+<ng-template #loadingTemplate>
+  <div class="loading-bar">
+    <div class="loader"></div>
   </div>
-</div>
+</ng-template>

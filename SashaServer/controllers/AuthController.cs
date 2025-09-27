@@ -36,8 +36,6 @@ namespace SashaServer.Controllers
                 return Conflict(new { message = "Email already registered" });
             }
 
-            Console.Write(req);
-
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -89,10 +87,12 @@ namespace SashaServer.Controllers
                 username = user.Username,
                 email = user.Email,
                 phoneNumber = user.PhoneNumber,
-                rating = user.Rating,   
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                rating = user.Rating,
+                profilePicture = user.ProfilePicture,
                 expiresAt
             });
-
         }
 
         [HttpPost("logout")]
@@ -131,7 +131,8 @@ namespace SashaServer.Controllers
                 user.PhoneNumber,
                 user.FirstName,
                 user.LastName,
-                user.Rating
+                user.Rating,
+                user.ProfilePicture
             });
         }
 
@@ -145,11 +146,10 @@ namespace SashaServer.Controllers
             user.PhoneNumber = req.PhoneNumber ?? user.PhoneNumber;
             user.ProfilePicture = req.ProfilePicture ?? user.ProfilePicture;
 
-            _data.UpdateUser(user);  
+            _data.UpdateUser(user);
 
             return Ok(new { message = "User updated", user });
         }
-
 
         private static string HashPassword(string password)
         {

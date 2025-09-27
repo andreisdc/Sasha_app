@@ -8,4 +8,5 @@ export interface AuthUser {
   firstName?: string;
   lastName?: string;
   rating?: number;
+  profilePicture?: string; // data URL sau URL imagine
 }

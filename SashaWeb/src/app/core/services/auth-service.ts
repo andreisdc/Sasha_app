@@ -20,87 +20,91 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     if (isBrowser) {
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
       if (storedUser) {
         this.currentUserSubject.next(JSON.parse(storedUser));
       }
     }
   }
 
-login(email: string, password: string, rememberMe: boolean = false): Observable<AuthUser> {
-  const payload: LoginRequest = { email, password, rememberMe };
-  return this.http.post<AuthUser>(`${this.baseUrl}/login`, payload).pipe(
-    tap((user) => {
+  /** Login user and store data in localStorage or sessionStorage depending on rememberMe */
+  login(email: string, password: string, rememberMe: boolean = false): Observable<AuthUser> {
+  return this.http.post<AuthUser>(`${this.baseUrl}/login`, { email, password, rememberMe }, { withCredentials: true }).pipe(
+    tap(user => {
       this.currentUserSubject.next(user);
-
       if (isBrowser) {
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('user');
-
-        if (rememberMe) {
-          localStorage.setItem('user', JSON.stringify(user));
-        } else {
-          sessionStorage.setItem('user', JSON.stringify(user));
-        }
+        localStorage.setItem('user', JSON.stringify(user));
+        sessionStorage.setItem('user', JSON.stringify(user));
       }
-    }),
+    })
   );
 }
 
-updateUser(data: UpdateUserRequest): Observable<any> {
-    return this.http.put(`${this.baseUrl}/update`, data, {
-      headers: { 'Content-Type': 'application/json' },
-    }).pipe(
-      tap((updatedUser: any) => {
-        // actualizează BehaviorSubject și localStorage
-        this.currentUserSubject.next(updatedUser.user);
-        if (isBrowser) {
-          localStorage.setItem('user', JSON.stringify(updatedUser.user));
-          sessionStorage.setItem('user', JSON.stringify(updatedUser.user));
-        }
-      })
-    );
-  }
 
-
-
+  /** Signup a new user */
   signup(user: SignupRequest): Observable<any> {
     return this.http.post(`${this.baseUrl}/signup`, user, {
       headers: { 'Content-Type': 'application/json' },
+      withCredentials: true
     });
   }
 
+  /** Logout user and clear storage */
   logout(): void {
     this.currentUserSubject.next(null);
     if (isBrowser) {
       localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
     }
-    // Optionally call backend logout
-    this.http.post(`${this.baseUrl}/logout`, {}).subscribe({
+
+    this.http.post(`${this.baseUrl}/logout`, {}, { withCredentials: true }).subscribe({
       next: () => console.log('Logged out on server'),
       error: (err) => console.error('Logout error', err)
     });
   }
 
+  /** Get current user from backend */
   me(): Observable<AuthUser> {
-    return this.http.get<AuthUser>(`${this.baseUrl}/me`).pipe(
+    return this.http.get<AuthUser>(`${this.baseUrl}/me`, { withCredentials: true }).pipe(
       tap((user) => {
         this.currentUserSubject.next(user);
         if (isBrowser) {
           localStorage.setItem('user', JSON.stringify(user));
+          sessionStorage.setItem('user', JSON.stringify(user));
         }
       }),
     );
   }
 
+  /** Update user profile */
+  updateUser(data: UpdateUserRequest): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update`, data, {
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true
+    }).pipe(
+      tap((res: any) => {
+        const updatedUser = res.user as AuthUser;
+        this.currentUserSubject.next(updatedUser);
+
+        if (isBrowser) {
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+      })
+    );
+  }
+
+  /** Check if user is logged in */
   isLoggedIn(): boolean {
     return !!this.currentUserSubject.value;
   }
 
+  /** Get stored token */
   getToken(): string | null {
     return this.currentUserSubject.value?.token || null;
   }
 
+  /** Get current user value */
   getCurrentUser(): AuthUser | null {
     return this.currentUserSubject.value;
   }
