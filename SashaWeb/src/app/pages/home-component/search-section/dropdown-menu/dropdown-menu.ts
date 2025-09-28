@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 
 @Component({
   selector: 'app-dropdown-menu',
@@ -7,4 +7,6 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   styleUrl: './dropdown-menu.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DropdownMenu {}
+export class DropdownMenu {
+  @Input() isGuestsOpen = false;
+}

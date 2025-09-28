@@ -1,6 +1,6 @@
 <div class="page-body">
   <div class="bg-div">
-    <img [src]="searchImgPath" />
+    <img [src]="searchImgPath" alt="Background Image" />
     <div class="text-search-bar-wrapper">
       <p class="motto-text">Find the place that feels</p>
       <form class="search-bar">
@@ -10,10 +10,14 @@
         <div class="field"><input type="date" /></div>
         <div class="field"><input type="date" /></div>
         <div class="field">
-          <input type="text" placeholder="How many guests..." />
+          <input
+            type="button"
+            value="How many guests..."
+            (click)="toggleGuestDropdown()"
+          />
         </div>
       </form>
-      <app-dropdown-menu></app-dropdown-menu>
+      <app-dropdown-menu [isGuestsOpen]="showGuestDropdown" />
     </div>
 
     <div
