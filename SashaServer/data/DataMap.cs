@@ -1,16 +1,19 @@
 using Npgsql;
 using SashaServer.Models;
+using Microsoft.Extensions.Logging; // Adaugă using-ul pentru logging
 
 namespace SashaServer.Data
 {
     public class DataMap
     {
         private readonly string _connectionString;
+        private readonly ILogger<DataMap> _logger; // Adaugă logger
 
-        public DataMap(IConfiguration configuration)
+        public DataMap(IConfiguration configuration, ILogger<DataMap> logger)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection") ?? 
                 throw new InvalidOperationException("Database connection string is not set in configuration.");
+            _logger = logger;
         }
 
         // ================================
@@ -1632,29 +1635,40 @@ namespace SashaServer.Data
         // 1️⃣4️⃣ PENDING APPROVE
         // ================================
 
-        public void AddPendingApprove(PendingApprove pendingApprove)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
+public void AddPendingApprove(PendingApprove pendingApprove)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
 
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO pending_approve 
-                  (id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at) 
-                  VALUES (@id, @user_id, @first_name, @last_name, @cnp, @photo, @status, @fail_reason, @created_at)",
-                conn);
+    var cmd = new NpgsqlCommand(
+        @"INSERT INTO pending_approve 
+          (user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at) 
+          VALUES (@user_id, @first_name, @last_name, @cnp, @photo, @status, @fail_reason, @created_at)",
+        conn);
 
-            cmd.Parameters.AddWithValue("id", pendingApprove.Id);
-            cmd.Parameters.AddWithValue("user_id", pendingApprove.UserId);
-            cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName);
-            cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName);
-            cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp);
-            cmd.Parameters.AddWithValue("photo", (object?)pendingApprove.Photo ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("status", pendingApprove.Status);
-            cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", pendingApprove.CreatedAt);
+    cmd.Parameters.AddWithValue("user_id", pendingApprove.UserId);
+    cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
+    cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
+    cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
+    
+    // Converteste base64 string în byte array dacă există
+    if (!string.IsNullOrEmpty(pendingApprove.Photo))
+    {
+        byte[] photoBytes = Convert.FromBase64String(pendingApprove.Photo);
+        cmd.Parameters.AddWithValue("photo", photoBytes);
+    }
+    else
+    {
+        cmd.Parameters.AddWithValue("photo", DBNull.Value);
+    }
+    
+    cmd.Parameters.AddWithValue("status", pendingApprove.Status ?? "pending");
+    cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("created_at", pendingApprove.CreatedAt);
 
-            cmd.ExecuteNonQuery();
-        }
+    cmd.ExecuteNonQuery();
+}
+    
 
         public bool UpdatePendingApprove(PendingApprove pendingApprove)
         {
