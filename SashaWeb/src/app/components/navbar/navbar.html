@@ -1,23 +1,17 @@
 <nav class="navbar">
-  <!-- Stânga: Logo -->
+  <!-- Left: Logo -->
   <div class="navbar-left">
-    <img src="assets/images/logo.png" alt="Logo" class="logo" />
+    <img ngSrc="assets/images/logo.png" alt="Logo" class="logo" width="120" height="40" />
   </div>
 
-  <!-- Mijloc: Navigație -->
+  <!-- Center: Navigation -->
   <div class="navbar-center">
-    <a routerLink="/home" class="nav-link">
-      <i class="fas fa-home"></i> Home
-    </a>
-    <a routerLink="/destinations" class="nav-link">
-      <i class="fas fa-map-marked-alt"></i> Destinations
-    </a>
-    <a routerLink="/experiences" class="nav-link">
-      <i class="fas fa-star"></i> Experiences
-    </a>
+    <a routerLink="/home" class="nav-link"><i class="fas fa-home"></i> <span>Home</span></a>
+    <a routerLink="/destinations" class="nav-link"><i class="fas fa-map-marked-alt"></i> <span>Destinations</span></a>
+    <a routerLink="/experiences" class="nav-link"><i class="fas fa-star"></i> <span>Experiences</span></a>
   </div>
 
-  <!-- Dreapta: Login / Avatar -->
+  <!-- Right: Login / Avatar -->
   <div class="navbar-right">
     <ng-container *ngIf="!isLoggedIn; else loggedBlock">
       <button class="login-btn" (click)="goToLogin()">Login</button>
@@ -25,22 +19,51 @@
 
     <ng-template #loggedBlock>
       <div class="user-info">
-        <span class="username" (click)="goToProfile()">{{ user?.username }}</span>
-        <div
-          class="avatar"
-          [style.background-color]="avatarColor"
-          (click)="toggleDropdown()"
-        >
-          {{ userInitial }}
-        </div>
+        <span class="username" (click)="goToProfile()" [title]="user?.username || 'User'">
+          {{ user?.username || 'User' }}
+        </span>
 
-        <div class="dropdown" *ngIf="dropdownOpen">
-          <a *ngIf="!user?.isSeller" (click)="becomeSeller()">Become Seller</a>
-          <ng-container *ngIf="user?.isSeller">
-            <a (click)="goToProperties()">Properties</a>
-            <a (click)="goToHistory()">History</a>
+        <div class="avatar" [style.background-color]="avatarColor" (click)="toggleDropdown()">
+          <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== ''; else initial">
+            <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
           </ng-container>
-          <a (click)="logout()">Logout</a>
+          <ng-template #initial>
+            {{ (user?.username?.charAt(0) || 'U') | uppercase }}
+          </ng-template>
+        </div>
+        <div class="status-dot"></div>
+
+
+        <!-- Dropdown Menu -->
+        <div class="dropdown" *ngIf="dropdownOpen">
+          <div class="user-profile">
+            <div class="dropdown-avatar" [style.background-color]="avatarColor">
+              <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== ''; else initialDropdown">
+                <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
+              </ng-container>
+              <ng-template #initialDropdown>
+                {{ (user?.username?.charAt(0) || 'U') | uppercase }}
+              </ng-template>
+            </div>
+            <div class="user-details">
+              <div class="dropdown-username" [title]="user?.username || 'User'">
+                {{ user?.username || 'User' }}
+              </div>
+              <div class="user-email" [title]="user?.email || ''">
+                {{ user?.email || 'Premium Member' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="dropdown-menu">
+            <a (click)="goToProfile()"><i class="fas fa-user"></i> My Profile</a>
+            <a *ngIf="!user?.isSeller" (click)="becomeSeller()" class="seller-option"><i class="fas fa-store"></i> Become Seller</a>
+            <ng-container *ngIf="user?.isSeller">
+              <a (click)="goToProperties()"><i class="fas fa-building"></i> My Properties</a>
+              <a (click)="goToHistory()"><i class="fas fa-history"></i> Booking History</a>
+            </ng-container>
+            <a (click)="logout()" class="logout-option"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
         </div>
       </div>
     </ng-template>

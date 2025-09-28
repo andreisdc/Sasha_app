@@ -1,60 +1,166 @@
 <div class="profile-container" *ngIf="user; else loadingTemplate">
   <div class="profile-card">
-    <!-- Stânga: Avatar -->
-    <div class="avatar-section">
-      <div class="avatar-wrapper" 
-           (mouseenter)="showUpload = true" 
-           (mouseleave)="showUpload = false">
-        <img *ngIf="user.profilePicture; else defaultAvatar" 
-             [src]="user.profilePicture" 
-             class="avatar" />
-        <ng-template #defaultAvatar>
-          <div class="avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
-        </ng-template>
-        <input *ngIf="showUpload" type="file" (change)="onFileChange($event)" class="file-input" />
-      </div>
+    <div class="profile-header">
+      <h2>My Profile</h2>
+      <p>Manage your personal information</p>
     </div>
 
-    <!-- Dreapta: Info -->
-    <div class="info-section">
-      <h2>{{ user.firstName }} {{ user.lastName }}</h2>
-
-      <div class="field">
-        <label>Username</label>
-        <div class="editable">
-          <input *ngIf="editingUsername" type="text" [(ngModel)]="user.username" />
-          <span *ngIf="!editingUsername">{{ user.username }}</span>
-          <i class="fas fa-pencil-alt edit-icon" (click)="toggleUsernameEdit()"></i>
+    <div class="profile-content">
+      <!-- Avatar Section -->
+      <div class="avatar-section">
+        <input #fileInput type="file" (change)="onFileChange($event)" accept="image/*" hidden />
+        <div class="avatar-container">
+          <div class="avatar-wrapper" (click)="fileInput.click()">
+            <div class="avatar-overlay">
+              <i class="fas fa-camera"></i>
+              <span>Change Photo</span>
+            </div>
+            <div class="avatar-image">
+              <img *ngIf="user.profilePicture; else defaultAvatar" 
+                   [src]="user.profilePicture" 
+                   class="avatar"
+                   [class.loading]="imageLoading" />
+              <ng-template #defaultAvatar>
+                <div class="avatar-initials">{{ user.username.charAt(0).toUpperCase() }}</div>
+              </ng-template>
+            </div>
+          </div>
+          <div *ngIf="imageLoading" class="upload-progress">
+            <div class="progress-bar">
+              <div class="progress-fill"></div>
+            </div>
+            <span>Uploading image...</span>
+          </div>
         </div>
       </div>
 
-      <div class="field">
-        <label>Email</label>
-        <span>{{ user.email }}</span>
-      </div>
+      <!-- Profile Information -->
+      <div class="info-section">
+        <!-- Name Row -->
+        <div class="info-row dual-input">
+          <div class="info-group">
+            <label>First Name</label>
+            <div class="input-container">
+              <input *ngIf="editingFirstName" 
+                     [(ngModel)]="user.firstName" 
+                     placeholder="First Name"
+                     class="edit-input" />
+              <span *ngIf="!editingFirstName" class="info-value">{{ user.firstName }}</span>
+              <button class="edit-btn" (click)="toggleFirstNameEdit()">
+                <i class="fas" [class.fa-pencil]="!editingFirstName" [class.fa-times]="editingFirstName"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="info-group">
+            <label>Last Name</label>
+            <div class="input-container">
+              <input *ngIf="editingLastName" 
+                     [(ngModel)]="user.lastName" 
+                     placeholder="Last Name"
+                     class="edit-input" />
+              <span *ngIf="!editingLastName" class="info-value">{{ user.lastName }}</span>
+              <button class="edit-btn" (click)="toggleLastNameEdit()">
+                <i class="fas" [class.fa-pencil]="!editingLastName" [class.fa-times]="editingLastName"></i>
+              </button>
+            </div>
+          </div>
+        </div>
 
-      <div class="field">
-        <label>Phone Number</label>
-        <div class="editable">
-          <input *ngIf="editingPhone" type="text" [(ngModel)]="user.phoneNumber" />
-          <span *ngIf="!editingPhone">{{ user.phoneNumber }}</span>
-          <i class="fas fa-pencil-alt edit-icon" (click)="togglePhoneEdit()"></i>
+        <!-- Email (read-only) -->
+        <div class="info-row">
+          <div class="info-group">
+            <label>Email Address</label>
+            <div class="input-container">
+              <span class="info-value email">{{ user.email }}</span>
+              <div class="read-only-badge">Read-only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="info-row">
+          <div class="info-group">
+            <label>Phone Number</label>
+            <div class="input-container">
+              <input *ngIf="editingPhone" 
+                     [(ngModel)]="user.phoneNumber" 
+                     placeholder="Phone Number"
+                     class="edit-input" />
+              <span *ngIf="!editingPhone" class="info-value">{{ user.phoneNumber || 'Not set' }}</span>
+              <button class="edit-btn" (click)="togglePhoneEdit()">
+                <i class="fas" [class.fa-pencil]="!editingPhone" [class.fa-times]="editingPhone"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Username -->
+        <div class="info-row">
+          <div class="info-group">
+            <label>Username</label>
+            <div class="input-container">
+              <input *ngIf="editingUsername" 
+                     [(ngModel)]="user.username" 
+                     placeholder="Username"
+                     class="edit-input" />
+              <span *ngIf="!editingUsername" class="info-value">{{ user.username }}</span>
+              <button class="edit-btn" (click)="toggleUsernameEdit()">
+                <i class="fas" [class.fa-pencil]="!editingUsername" [class.fa-times]="editingUsername"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rating -->
+        <div class="info-row">
+          <div class="info-group">
+            <label>User Rating</label>
+            <div class="rating-container">
+              <div class="stars">
+                <span *ngFor="let _ of getFilledStars()" class="star filled">
+                  <i class="fas fa-star"></i>
+                </span>
+                <span *ngFor="let _ of getEmptyStars()" class="star">
+                  <i class="far fa-star"></i>
+                </span>
+              </div>
+              <span class="rating-value">({{ user.rating || 0 }}/5)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="actions-row">
+          <button class="save-btn" 
+                  [disabled]="!hasChanges() || loading" 
+                  [class.loading]="loading"
+                  (click)="saveChanges()">
+            <span *ngIf="!loading">Save Changes</span>
+            <span *ngIf="loading" class="loading-text">
+              <i class="fas fa-spinner fa-spin"></i>
+              Saving...
+            </span>
+          </button>
+          
+          <div *ngIf="hasChanges() && !loading" class="changes-indicator">
+            <i class="fas fa-exclamation-circle"></i>
+            You have unsaved changes
+          </div>
         </div>
       </div>
-
-      <div class="field rating">
-        <label>Rating</label>
-        <span *ngFor="let _ of getFilledStars()"><i class="fas fa-star filled-star"></i></span>
-        <span *ngFor="let _ of getEmptyStars()"><i class="far fa-star empty-star"></i></span>
-      </div>
-
-      <button class="save-btn" (click)="saveChanges()">Save</button>
     </div>
   </div>
 </div>
 
 <ng-template #loadingTemplate>
-  <div class="loading-bar">
-    <div class="loader"></div>
+  <div class="loading-container">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    <div class="loading-text">
+      <h3>Loading your profile</h3>
+      <p>Please wait while we load your information...</p>
+    </div>
   </div>
 </ng-template>

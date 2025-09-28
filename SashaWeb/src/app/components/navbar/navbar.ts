@@ -1,50 +1,78 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
+import { AuthService } from '../../core/services/auth-service';
+import { AuthUser } from '../../core/interfaces/authUser';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgOptimizedImage],
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.less'],
 })
 export class Navbar implements OnInit {
-  user: any = null;
+  user: AuthUser | null = null;
   isLoggedIn = false;
-  userInitial: string = '';
-  avatarColor: string = '';
+  avatarColor = '';
   dropdownOpen = false;
+  isBrowser: boolean;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private authService: AuthService
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
-  ngOnInit(): void {
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (storedUser) {
-      this.user = JSON.parse(storedUser);
-      this.isLoggedIn = true;
-      this.setUserInitial();
+  async ngOnInit() {
+    if (this.isBrowser) {
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (storedUser) {
+        this.user = JSON.parse(storedUser);
+        this.isLoggedIn = true;
+      } else {
+        try {
+          this.user = await firstValueFrom(this.authService.me());
+          this.isLoggedIn = !!this.user;
+        } catch {
+          this.user = null;
+          this.isLoggedIn = false;
+        }
+      }
       this.setAvatarColor();
     }
   }
 
-  toggleDropdown(): void {
-    this.dropdownOpen = !this.dropdownOpen;
-  }
+  toggleDropdown() { this.dropdownOpen = !this.dropdownOpen; }
 
   @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
+  onDocumentClick(event: Event) {
     const target = event.target as HTMLElement;
     if (!target.closest('.user-info')) {
       this.dropdownOpen = false;
     }
   }
 
-  private setUserInitial(): void {
-    this.userInitial = this.user?.username?.charAt(0).toUpperCase() || '';
+  goToLogin() { this.router.navigate(['/login']); }
+  goToProfile() { this.router.navigate(['/profile']); this.dropdownOpen = false; }
+  becomeSeller() { this.dropdownOpen = false; this.router.navigate(['/become-seller']); }
+  goToProperties() { this.dropdownOpen = false; this.router.navigate(['/properties']); }
+  goToHistory() { this.dropdownOpen = false; this.router.navigate(['/history']); }
+
+  logout() {
+    this.authService.logout();
+    this.isLoggedIn = false;
+    this.user = null;
+    this.dropdownOpen = false;
+    this.router.navigate(['/login']);
   }
 
-  private setAvatarColor(): void {
+  private setAvatarColor() {
+    if (!this.isBrowser) return;
     const savedColor = localStorage.getItem('avatarColor') || sessionStorage.getItem('avatarColor');
     if (savedColor) {
       this.avatarColor = savedColor;
@@ -55,36 +83,13 @@ export class Navbar implements OnInit {
     }
   }
 
-  goToLogin(): void { this.router.navigate(['/login']); }
-
-  goToProfile(): void {
-    this.router.navigate(['/profile']);
-    this.dropdownOpen = false;
+  // ✅ getter pentru profile picture
+  get displayProfilePicture(): string {
+    if (this.user?.profilePicture?.trim()) return this.user.profilePicture;
+    return 'assets/default-avatar.png';
   }
 
-  logout(): void {
-    localStorage.removeItem('user');
-    localStorage.removeItem('avatarColor');
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('avatarColor');
-    this.isLoggedIn = false;
-    this.user = null;
-    this.dropdownOpen = false;
-    this.router.navigate(['/login']);
-  }
-
-  becomeSeller(): void {
-    this.dropdownOpen = false;
-    this.router.navigate(['/become-seller']);
-  }
-
-  goToProperties(): void {
-    this.dropdownOpen = false;
-    this.router.navigate(['/properties']);
-  }
-
-  goToHistory(): void {
-    this.dropdownOpen = false;
-    this.router.navigate(['/history']);
+  get userInitial(): string {
+    return this.user?.username?.charAt(0).toUpperCase() || 'U';
   }
 }
