@@ -54,11 +54,9 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(
-      circle at center,
-      transparent 30%,
-      rgba(0, 0, 0, 0.03) 100%
-    );
+    background: radial-gradient(circle at center,
+        transparent 30%,
+        rgba(0, 0, 0, 0.03) 100%);
     pointer-events: none;
     z-index: -1;
   }
@@ -109,6 +107,7 @@ body {
   }
 
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.08);
+
   h1 {
     text-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
   }
@@ -118,8 +117,9 @@ body {
 .header-content p {
   color: var(--header-title-color, #2563eb);
 }
-html body .header-content > h1,
-html body .header-content > p {
+
+html body .header-content>h1,
+html body .header-content>p {
   color: var(--header-title-color, #2563eb);
 }
 
@@ -164,11 +164,9 @@ div {
       backdrop-filter: blur(6px);
 
       &:hover {
-        background: linear-gradient(
-          135deg,
-          var(--chip-active-bg-start) 0%,
-          var(--chip-active-bg-end) 100%
-        );
+        background: linear-gradient(135deg,
+            var(--chip-active-bg-start) 0%,
+            var(--chip-active-bg-end) 100%);
         transform: translateY(-2px);
       }
 
@@ -203,8 +201,7 @@ div {
   background-color: var(--chip-bg);
   border: 0.063rem solid var(--chip-border);
   color: var(--chip-text);
-  padding: clamp(var(--chip-min-padding-y), 1.25vw, var(--chip-max-padding-y))
-    clamp(var(--chip-min-padding-x), 2vw, var(--chip-max-padding-x));
+  padding: clamp(var(--chip-min-padding-y), 1.25vw, var(--chip-max-padding-y)) clamp(var(--chip-min-padding-x), 2vw, var(--chip-max-padding-x));
   border-radius: 62.438rem;
   margin: 0;
   transition: all 0.25s ease;
@@ -223,17 +220,17 @@ div {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.4),
-      transparent
-    );
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent);
     transition: left 0.5s ease;
   }
+
   &:hover::before {
     left: 100%;
   }
+
   :hover,
   :focus {
     background-color: var(--chip-hover-bg);
@@ -242,6 +239,7 @@ div {
     outline: 0.125rem solid var(--chip-focus-outline);
     outline-offset: 0.125rem;
   }
+
   .active {
     background-color: var(--chip-active-fallback);
     color: var(--white);
@@ -249,6 +247,7 @@ div {
     transform: translateY(-0.1875rem);
     box-shadow: 0 0.375rem 0.75rem rgba(90, 23, 11, 0.25);
   }
+
   .active::after {
     content: "";
     position: absolute;
@@ -267,18 +266,22 @@ div {
     opacity: 0;
     transform: translateY(clamp(0.25rem, 1.2vw, 0.375rem));
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 @keyframes subtleBackground {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }

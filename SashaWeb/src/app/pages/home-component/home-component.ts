@@ -13,10 +13,14 @@ import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
 import { Navbar } from "../../components/navbar/navbar";
+import { DreamTripComponent } from "./dream-trip.component/dream-trip.component"
+import { AdventuresComponent } from './adventures.component/adventures.component';
+import { AiPlannerComponent } from './ai-planner.component/ai-planner.component';
+import { FooterComponent } from './footer.component/footer.component';
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, SearchSection, Navbar],
+  imports: [CommonModule, DatagridComponent, SearchSection, Navbar, DreamTripComponent, AdventuresComponent, AiPlannerComponent, FooterComponent],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

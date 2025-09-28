@@ -1,0 +1,63 @@
+// footer.component.less
+@import '../home-component.less';
+
+.footer-container {
+
+    margin: 0 auto;
+    padding: 0px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.footer-content {
+    background: #3B82F6;
+
+
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(12px);
+    text-align: center;
+
+    h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--header-title-color, #2563eb);
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 1rem;
+        color: var(--chip-text);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .copyright {
+        font-size: 0.9rem;
+        color: var(--accent-color);
+        font-style: italic;
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .footer-content {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-container {
+        padding: 1rem 0.5rem;
+    }
+
+    .footer-content {
+        padding: 1.5rem 1rem;
+
+
+        p {
+            font-size: 0.9rem;
+        }
+    }
+}

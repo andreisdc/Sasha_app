@@ -1,0 +1,98 @@
+// ai-planner.component.less
+@import '../home-component.less';
+
+.ai-planner-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.ai-planner-content {
+    background: var(--white);
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(12px);
+    text-align: center;
+}
+
+.ai-planner-header {
+    margin-bottom: 2rem;
+
+    h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 800;
+        color: var(--header-title-color, #2563eb);
+        margin-bottom: 1.5rem;
+        text-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+        line-height: 1.2;
+    }
+
+    p {
+        font-size: clamp(1rem, 2vw, 1.25rem);
+        color: var(--chip-text);
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
+
+.ai-planner-cta {
+    margin: 2rem 0;
+}
+
+.create-plan-btn {
+    background: linear-gradient(135deg,
+            var(--chip-active-bg-start) 0%,
+            var(--chip-active-bg-end) 100%);
+    color: var(--white);
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 0.25rem 0.75rem rgba(37, 99, 235, 0.3);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1.5rem rgba(37, 99, 235, 0.4);
+    }
+
+    &:focus {
+        outline: 0.125rem solid var(--chip-focus-outline);
+        outline-offset: 0.125rem;
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .ai-planner-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .ai-planner-header {
+        h1 {
+            font-size: clamp(1.75rem, 6vw, 2.5rem);
+        }
+    }
+
+    .create-plan-btn {
+        padding: 0.875rem 2rem;
+        font-size: 1.1rem;
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-planner-container {
+        padding: 1rem 0.5rem;
+    }
+
+    .ai-planner-content {
+        padding: 1.5rem 1rem;
+    }
+}

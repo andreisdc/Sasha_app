@@ -1,0 +1,36 @@
+<!-- dream-trip.component.html -->
+<div class="dream-trip-container">
+    <div class="dream-trip-header">
+        <h1>Tell Us What You Dream Of</h1>
+        <p>
+            Describe your perfect trip and we'll handle everything – from restaurant reservations
+            to exclusive experiences. Our concierge service creates magical moments tailored just for you.
+        </p>
+    </div>
+
+    <div class="dream-trip-content">
+        <div class="dream-input-section">
+            <h2>Share Your Travel Dreams</h2>
+            <div class="dream-input-wrapper">
+                <textarea class="dream-input"
+                    placeholder="I want to experience authentic local cuisine, explore hidden gems, take sunset photos at scenic spots, and maybe catch a few jazz performances..."
+                    rows="4"></textarea>
+            </div>
+
+            <button class="create-trip-btn">
+                Create My Perfect Trip
+            </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="services-grid">
+            <div class="service-card" *ngFor="let service of services; let i = index"
+                [style.animationDelay.ms]="i * 100">
+                <div class="service-icon">{{ service.icon }}</div>
+                <h3 class="service-title">{{ service.title }}</h3>
+                <p class="service-description">{{ service.description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
