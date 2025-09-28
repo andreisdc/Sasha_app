@@ -4,7 +4,8 @@
   align-items: center;
   min-height: 100vh;
 
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .signin-form {
@@ -15,7 +16,7 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
-  
+
   h2 {
     text-align: center;
     color: #333;
@@ -30,12 +31,12 @@
   .form-group {
     margin-bottom: 20px;
     position: relative;
-    
+
     &.password-group {
       position: relative;
     }
   }
-  
+
   .form-input {
     width: 100%;
     padding: 16px;
@@ -45,25 +46,25 @@
     color: #333;
     transition: border-color 0.3s ease;
     box-sizing: border-box;
-    
+
     &:focus {
       outline: none;
       border-color: #1ea7fd;
     }
-    
+
     &.error {
       border-color: #dc3545;
     }
-    
+
     &::placeholder {
       color: #999;
     }
   }
-  
+
   .password-group .form-input {
     padding-right: 50px;
   }
-  
+
   .password-toggle {
     position: absolute;
     right: 12px;
@@ -78,22 +79,22 @@
     align-items: center;
     justify-content: center;
     transition: color 0.3s ease;
-    
+
     &:hover {
       color: #333;
     }
-    
+
     &:focus {
       outline: none;
       color: #1ea7fd;
     }
-    
+
     svg {
       width: 20px;
       height: 20px;
     }
   }
-  
+
   .btn-primary {
     width: 100%;
     padding: 16px;
@@ -106,42 +107,42 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     margin-bottom: 20px;
-    
+
     &:hover:not(:disabled) {
       background: #0d8ce8;
     }
-    
+
     &:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
   }
-  
+
   .login-link {
     text-align: center;
     margin-bottom: 25px;
     color: #666;
     font-size: 14px;
     cursor: pointer;
-    
+
     .link {
       color: #1ea7fd;
       text-decoration: none;
       font-weight: 500;
-      
+
       &:hover {
         text-decoration: underline;
       }
     }
   }
-  
+
   .divider {
     text-align: center;
     margin: 25px 0;
     position: relative;
-    
+
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 50%;
       left: 0;
@@ -149,7 +150,7 @@
       height: 1px;
       background: #e1e5e9;
     }
-    
+
     span {
       background: white;
       color: #999;
@@ -159,7 +160,7 @@
       z-index: 1;
     }
   }
-  
+
   .btn-google {
     width: 100%;
     padding: 16px;
@@ -175,12 +176,12 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    
+
     &:hover {
       border-color: #ccc;
       background: #f8f9fa;
     }
-    
+
     .google-icon {
       width: 18px;
       height: 18px;
@@ -193,8 +194,65 @@
   .signin-container {
     padding: 10px;
   }
-  
+
   .signin-form {
     padding: 30px 20px;
+  }
+}
+
+/* Container for alerts */
+.alert {
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  position: relative;
+  transition: all 0.3s ease;
+
+  &.success {
+    background-color: #d4edda;     /* light green */
+    color: #155724;               /* dark green text */
+    border: 1px solid #c3e6cb;   /* green border */
+  }
+
+  &.error {
+    background-color: #f8d7da;    /* light red/pink */
+    color: #721c24;               /* dark red text */
+    border: 1px solid #f5c6cb;   /* red border */
+  }
+
+  /* Optional: add a small close button */
+  &::after {
+    content: '×';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-weight: bold;
+    display: inline-block;
+    color: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  &.success::after:hover,
+  &.error::after:hover {
+    opacity: 0.7;
+  }
+}
+
+/* Optional: fade-in animation */
+.alert {
+  opacity: 0;
+  animation: fadeIn 0.4s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
   }
 }

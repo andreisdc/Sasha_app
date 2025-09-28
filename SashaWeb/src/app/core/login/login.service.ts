@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { LoginRequest } from './request.interface';
 import { LoginResponse } from './response.interface';
@@ -10,9 +10,9 @@ import { catchError, tap } from 'rxjs/operators';
 })
 export class LoginService {
   // Facem asta constanta globala in ceva fisier pt a o importa toti (mai usor de modificat).
-  private readonly apiUrl = 'https://localhost:3000/api'; 
+  private readonly apiUrl = 'https://localhost:3000/api';
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   login(userData: LoginRequest): Observable<LoginResponse> {
     return this.http
@@ -23,7 +23,7 @@ export class LoginService {
             localStorage.setItem('token', response.token);
           }
         }),
-        catchError(this.handleError)
+        catchError(this.handleError),
       );
   }
 

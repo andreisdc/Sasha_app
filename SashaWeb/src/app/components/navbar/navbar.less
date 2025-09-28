@@ -1,0 +1,75 @@
+.navbar {
+  position: fixed;   // rămâne sus mereu
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-link {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e40af;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.2s;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover {
+    color: #2563eb;
+  }
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.login-btn {
+  padding: 0.45rem 1rem;
+  background: #f97316;
+  width: 70px;
+  height: 30px;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #ea580c;
+  }
+}

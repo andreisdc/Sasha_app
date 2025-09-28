@@ -1,11 +1,11 @@
-.datagrid-container{
+.datagrid-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
   font-family: Georgia;
   font-size: 1rem;
 }
 
-.datagrid-card{
+.datagrid-card {
   border-radius: 0.6rem;
   border-color: rgb(5, 30, 78);
   border-style: solid;
@@ -13,8 +13,7 @@
   padding: clamp(0.5rem, 2vw, 1rem);
   position: relative;
   cursor: pointer;
-  transition: all 0.075s ease-out; 
-  &:hover{  
+  &:hover {
     box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.574);
     transform: scale(1.05);
   }
@@ -26,7 +25,7 @@
   height: 15rem;
   overflow: hidden;
   border-radius: 0.6rem;
-  background-color: #e0e0e0; 
+  background-color: #e0e0e0;
 }
 
 .property-image {
@@ -38,11 +37,12 @@
   transition: opacity 0.5s ease;
 }
 
-.prev, .next {
+.prev,
+.next {
   position: absolute;
-  top: 50%; 
+  top: 50%;
   transform: translateY(-50%);
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
   width: 2rem;
@@ -53,25 +53,29 @@
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  &:hover{
+  &:hover {
     background: rgba(0, 0, 1, 0.8);
   }
 }
 
-.prev { left: 0.5rem; }
-.next { right: 0.5rem; }
+.prev {
+  left: 0.5rem;
+}
+.next {
+  right: 0.5rem;
+}
 
 .image-container:hover .prev,
 .image-container:hover .next {
   opacity: 1;
 }
 
-.title{
+.title {
   text-align: center;
   z-index: 15;
 }
 
-.type{
+.type {
   position: absolute;
   top: 0.01rem;
   left: 1rem;
@@ -82,12 +86,12 @@
   font-size: clamp(0.8rem, 1vw, 1rem);
 }
 
-.location-container{
+.location-container {
   display: flex;
   align-items: center;
 }
 
-.location{
+.location {
   bottom: 1rem;
   right: 1rem;
   width: clamp(1.5rem, 2vw, 2rem);
@@ -96,7 +100,7 @@
   z-index: 15;
 }
 
-.rating{
+.rating {
   position: absolute;
   bottom: 0.01rem;
   right: 1rem;
@@ -105,8 +109,8 @@
   font-size: clamp(0.8rem, 1vw, 1rem);
 }
 
-.price{
-  position:absolute;
+.price {
+  position: absolute;
   bottom: 0.01rem;
   right: 0.7rem;
   background: rgba(255, 255, 255, 0.7);
@@ -115,7 +119,7 @@
   font-size: clamp(0.8rem, 1vw, 1rem);
 }
 
-.like-button{
+.like-button {
   background: none !important;
   border: none !important;
   position: absolute;
@@ -123,27 +127,35 @@
   right: 1.2rem;
 
   font-size: clamp(1.8rem, 2vw, 1.6rem);
-  transition: transform 0.2s, color 0.2s;
-  color:rgb(255, 255, 255);
+  transition:
+    transform 0.2s,
+    color 0.2s;
+  color: rgb(255, 255, 255);
   cursor: pointer;
 
-  &:hover{
+  &:hover {
     color: darken(rgb(70, 4, 4), 10%);
     transform: scale(1.2);
   }
-  &.liked{
+  &.liked {
     color: red;
     animation: pop 0.3s ease;
   }
 }
 
 @keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.5); }
-  100% { transform: scale(1.2); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1.2);
+  }
 }
 
-.scroll-up{
+.scroll-up {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
@@ -155,7 +167,7 @@
   height: 3rem;
   font-size: 1.5rem;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,11 +177,10 @@
   }
 }
 
-
 .pagination {
   display: flex;
-  justify-content: center; 
-  align-items: center;     
+  justify-content: center;
+  align-items: center;
   list-style: none;
 }
 
@@ -178,5 +189,3 @@
   padding: 0.5rem 1rem;
   text-decoration: none;
 }
-
-

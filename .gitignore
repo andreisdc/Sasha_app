@@ -1,0 +1,105 @@
+# Visual Studio / .NET Core
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.rsuser
+*.resharper
+*.DotSettings.user
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+Generated\ Files/
+
+# Visual Studio cache/options directory
+.vs/
+.history/
+.vshistory/
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.snupkg
+*.nuget.props
+*.nuget.targets
+
+# DotNet Core / ASP.NET
+artifacts/
+*.pidb
+*.svclog
+*.tlog
+project.lock.json
+project.fragment.lock.json
+*.dotCover
+*.coverage
+*.coveragexml
+
+# Web / Node
+node_modules/
+wwwroot/node_modules
+
+# Test / Coverage
+[Tt]est[Rr]esult*/
+nunit-*.xml
+BenchmarkDotNet.Artifacts/
+_NCrunch_*
+_JustCode/
+*.VisualState.xml
+OpenCover/
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Misc
+*.log
+*.cache
+*.pdb
+*.tmp
+*.bak
+*.dbmdl
+*.dbproj.schemaview
+*.plg
+*.opt
+*.userprefs
+*.gpState
+*.iobj
+*.ipdb
+*.tmp_proj
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# SQL Server
+*.mdf
+*.ldf
+*.ndf
+
+# AppSettings: include in Git
+# SashaServer/appsettings.Development.json
+
+# Other
+publish/
+*.appx
+*.appxbundle
+*.appxupload

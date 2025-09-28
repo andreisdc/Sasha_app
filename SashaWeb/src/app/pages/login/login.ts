@@ -1,29 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { LoginService } from '../../core/login/login.service';
+import { AuthService } from '../../core/services/auth-service';
 
 @Component({
-  selector: 'app-register',
+  selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
-  styleUrl: './login.less'
+  styleUrls: ['./login.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Login implements OnInit {
+export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   showPassword = false;
+  serverError = '';
 
-  constructor(private fb: FormBuilder, private router: Router,
-    private loginService: LoginService
-  ) {}
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      rememberMe: [false],
     });
   }
 
@@ -32,34 +34,39 @@ export class Login implements OnInit {
   }
 
   onSubmit() {
+    this.serverError = '';
+
     if (this.loginForm.valid) {
-      console.log('Form submitted:', this.loginForm.value);
-      this.loginService.login(this.loginForm.value).subscribe({
-        next: (response) => {
-          console.log('Login successful:', response);
+      const { email, password, rememberMe } = this.loginForm.value;
+
+      this.authService.login(email, password, rememberMe).subscribe({
+        next: () => {
           this.router.navigate(['/home']);
         },
-        error: (error) => {
-          console.error('Login failed:', error);
-          // TODO: Show error message or smth
-          this.loginForm.reset(); // Reset the form on error
-        }
+        error: (err) => {
+          this.serverError = err?.error?.message || 'Login failed';
+          this.loginForm.get('password')?.reset();
+        },
       });
     } else {
-      console.log('Form is invalid');
       this.markFormGroupTouched();
     }
   }
 
-  onGoogleSignin() {
-    console.log('Google signup clicked :P');
-    // TODO: Login prin google (nu e necesar).
-  }
-
   private markFormGroupTouched() {
-    Object.keys(this.loginForm.controls).forEach(key => {
+    Object.keys(this.loginForm.controls).forEach((key) => {
       const control = this.loginForm.get(key);
       control?.markAsTouched();
     });
+  }
+
+  get email() {
+    return this.loginForm.get('email')!;
+  }
+  get password() {
+    return this.loginForm.get('password')!;
+  }
+  get rememberMe() {
+    return this.loginForm.get('rememberMe')!;
   }
 }
