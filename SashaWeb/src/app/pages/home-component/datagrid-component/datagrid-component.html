@@ -18,18 +18,19 @@
          
           <p class="type"><b>{{property.type}}</b></p>
           <div class="arrows">
-            @if(hovered===property.id)
+            @if(hovered === property.id)
             {
-              <button nz-button nzType="text" class="prev" (click)="prev(property); $event.stopPropagation()">
-                <i nz-icon nzType="left" nzTheme="outline"></i>
-              </button>
-            }
-            
-            @if(hovered===property.id)
-            {
-              <button nz-button nzType="text" class="next" (click)="next(property); $event.stopPropagation()">
-                <i nz-icon nzType="right" nzTheme="outline"></i>
-              </button>
+                <button class="prev" (click)="prev(property); $event.stopPropagation()">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                  </svg>
+                </button>
+
+                <button class="next" (click)="next(property); $event.stopPropagation()">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2">
+                    <path d="M9 6l6 6-6 6"/>
+                  </svg>
+                </button>
             }
           </div>
           <p class="price"><b>{{ property.pricePerNight | currency:'EUR':'symbol':'1.0-0' }}</b></p>

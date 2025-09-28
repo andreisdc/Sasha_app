@@ -13,7 +13,10 @@ import { AsyncPipe } from '@angular/common';
 })
 export class PropertyDetails implements OnInit {
   property$!: Observable<Property>;
+  currentIndex : { [id: number]: number } = {};
+
   constructor(private propertyService: PropertyService, private route: ActivatedRoute) {}
+
   ngOnInit() {
     this.property$=this.route.paramMap.pipe(
       switchMap(params => {
@@ -26,6 +29,18 @@ export class PropertyDetails implements OnInit {
       })
     );
   }
+
+  next(prop: Property) {
+    const id = prop.id;
+    if (this.currentIndex[id] == null) this.currentIndex[id] = 0;
+    this.currentIndex[id] = (this.currentIndex[id] + 1) % prop.images.length;
+  }
+
+  prev(prop: Property) {
+    const id = prop.id;
+    if (this.currentIndex[id] == null) this.currentIndex[id] = 0;
+    this.currentIndex[id] = (this.currentIndex[id] - 1 + prop.images.length) % prop.images.length;
+  } 
 
   trackByIndex(index: number, item: any): number {
     return item.index;
