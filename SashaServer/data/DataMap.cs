@@ -7,7 +7,7 @@ namespace SashaServer.Data
     {
         private readonly string _connectionString;
 
-  public DataMap(IConfiguration configuration)
+        public DataMap(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             if (string.IsNullOrEmpty(_connectionString))
@@ -15,9 +15,10 @@ namespace SashaServer.Data
         }
 
         // ================================
-        // 1️⃣ Users
+        // 1️⃣ USERS (primele, cum ai cerut)
         // ================================
-      public void AddUser(User user)
+
+        public void AddUser(User user)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
@@ -43,13 +44,44 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
-        public bool UserExists(string email)
+        public bool UpdateUser(User user)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            var cmd = new NpgsqlCommand("SELECT COUNT(1) FROM t_users WHERE email = @Email", conn);
-            cmd.Parameters.AddWithValue("Email", email);
-            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            var cmd = new NpgsqlCommand(
+                @"UPDATE t_users SET 
+                first_name=@first_name,
+                last_name=@last_name,
+                username=@username,
+                email=@email,
+                password_hash=@password_hash,
+                rating=@rating,
+                is_seller=@is_seller,
+                profile_picture=@profile_picture,
+                phone_number=@phone_number
+                WHERE id=@id", conn);
+
+            cmd.Parameters.AddWithValue("id", user.Id);
+            cmd.Parameters.AddWithValue("first_name", user.FirstName);
+            cmd.Parameters.AddWithValue("last_name", user.LastName);
+            cmd.Parameters.AddWithValue("username", user.Username);
+            cmd.Parameters.AddWithValue("email", user.Email);
+            cmd.Parameters.AddWithValue("password_hash", user.PasswordHash);
+            cmd.Parameters.AddWithValue("rating", user.Rating);
+            cmd.Parameters.AddWithValue("is_seller", user.IsSeller);
+            cmd.Parameters.AddWithValue("profile_picture", (object?)user.ProfilePicture ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("phone_number", (object?)user.PhoneNumber ?? DBNull.Value);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
+        public bool DeleteUserById(Guid userId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("DELETE FROM t_users WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", userId);
+            return cmd.ExecuteNonQuery() > 0;
         }
 
         public User? GetUserByEmail(string email)
@@ -112,6 +144,19 @@ namespace SashaServer.Data
             };
         }
 
+        public bool UserExists(string email)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT COUNT(1) FROM t_users WHERE email = @Email", conn);
+            cmd.Parameters.AddWithValue("Email", email);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        // ================================
+        // 2️⃣ SESSIONS
+        // ================================
+
         public void AddSession(Guid userId, string token, DateTime expiresAt)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -135,42 +180,21 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
-        public bool UpdateUser(User user)
+        public bool DeleteAllSessionsForUser(Guid userId)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"UPDATE t_users SET 
-                first_name=@first_name,
-                last_name=@last_name,
-                username=@username,
-                email=@email,
-                password_hash=@password_hash,
-                rating=@rating,
-                is_seller=@is_seller,
-                profile_picture=@profile_picture
-                WHERE id=@id", conn);
-
-            cmd.Parameters.AddWithValue("id", user.Id);
-            cmd.Parameters.AddWithValue("first_name", user.FirstName);
-            cmd.Parameters.AddWithValue("last_name", user.LastName);
-            cmd.Parameters.AddWithValue("username", user.Username);
-            cmd.Parameters.AddWithValue("email", user.Email);
-            cmd.Parameters.AddWithValue("password_hash", user.PasswordHash);
-            cmd.Parameters.AddWithValue("rating", user.Rating);
-            cmd.Parameters.AddWithValue("is_seller", user.IsSeller);
-            cmd.Parameters.AddWithValue("profile_picture", (object?)user.ProfilePicture ?? DBNull.Value);
-
+            using var cmd = new NpgsqlCommand(
+                @"DELETE FROM user_sessions WHERE user_id = @userId", conn);
+            cmd.Parameters.AddWithValue("userId", userId);
             return cmd.ExecuteNonQuery() > 0;
         }
-    
-
-
 
         // ================================
-        // 2️⃣ Properties
+        // 3️⃣ PROPERTIES
         // ================================
-      public void AddProperty(Property property)
+
+        public void AddProperty(Property property)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
@@ -221,429 +245,13 @@ namespace SashaServer.Data
             cmd.Parameters.AddWithValue("average_rating", property.AverageRating);
             cmd.Parameters.AddWithValue("review_count", property.ReviewCount);
             cmd.Parameters.AddWithValue("neighborhood_description", property.NeighborhoodDescription ?? "");
-            cmd.Parameters.AddWithValue("tags", property.Tags ?? Array.Empty<string>()); // ← corect array
+            cmd.Parameters.AddWithValue("tags", property.Tags ?? Array.Empty<string>());
             cmd.Parameters.AddWithValue("instant_book", property.InstantBook);
             cmd.Parameters.AddWithValue("created_at", property.CreatedAt);
             cmd.Parameters.AddWithValue("updated_at", property.UpdatedAt);
 
             cmd.ExecuteNonQuery();
         }
-
-        public List<Property> GetProperties()
-        {
-            var properties = new List<Property>();
-
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-
-            var cmd = new NpgsqlCommand(
-                @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
-                         postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
-                         check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
-                         smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
-                         average_rating, review_count, neighborhood_description, tags, instant_book,
-                         created_at, updated_at
-                  FROM t_properties", conn);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                var property = new Property
-                {
-                    Id = reader.GetGuid(0),
-                    OwnerId = reader.GetGuid(1),
-                    Title = reader.GetString(2),
-                    Description = reader.GetString(3),
-                    LocationType = reader.GetString(4),
-                    Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                    City = reader.IsDBNull(6) ? "" : reader.GetString(6),
-                    County = reader.IsDBNull(7) ? "" : reader.GetString(7),
-                    Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
-                    PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
-                    Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
-                    Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
-                    Status = reader.GetString(12),
-                    PricePerNight = reader.GetDecimal(13),
-                    MinNights = reader.GetInt32(14),
-                    MaxNights = reader.GetInt32(15),
-                    CheckInTime = reader.GetTimeSpan(16),
-                    CheckOutTime = reader.GetTimeSpan(17),
-                    MaxGuests = reader.GetInt32(18),
-                    Bathrooms = reader.GetInt32(19),
-                    Kitchen = reader.GetBoolean(20),
-                    LivingSpace = reader.GetDecimal(21),
-                    PetFriendly = reader.GetBoolean(22),
-                    SmokeDetector = reader.GetBoolean(23),
-                    FireExtinguisher = reader.GetBoolean(24),
-                    CarbonMonoxideDetector = reader.GetBoolean(25),
-                    LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
-                    AverageRating = reader.GetDecimal(27),
-                    ReviewCount = reader.GetInt32(28),
-                    NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
-                    Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30), // ← corect array
-                    InstantBook = reader.GetBoolean(31),
-                    CreatedAt = reader.GetDateTime(32),
-                    UpdatedAt = reader.GetDateTime(33)
-                };
-
-                properties.Add(property);
-            }
-
-            return properties;
-        }
-
-        // ================================
-        // 3️⃣ Property Photos
-        // ================================
-        public void AddPropertyPhoto(PropertyPhoto photo)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_property_photos
-                  (id, property_id, file_path, is_cover, created_at)
-                  VALUES (@id, @property_id, @file_path, @is_cover, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", photo.Id);
-            cmd.Parameters.AddWithValue("property_id", photo.PropertyId);
-            cmd.Parameters.AddWithValue("file_path", photo.FilePath);
-            cmd.Parameters.AddWithValue("is_cover", photo.IsCover);
-            cmd.Parameters.AddWithValue("created_at", photo.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<PropertyPhoto> GetPropertyPhotos(Guid propertyId)
-        {
-            var list = new List<PropertyPhoto>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, property_id, file_path, is_cover, created_at FROM t_property_photos WHERE property_id=@property_id", conn);
-            cmd.Parameters.AddWithValue("property_id", propertyId);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new PropertyPhoto
-                {
-                    Id = reader.GetGuid(0),
-                    PropertyId = reader.GetGuid(1),
-                    FilePath = reader.GetString(2),
-                    IsCover = reader.GetBoolean(3),
-                    CreatedAt = reader.GetDateTime(4)
-                });
-            }
-            return list;
-        }
-
-        // ================================
-        // 4️⃣ Amenities & PropertyAmenities
-        // ================================
-        public void AddAmenity(Amenity amenity)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_amenities
-                  (id, code, name, category, created_at)
-                  VALUES (@id, @code, @name, @category, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", amenity.Id);
-            cmd.Parameters.AddWithValue("code", amenity.Code);
-            cmd.Parameters.AddWithValue("name", amenity.Name);
-            cmd.Parameters.AddWithValue("category", (object?)amenity.Category ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", amenity.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<Amenity> GetAmenities()
-        {
-            var list = new List<Amenity>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, code, name, category, created_at FROM t_amenities", conn);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new Amenity
-                {
-                    Id = reader.GetGuid(0),
-                    Code = reader.GetString(1),
-                    Name = reader.GetString(2),
-                    Category = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    CreatedAt = reader.GetDateTime(4)
-                });
-            }
-            return list;
-        }
-
-        public void AddPropertyAmenity(PropertyAmenity pa)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_property_amenities
-                  (id, property_id, amenity_id, description, created_at)
-                  VALUES (@id, @property_id, @amenity_id, @description, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", pa.Id);
-            cmd.Parameters.AddWithValue("property_id", pa.PropertyId);
-            cmd.Parameters.AddWithValue("amenity_id", pa.AmenityId);
-            cmd.Parameters.AddWithValue("description", (object?)pa.Description ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", pa.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<PropertyAmenity> GetPropertyAmenities(Guid propertyId)
-        {
-            var list = new List<PropertyAmenity>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, property_id, amenity_id, description, created_at FROM t_property_amenities WHERE property_id=@property_id", conn);
-            cmd.Parameters.AddWithValue("property_id", propertyId);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new PropertyAmenity
-                {
-                    Id = reader.GetGuid(0),
-                    PropertyId = reader.GetGuid(1),
-                    AmenityId = reader.GetGuid(2),
-                    Description = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    CreatedAt = reader.GetDateTime(4)
-                });
-            }
-            return list;
-        }
-
-        // ================================
-        // 5️⃣ Activities & PropertyActivities
-        // ================================
-        public void AddActivity(Activity activity)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_activities
-                  (id, code, name, category, created_at)
-                  VALUES (@id, @code, @name, @category, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", activity.Id);
-            cmd.Parameters.AddWithValue("code", activity.Code);
-            cmd.Parameters.AddWithValue("name", activity.Name);
-            cmd.Parameters.AddWithValue("category", (object?)activity.Category ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", activity.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<Activity> GetActivities()
-        {
-            var list = new List<Activity>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, code, name, category, created_at FROM t_activities", conn);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new Activity
-                {
-                    Id = reader.GetGuid(0),
-                    Code = reader.GetString(1),
-                    Name = reader.GetString(2),
-                    Category = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    CreatedAt = reader.GetDateTime(4)
-                });
-            }
-            return list;
-        }
-
-        public void AddPropertyActivity(PropertyActivity pa)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_property_activities
-                  (id, property_id, activity_id, notes, created_at)
-                  VALUES (@id, @property_id, @activity_id, @notes, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", pa.Id);
-            cmd.Parameters.AddWithValue("property_id", pa.PropertyId);
-            cmd.Parameters.AddWithValue("activity_id", pa.ActivityId);
-            cmd.Parameters.AddWithValue("notes", (object?)pa.Notes ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", pa.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<PropertyActivity> GetPropertyActivities(Guid propertyId)
-        {
-            var list = new List<PropertyActivity>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, property_id, activity_id, notes, created_at FROM t_property_activities WHERE property_id=@property_id", conn);
-            cmd.Parameters.AddWithValue("property_id", propertyId);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new PropertyActivity
-                {
-                    Id = reader.GetGuid(0),
-                    PropertyId = reader.GetGuid(1),
-                    ActivityId = reader.GetGuid(2),
-                    Notes = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    CreatedAt = reader.GetDateTime(4)
-                });
-            }
-            return list;
-        }
-
-        // ================================
-        // 6️⃣ Bookings
-        // ================================
-        public void AddBooking(Booking booking)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_bookings
-                  (id, property_id, user_id, start_date, end_date, total_price, status, created_at, updated_at)
-                  VALUES
-                  (@id, @property_id, @user_id, @start_date, @end_date, @total_price, @status, @created_at, @updated_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", booking.Id);
-            cmd.Parameters.AddWithValue("property_id", booking.PropertyId);
-            cmd.Parameters.AddWithValue("user_id", booking.UserId);
-            cmd.Parameters.AddWithValue("start_date", booking.StartDate);
-            cmd.Parameters.AddWithValue("end_date", booking.EndDate);
-            cmd.Parameters.AddWithValue("total_price", booking.TotalPrice);
-            cmd.Parameters.AddWithValue("status", booking.Status);
-            cmd.Parameters.AddWithValue("created_at", booking.CreatedAt);
-            cmd.Parameters.AddWithValue("updated_at", booking.UpdatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<Booking> GetBookingsForUser(Guid userId)
-        {
-            var list = new List<Booking>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT * FROM t_bookings WHERE user_id=@user_id", conn);
-            cmd.Parameters.AddWithValue("user_id", userId);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new Booking
-                {
-                    Id = reader.GetGuid(0),
-                    PropertyId = reader.GetGuid(1),
-                    UserId = reader.GetGuid(2),
-                    StartDate = reader.GetDateTime(3),
-                    EndDate = reader.GetDateTime(4),
-                    TotalPrice = reader.GetDecimal(5),
-                    Status = reader.GetString(6),
-                    CreatedAt = reader.GetDateTime(7),
-                    UpdatedAt = reader.GetDateTime(8)
-                });
-            }
-            return list;
-        }
-
-        // ================================
-        // 7️⃣ Reviews
-        // ================================
-        public void AddReview(Review review)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_reviews
-                  (id, property_id, user_id, rating, comment, created_at)
-                  VALUES
-                  (@id, @property_id, @user_id, @rating, @comment, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", review.Id);
-            cmd.Parameters.AddWithValue("property_id", review.PropertyId);
-            cmd.Parameters.AddWithValue("user_id", review.UserId);
-            cmd.Parameters.AddWithValue("rating", review.Rating);
-            cmd.Parameters.AddWithValue("comment", (object?)review.Comment ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("created_at", review.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<Review> GetReviewsForProperty(Guid propertyId)
-        {
-            var list = new List<Review>();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("SELECT id, property_id, user_id, rating, comment, created_at FROM t_reviews WHERE property_id=@property_id", conn);
-            cmd.Parameters.AddWithValue("property_id", propertyId);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new Review
-                {
-                    Id = reader.GetGuid(0),
-                    PropertyId = reader.GetGuid(1),
-                    UserId = reader.GetGuid(2),
-                    Rating = reader.GetInt16(3),
-                    Comment = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    CreatedAt = reader.GetDateTime(5)
-                });
-            }
-            return list;
-        }
-
-        // ================================
-        // 8️⃣ Notifications
-        // ================================
-        public void AddNotification(Notification notification)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_notifications
-                  (id, user_id, message, read, created_at)
-                  VALUES
-                  (@id, @user_id, @message, @read, @created_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", notification.Id);
-            cmd.Parameters.AddWithValue("user_id", notification.UserId);
-            cmd.Parameters.AddWithValue("message", notification.Message);
-            cmd.Parameters.AddWithValue("read", notification.Read);
-            cmd.Parameters.AddWithValue("created_at", notification.CreatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-        // ================================
-        // 9️⃣ QR Check-in
-        // ================================
-        public void AddQrCheckin(QrCheckin qr)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_qr_checkin
-                  (id, booking_id, qr_code, checked_in, checked_out, created_at, updated_at)
-                  VALUES
-                  (@id, @booking_id, @qr_code, @checked_in, @checked_out, @created_at, @updated_at)", conn);
-
-            cmd.Parameters.AddWithValue("id", qr.Id);
-            cmd.Parameters.AddWithValue("booking_id", qr.BookingId);
-            cmd.Parameters.AddWithValue("qr_code", qr.QrCode);
-            cmd.Parameters.AddWithValue("checked_in", qr.CheckedIn);
-            cmd.Parameters.AddWithValue("checked_out", qr.CheckedOut);
-            cmd.Parameters.AddWithValue("created_at", qr.CreatedAt);
-            cmd.Parameters.AddWithValue("updated_at", qr.UpdatedAt);
-            cmd.ExecuteNonQuery();
-        }
-
-
-        public bool DeleteUserById(Guid userId)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("DELETE FROM t_users WHERE id=@id", conn);
-            cmd.Parameters.AddWithValue("id", userId);
-            return cmd.ExecuteNonQuery() > 0;
-        }
-
 
         public bool UpdateProperty(Property property)
         {
@@ -729,6 +337,89 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<Property> GetProperties()
+        {
+            var properties = new List<Property>();
+
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+
+            var cmd = new NpgsqlCommand(
+                @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
+                         postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
+                         check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
+                         smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
+                         average_rating, review_count, neighborhood_description, tags, instant_book,
+                         created_at, updated_at
+                  FROM t_properties", conn);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var property = new Property
+                {
+                    Id = reader.GetGuid(0),
+                    OwnerId = reader.GetGuid(1),
+                    Title = reader.GetString(2),
+                    Description = reader.GetString(3),
+                    LocationType = reader.GetString(4),
+                    Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                    City = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                    County = reader.IsDBNull(7) ? "" : reader.GetString(7),
+                    Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
+                    PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
+                    Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
+                    Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
+                    Status = reader.GetString(12),
+                    PricePerNight = reader.GetDecimal(13),
+                    MinNights = reader.GetInt32(14),
+                    MaxNights = reader.GetInt32(15),
+                    CheckInTime = reader.GetTimeSpan(16),
+                    CheckOutTime = reader.GetTimeSpan(17),
+                    MaxGuests = reader.GetInt32(18),
+                    Bathrooms = reader.GetInt32(19),
+                    Kitchen = reader.GetBoolean(20),
+                    LivingSpace = reader.GetDecimal(21),
+                    PetFriendly = reader.GetBoolean(22),
+                    SmokeDetector = reader.GetBoolean(23),
+                    FireExtinguisher = reader.GetBoolean(24),
+                    CarbonMonoxideDetector = reader.GetBoolean(25),
+                    LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
+                    AverageRating = reader.GetDecimal(27),
+                    ReviewCount = reader.GetInt32(28),
+                    NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
+                    Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30),
+                    InstantBook = reader.GetBoolean(31),
+                    CreatedAt = reader.GetDateTime(32),
+                    UpdatedAt = reader.GetDateTime(33)
+                };
+
+                properties.Add(property);
+            }
+
+            return properties;
+        }
+
+        // ================================
+        // 4️⃣ PROPERTY PHOTOS
+        // ================================
+
+        public void AddPropertyPhoto(PropertyPhoto photo)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_property_photos
+                  (id, property_id, file_path, is_cover, created_at)
+                  VALUES (@id, @property_id, @file_path, @is_cover, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", photo.Id);
+            cmd.Parameters.AddWithValue("property_id", photo.PropertyId);
+            cmd.Parameters.AddWithValue("file_path", photo.FilePath);
+            cmd.Parameters.AddWithValue("is_cover", photo.IsCover);
+            cmd.Parameters.AddWithValue("created_at", photo.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool DeletePropertyPhoto(Guid photoId)
         {
@@ -739,6 +430,48 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<PropertyPhoto> GetPropertyPhotos(Guid propertyId)
+        {
+            var list = new List<PropertyPhoto>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, file_path, is_cover, created_at FROM t_property_photos WHERE property_id=@property_id", conn);
+            cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PropertyPhoto
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    FilePath = reader.GetString(2),
+                    IsCover = reader.GetBoolean(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 5️⃣ AMENITIES
+        // ================================
+
+        public void AddAmenity(Amenity amenity)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_amenities
+                  (id, code, name, category, created_at)
+                  VALUES (@id, @code, @name, @category, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", amenity.Id);
+            cmd.Parameters.AddWithValue("code", amenity.Code);
+            cmd.Parameters.AddWithValue("name", amenity.Name);
+            cmd.Parameters.AddWithValue("category", (object?)amenity.Category ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", amenity.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdateAmenity(Amenity amenity)
         {
@@ -762,6 +495,48 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<Amenity> GetAmenities()
+        {
+            var list = new List<Amenity>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, code, name, category, created_at FROM t_amenities", conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Amenity
+                {
+                    Id = reader.GetGuid(0),
+                    Code = reader.GetString(1),
+                    Name = reader.GetString(2),
+                    Category = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 6️⃣ PROPERTY AMENITIES
+        // ================================
+
+        public void AddPropertyAmenity(PropertyAmenity pa)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_property_amenities
+                  (id, property_id, amenity_id, description, created_at)
+                  VALUES (@id, @property_id, @amenity_id, @description, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", pa.Id);
+            cmd.Parameters.AddWithValue("property_id", pa.PropertyId);
+            cmd.Parameters.AddWithValue("amenity_id", pa.AmenityId);
+            cmd.Parameters.AddWithValue("description", (object?)pa.Description ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", pa.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
+
         public bool DeletePropertyAmenity(Guid id)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -771,6 +546,48 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<PropertyAmenity> GetPropertyAmenities(Guid propertyId)
+        {
+            var list = new List<PropertyAmenity>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, amenity_id, description, created_at FROM t_property_amenities WHERE property_id=@property_id", conn);
+            cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PropertyAmenity
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    AmenityId = reader.GetGuid(2),
+                    Description = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 7️⃣ ACTIVITIES
+        // ================================
+
+        public void AddActivity(Activity activity)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_activities
+                  (id, code, name, category, created_at)
+                  VALUES (@id, @code, @name, @category, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", activity.Id);
+            cmd.Parameters.AddWithValue("code", activity.Code);
+            cmd.Parameters.AddWithValue("name", activity.Name);
+            cmd.Parameters.AddWithValue("category", (object?)activity.Category ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", activity.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdateActivity(Activity activity)
         {
@@ -794,6 +611,48 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<Activity> GetActivities()
+        {
+            var list = new List<Activity>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, code, name, category, created_at FROM t_activities", conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Activity
+                {
+                    Id = reader.GetGuid(0),
+                    Code = reader.GetString(1),
+                    Name = reader.GetString(2),
+                    Category = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 8️⃣ PROPERTY ACTIVITIES
+        // ================================
+
+        public void AddPropertyActivity(PropertyActivity pa)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_property_activities
+                  (id, property_id, activity_id, notes, created_at)
+                  VALUES (@id, @property_id, @activity_id, @notes, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", pa.Id);
+            cmd.Parameters.AddWithValue("property_id", pa.PropertyId);
+            cmd.Parameters.AddWithValue("activity_id", pa.ActivityId);
+            cmd.Parameters.AddWithValue("notes", (object?)pa.Notes ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", pa.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
+
         public bool DeletePropertyActivity(Guid id)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -803,6 +662,53 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<PropertyActivity> GetPropertyActivities(Guid propertyId)
+        {
+            var list = new List<PropertyActivity>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, activity_id, notes, created_at FROM t_property_activities WHERE property_id=@property_id", conn);
+            cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PropertyActivity
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    ActivityId = reader.GetGuid(2),
+                    Notes = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 9️⃣ BOOKINGS
+        // ================================
+
+        public void AddBooking(Booking booking)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_bookings
+                  (id, property_id, user_id, start_date, end_date, total_price, status, created_at, updated_at)
+                  VALUES
+                  (@id, @property_id, @user_id, @start_date, @end_date, @total_price, @status, @created_at, @updated_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", booking.Id);
+            cmd.Parameters.AddWithValue("property_id", booking.PropertyId);
+            cmd.Parameters.AddWithValue("user_id", booking.UserId);
+            cmd.Parameters.AddWithValue("start_date", booking.StartDate);
+            cmd.Parameters.AddWithValue("end_date", booking.EndDate);
+            cmd.Parameters.AddWithValue("total_price", booking.TotalPrice);
+            cmd.Parameters.AddWithValue("status", booking.Status);
+            cmd.Parameters.AddWithValue("created_at", booking.CreatedAt);
+            cmd.Parameters.AddWithValue("updated_at", booking.UpdatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdateBooking(Booking booking)
         {
@@ -840,6 +746,54 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<Booking> GetBookingsForUser(Guid userId)
+        {
+            var list = new List<Booking>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT * FROM t_bookings WHERE user_id=@user_id", conn);
+            cmd.Parameters.AddWithValue("user_id", userId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Booking
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    UserId = reader.GetGuid(2),
+                    StartDate = reader.GetDateTime(3),
+                    EndDate = reader.GetDateTime(4),
+                    TotalPrice = reader.GetDecimal(5),
+                    Status = reader.GetString(6),
+                    CreatedAt = reader.GetDateTime(7),
+                    UpdatedAt = reader.GetDateTime(8)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 🔟 REVIEWS
+        // ================================
+
+        public void AddReview(Review review)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_reviews
+                  (id, property_id, user_id, rating, comment, created_at)
+                  VALUES
+                  (@id, @property_id, @user_id, @rating, @comment, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", review.Id);
+            cmd.Parameters.AddWithValue("property_id", review.PropertyId);
+            cmd.Parameters.AddWithValue("user_id", review.UserId);
+            cmd.Parameters.AddWithValue("rating", review.Rating);
+            cmd.Parameters.AddWithValue("comment", (object?)review.Comment ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", review.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdateReview(Review review)
         {
@@ -863,6 +817,50 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public List<Review> GetReviewsForProperty(Guid propertyId)
+        {
+            var list = new List<Review>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, user_id, rating, comment, created_at FROM t_reviews WHERE property_id=@property_id", conn);
+            cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Review
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    UserId = reader.GetGuid(2),
+                    Rating = reader.GetInt16(3),
+                    Comment = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    CreatedAt = reader.GetDateTime(5)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 1️⃣1️⃣ NOTIFICATIONS
+        // ================================
+
+        public void AddNotification(Notification notification)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_notifications
+                  (id, user_id, message, read, created_at)
+                  VALUES
+                  (@id, @user_id, @message, @read, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", notification.Id);
+            cmd.Parameters.AddWithValue("user_id", notification.UserId);
+            cmd.Parameters.AddWithValue("message", notification.Message);
+            cmd.Parameters.AddWithValue("read", notification.Read);
+            cmd.Parameters.AddWithValue("created_at", notification.CreatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdateNotification(Notification notification)
         {
@@ -885,7 +883,29 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        // ================================
+        // 1️⃣2️⃣ QR CHECK-IN
+        // ================================
 
+        public void AddQrCheckin(QrCheckin qr)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_qr_checkin
+                  (id, booking_id, qr_code, checked_in, checked_out, created_at, updated_at)
+                  VALUES
+                  (@id, @booking_id, @qr_code, @checked_in, @checked_out, @created_at, @updated_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", qr.Id);
+            cmd.Parameters.AddWithValue("booking_id", qr.BookingId);
+            cmd.Parameters.AddWithValue("qr_code", qr.QrCode);
+            cmd.Parameters.AddWithValue("checked_in", qr.CheckedIn);
+            cmd.Parameters.AddWithValue("checked_out", qr.CheckedOut);
+            cmd.Parameters.AddWithValue("created_at", qr.CreatedAt);
+            cmd.Parameters.AddWithValue("updated_at", qr.UpdatedAt);
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdateQrCheckin(QrCheckin qr)
         {
@@ -913,56 +933,31 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
-public void AddUserHistory(UserHistory history)
-{
-    using var conn = new NpgsqlConnection(_connectionString);
-    conn.Open();
-    var cmd = new NpgsqlCommand(
-        @"INSERT INTO t_user_history
-          (id, user_id, property_id, property_name, location, start_date, end_date, rating, created_at)
-          VALUES (@id, @user_id, @property_id, @property_name, @location, @start_date, @end_date, @rating, @created_at)", conn);
+        // ================================
+        // 1️⃣3️⃣ USER HISTORY
+        // ================================
 
-    cmd.Parameters.AddWithValue("id", history.Id);
-    cmd.Parameters.AddWithValue("user_id", history.UserId);
-    cmd.Parameters.AddWithValue("property_id", history.PropertyId);
-    cmd.Parameters.AddWithValue("property_name", history.PropertyName);
-    cmd.Parameters.AddWithValue("location", (object?)history.Location ?? DBNull.Value);
-    cmd.Parameters.AddWithValue("start_date", history.StartDate);
-    cmd.Parameters.AddWithValue("end_date", history.EndDate);
-    cmd.Parameters.AddWithValue("rating", (object?)history.Rating ?? DBNull.Value);
-    cmd.Parameters.AddWithValue("created_at", history.CreatedAt);
-
-    cmd.ExecuteNonQuery();
-}
-
-
-public List<UserHistory> GetUserHistory(Guid userId)
-{
-    var list = new List<UserHistory>();
-    using var conn = new NpgsqlConnection(_connectionString);
-    conn.Open();
-    var cmd = new NpgsqlCommand(
-        "SELECT id, user_id, property_id, property_name, location, start_date, end_date, rating, created_at FROM t_user_history WHERE user_id=@user_id ORDER BY start_date DESC", conn);
-    cmd.Parameters.AddWithValue("user_id", userId);
-
-    using var reader = cmd.ExecuteReader();
-    while (reader.Read())
-    {
-        list.Add(new UserHistory
+        public void AddUserHistory(UserHistory history)
         {
-            Id = reader.GetGuid(0),
-            UserId = reader.GetGuid(1),
-            PropertyId = reader.GetGuid(2),
-            PropertyName = reader.GetString(3),
-            Location = reader.IsDBNull(4) ? null : reader.GetString(4),
-            StartDate = reader.GetDateTime(5),
-            EndDate = reader.GetDateTime(6),
-            Rating = reader.IsDBNull(7) ? null : reader.GetInt16(7),
-            CreatedAt = reader.GetDateTime(8)
-        });
-    }
-    return list;
-}
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO t_user_history
+                  (id, user_id, property_id, property_name, location, start_date, end_date, rating, created_at)
+                  VALUES (@id, @user_id, @property_id, @property_name, @location, @start_date, @end_date, @rating, @created_at)", conn);
+
+            cmd.Parameters.AddWithValue("id", history.Id);
+            cmd.Parameters.AddWithValue("user_id", history.UserId);
+            cmd.Parameters.AddWithValue("property_id", history.PropertyId);
+            cmd.Parameters.AddWithValue("property_name", history.PropertyName);
+            cmd.Parameters.AddWithValue("location", (object?)history.Location ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("start_date", history.StartDate);
+            cmd.Parameters.AddWithValue("end_date", history.EndDate);
+            cmd.Parameters.AddWithValue("rating", (object?)history.Rating ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", history.CreatedAt);
+
+            cmd.ExecuteNonQuery();
+        }
 
         public bool DeleteUserHistory(Guid id)
         {
@@ -973,18 +968,32 @@ public List<UserHistory> GetUserHistory(Guid userId)
             return cmd.ExecuteNonQuery() > 0;
         }
 
-        public bool DeleteAllSessionsForUser(Guid userId)
+        public List<UserHistory> GetUserHistory(Guid userId)
         {
+            var list = new List<UserHistory>();
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            using var cmd = new NpgsqlCommand(
-                @"DELETE FROM user_sessions WHERE user_id = @userId", conn);
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, property_id, property_name, location, start_date, end_date, rating, created_at FROM t_user_history WHERE user_id=@user_id ORDER BY start_date DESC", conn);
+            cmd.Parameters.AddWithValue("user_id", userId);
 
-            cmd.Parameters.AddWithValue("userId", userId);
-
-            return cmd.ExecuteNonQuery() > 0;
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new UserHistory
+                {
+                    Id = reader.GetGuid(0),
+                    UserId = reader.GetGuid(1),
+                    PropertyId = reader.GetGuid(2),
+                    PropertyName = reader.GetString(3),
+                    Location = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    StartDate = reader.GetDateTime(5),
+                    EndDate = reader.GetDateTime(6),
+                    Rating = reader.IsDBNull(7) ? null : reader.GetInt16(7),
+                    CreatedAt = reader.GetDateTime(8)
+                });
+            }
+            return list;
         }
-
-
-}
+    }
 }
