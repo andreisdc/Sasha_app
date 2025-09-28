@@ -1,1 +1,255 @@
-<p>become-seller-page works!</p>
+<!-- become-seller-page.html -->
+<div class="become-seller-container" [@pageTransition]>
+  <!-- Background Elements -->
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="header-section" [@fadeInUp]>
+    <div class="header-icon" [@bounceIn]>
+      <svg class="icon-verified" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+    </div>
+    <h1 class="header-title">Become a Verified Host</h1>
+    <p class="header-subtitle">
+      Join our trusted community - Simple, secure, and encrypted verification
+    </p>
+  </div>
+
+  <!-- Progress Steps -->
+  <div class="progress-steps" [@fadeInUp]>
+    <div class="steps-container">
+      <div *ngFor="let step of steps; let i = index" class="step-item">
+        <div class="step-content">
+          <div [class]="getStepCircleClass(step)" class="step-circle">
+            <span class="step-number">{{step.number}}</span>
+          </div>
+          <span [class]="getStepTextClass(step)" class="step-label">
+            {{step.title}}
+          </span>
+        </div>
+        <div *ngIf="i < steps.length - 1" 
+             [class]="getConnectorClass(step)" 
+             class="step-connector">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step Content -->
+  <div class="content-card" [@stepTransition]>
+    
+    <!-- Step 1: GDPR & Security -->
+    <div *ngIf="currentStep === 1" class="step-content">
+      <div class="step-header">
+        <div class="security-icon" [@bounceIn]>🔒</div>
+        <h2 class="step-title">Your Security First</h2>
+        <p class="step-description">We protect your personal data with military-grade encryption</p>
+      </div>
+
+      <div class="gdpr-content">
+        <div class="security-features" [@staggerItem]>
+          <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-text">
+              <h3>End-to-End Encryption</h3>
+              <p>All documents encrypted during transfer and storage</p>
+            </div>
+          </div>
+          
+          <div class="feature-item">
+            <div class="feature-icon">⏰</div>
+            <div class="feature-text">
+              <h3>Auto Data Deletion</h3>
+              <p>Personal data automatically deleted after verification</p>
+            </div>
+          </div>
+          
+          <div class="feature-item">
+            <div class="feature-icon">🛡️</div>
+            <div class="feature-text">
+              <h3>GDPR Compliant</h3>
+              <p>Strict compliance with European data protection laws</p>
+            </div>
+          </div>
+          
+          <div class="feature-item">
+            <div class="feature-icon">🔐</div>
+            <div class="feature-text">
+              <h3>Zero Data Retention</h3>
+              <p>Once verified, your sensitive data is permanently deleted</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gdpr-agreement">
+          <label class="checkbox-container">
+            <input type="checkbox" [(ngModel)]="acceptedGdpr" class="checkbox-input">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">
+              I understand my data is encrypted and will be automatically deleted after verification
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="navigation-buttons">
+        <button (click)="nextStep()" 
+                [disabled]="!acceptedGdpr"
+                [class]="getNextButtonClass()"
+                class="next-button">
+          Continue Securely
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Personal Information -->
+    <div *ngIf="currentStep === 2" class="step-content">
+      <div class="step-header">
+        <h2 class="step-title">Personal Information</h2>
+        <p class="step-description">We need just a few basic details to get started</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" 
+                 [(ngModel)]="formData.firstName"
+                 class="form-input"
+                 placeholder="Enter your first name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" 
+                 [(ngModel)]="formData.lastName"
+                 class="form-input"
+                 placeholder="Enter your last name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input type="text" 
+                 [(ngModel)]="formData.address"
+                 class="form-input"
+                 placeholder="Enter your address">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CNP</label>
+          <input type="text" 
+                 [(ngModel)]="formData.cnp"
+                 class="form-input"
+                 placeholder="Enter your CNP"
+                 maxlength="13">
+          <div class="input-note">Encrypted immediately after verification</div>
+        </div>
+      </div>
+
+      <div class="navigation-buttons dual-buttons">
+        <button (click)="previousStep()" class="back-button">
+          Back
+        </button>
+        <button (click)="nextStep()" 
+                [disabled]="!canProceedToStep3()"
+                [class]="getNextButtonClass()"
+                class="next-button">
+          Continue to ID Upload
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: ID Upload -->
+    <div *ngIf="currentStep === 3" class="step-content">
+      <div class="step-header">
+        <h2 class="step-title">Identity Verification</h2>
+        <p class="step-description">Upload your ID card for secure verification</p>
+      </div>
+
+      <div class="upload-section">
+        <div class="upload-box" (click)="idDocumentInput.click()" [@bounceIn]>
+          <div class="upload-icon-container">
+            <svg class="upload-icon" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="upload-text">
+            <p class="upload-title">Upload ID Card</p>
+            <p class="upload-subtitle">Take a clear photo of your government-issued ID card</p>
+          </div>
+          <input #idDocumentInput type="file" accept="image/*" 
+                 (change)="onFileSelected($event, 'idDocument')" class="file-input">
+          <button type="button" class="upload-button">Choose File</button>
+        </div>
+        <div *ngIf="formData.idDocument" class="file-status">
+          <span class="success-icon">✓</span>
+          {{formData.idDocument.name}}
+        </div>
+      </div>
+
+      <div class="security-note">
+        <div class="note-icon">🔒</div>
+        <div class="note-text">
+          Your ID photo is encrypted immediately and will be automatically deleted after verification.
+        </div>
+      </div>
+
+      <div class="navigation-buttons dual-buttons">
+        <button (click)="previousStep()" class="back-button">
+          Back
+        </button>
+        <button (click)="submitVerification()" 
+                [disabled]="!canSubmitVerification()"
+                [class]="getSubmitButtonClass()"
+                class="submit-button">
+          Submit Verification
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div *ngIf="currentStep === 4" class="success-step">
+      <div class="stars-container">
+        <div *ngFor="let star of stars" class="star" [style]="star.style" [@bounceIn]>{{star.emoji}}</div>
+      </div>
+      
+      <div class="success-icon-large" [@pulse]>🎉</div>
+      <h2 class="success-title">Welcome Aboard!</h2>
+      <p class="success-description">
+        Your verification has been submitted successfully! We'll review your documents and notify you via email.
+      </p>
+      
+      <div class="success-details">
+        <div class="detail-item">
+          <span class="detail-icon">⏱️</span>
+          <span><strong>Processing Time:</strong> 24-48 hours</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-icon">📧</span>
+          <span><strong>Notification:</strong> Email confirmation</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-icon">🛡️</span>
+          <span><strong>Next:</strong> Verified Host status</span>
+        </div>
+      </div>
+
+      <div class="tutorial-options">
+        <p class="tutorial-text">Ready to learn how to maximize your hosting experience?</p>
+        <div class="tutorial-buttons">
+          <button class="tutorial-button primary" (click)="startTutorial()">
+            Start Tutorial
+          </button>
+          <button class="tutorial-button secondary" (click)="skipTutorial()">
+            Skip for Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

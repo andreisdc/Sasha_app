@@ -21,7 +21,13 @@ export const routes: Routes = [
     path: 'profile',
     loadComponent: () =>
       import('./pages/profile-page/profile-page').then((m) => m.ProfilePage),
-    canActivate: [AuthGuard], // 🔒 protejat doar după login
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'becomeSeller',
+    loadComponent: () =>
+      import('./pages/become-seller-page/become-seller-page').then((m) => m.BecomeSellerPageComponent),
+    canActivate: [AuthGuard], // 🔒 Doar utilizatorii autentificați pot deveni sellers
   },
   {
     path: '',
