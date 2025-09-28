@@ -9,13 +9,12 @@ namespace SashaServer.Data
 
         public DataMap(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
-            if (string.IsNullOrEmpty(_connectionString))
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? 
                 throw new InvalidOperationException("Database connection string is not set in configuration.");
         }
 
         // ================================
-        // 1️⃣ USERS (primele, cum ai cerut)
+        // 1️⃣ USERS
         // ================================
 
         public void AddUser(User user)
@@ -25,8 +24,8 @@ namespace SashaServer.Data
 
             var cmd = new NpgsqlCommand(
                 @"INSERT INTO t_users 
-                  (id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at) 
-                  VALUES (@id, @first_name, @last_name, @username, @email, @password_hash, @rating, @is_seller, @profile_picture, @phone_number, @created_at)",
+                  (id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at, is_host, is_admin, is_verified) 
+                  VALUES (@id, @first_name, @last_name, @username, @email, @password_hash, @rating, @is_seller, @profile_picture, @phone_number, @created_at, @is_host, @is_admin, @is_verified)",
                 conn);
 
             cmd.Parameters.AddWithValue("id", user.Id);
@@ -40,6 +39,9 @@ namespace SashaServer.Data
             cmd.Parameters.AddWithValue("profile_picture", (object?)user.ProfilePicture ?? DBNull.Value);
             cmd.Parameters.AddWithValue("phone_number", (object?)user.PhoneNumber ?? DBNull.Value);
             cmd.Parameters.AddWithValue("created_at", user.CreatedAt);
+            cmd.Parameters.AddWithValue("is_host", user.IsHost);
+            cmd.Parameters.AddWithValue("is_admin", user.IsAdmin);
+            cmd.Parameters.AddWithValue("is_verified", user.IsVerified);
 
             cmd.ExecuteNonQuery();
         }
@@ -58,7 +60,10 @@ namespace SashaServer.Data
                 rating=@rating,
                 is_seller=@is_seller,
                 profile_picture=@profile_picture,
-                phone_number=@phone_number
+                phone_number=@phone_number,
+                is_host=@is_host,
+                is_admin=@is_admin,
+                is_verified=@is_verified
                 WHERE id=@id", conn);
 
             cmd.Parameters.AddWithValue("id", user.Id);
@@ -71,6 +76,9 @@ namespace SashaServer.Data
             cmd.Parameters.AddWithValue("is_seller", user.IsSeller);
             cmd.Parameters.AddWithValue("profile_picture", (object?)user.ProfilePicture ?? DBNull.Value);
             cmd.Parameters.AddWithValue("phone_number", (object?)user.PhoneNumber ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("is_host", user.IsHost);
+            cmd.Parameters.AddWithValue("is_admin", user.IsAdmin);
+            cmd.Parameters.AddWithValue("is_verified", user.IsVerified);
 
             return cmd.ExecuteNonQuery() > 0;
         }
@@ -84,12 +92,44 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public User? GetUserById(Guid userId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"SELECT id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at, is_host, is_admin, is_verified 
+                  FROM t_users WHERE id = @id",
+                conn);
+            cmd.Parameters.AddWithValue("id", userId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new User
+            {
+                Id = reader.GetGuid(0),
+                FirstName = reader.GetString(1),
+                LastName = reader.GetString(2),
+                Username = reader.GetString(3),
+                Email = reader.GetString(4),
+                PasswordHash = reader.GetString(5),
+                Rating = reader.GetInt32(6),
+                IsSeller = reader.GetBoolean(7),
+                ProfilePicture = reader.IsDBNull(8) ? null : reader.GetString(8),
+                PhoneNumber = reader.IsDBNull(9) ? null : reader.GetString(9),
+                CreatedAt = reader.GetDateTime(10),
+                IsHost = reader.GetBoolean(11),
+                IsAdmin = reader.GetBoolean(12),
+                IsVerified = reader.GetBoolean(13)
+            };
+        }
+
         public User? GetUserByEmail(string email)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
             var cmd = new NpgsqlCommand(
-                @"SELECT id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at 
+                @"SELECT id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at, is_host, is_admin, is_verified 
                   FROM t_users WHERE email = @Email",
                 conn);
             cmd.Parameters.AddWithValue("Email", email);
@@ -109,7 +149,10 @@ namespace SashaServer.Data
                 IsSeller = reader.GetBoolean(7),
                 ProfilePicture = reader.IsDBNull(8) ? null : reader.GetString(8),
                 PhoneNumber = reader.IsDBNull(9) ? null : reader.GetString(9),
-                CreatedAt = reader.GetDateTime(10)
+                CreatedAt = reader.GetDateTime(10),
+                IsHost = reader.GetBoolean(11),
+                IsAdmin = reader.GetBoolean(12),
+                IsVerified = reader.GetBoolean(13)
             };
         }
 
@@ -118,7 +161,7 @@ namespace SashaServer.Data
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
             var cmd = new NpgsqlCommand(
-                @"SELECT u.id, u.first_name, u.last_name, u.username, u.email, u.password_hash, u.rating, u.created_at, u.phone_number, u.is_seller, u.profile_picture
+                @"SELECT u.id, u.first_name, u.last_name, u.username, u.email, u.password_hash, u.rating, u.created_at, u.phone_number, u.is_seller, u.profile_picture, u.is_host, u.is_admin, u.is_verified
                   FROM t_users u
                   JOIN user_sessions s ON s.user_id = u.id
                   WHERE s.token = @token AND s.expires_at > NOW()",
@@ -140,8 +183,45 @@ namespace SashaServer.Data
                 CreatedAt = reader.GetDateTime(7),
                 PhoneNumber = reader.IsDBNull(8) ? null : reader.GetString(8),
                 IsSeller = reader.GetBoolean(9),
-                ProfilePicture = reader.IsDBNull(10) ? null : reader.GetString(10)
+                ProfilePicture = reader.IsDBNull(10) ? null : reader.GetString(10),
+                IsHost = reader.GetBoolean(11),
+                IsAdmin = reader.GetBoolean(12),
+                IsVerified = reader.GetBoolean(13)
             };
+        }
+
+        public List<User> GetAllUsers()
+        {
+            var users = new List<User>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"SELECT id, first_name, last_name, username, email, password_hash, rating, is_seller, profile_picture, phone_number, created_at, is_host, is_admin, is_verified 
+                  FROM t_users",
+                conn);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                users.Add(new User
+                {
+                    Id = reader.GetGuid(0),
+                    FirstName = reader.GetString(1),
+                    LastName = reader.GetString(2),
+                    Username = reader.GetString(3),
+                    Email = reader.GetString(4),
+                    PasswordHash = reader.GetString(5),
+                    Rating = reader.GetInt32(6),
+                    IsSeller = reader.GetBoolean(7),
+                    ProfilePicture = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    PhoneNumber = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    CreatedAt = reader.GetDateTime(10),
+                    IsHost = reader.GetBoolean(11),
+                    IsAdmin = reader.GetBoolean(12),
+                    IsVerified = reader.GetBoolean(13)
+                });
+            }
+            return users;
         }
 
         public bool UserExists(string email)
@@ -337,6 +417,62 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public Property? GetPropertyById(Guid propertyId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
+                         postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
+                         check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
+                         smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
+                         average_rating, review_count, neighborhood_description, tags, instant_book,
+                         created_at, updated_at
+                  FROM t_properties WHERE id = @id", conn);
+            cmd.Parameters.AddWithValue("id", propertyId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new Property
+            {
+                Id = reader.GetGuid(0),
+                OwnerId = reader.GetGuid(1),
+                Title = reader.GetString(2),
+                Description = reader.GetString(3),
+                LocationType = reader.GetString(4),
+                Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                City = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                County = reader.IsDBNull(7) ? "" : reader.GetString(7),
+                Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
+                PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
+                Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
+                Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
+                Status = reader.GetString(12),
+                PricePerNight = reader.GetDecimal(13),
+                MinNights = reader.GetInt32(14),
+                MaxNights = reader.GetInt32(15),
+                CheckInTime = reader.GetTimeSpan(16),
+                CheckOutTime = reader.GetTimeSpan(17),
+                MaxGuests = reader.GetInt32(18),
+                Bathrooms = reader.GetInt32(19),
+                Kitchen = reader.GetBoolean(20),
+                LivingSpace = reader.GetDecimal(21),
+                PetFriendly = reader.GetBoolean(22),
+                SmokeDetector = reader.GetBoolean(23),
+                FireExtinguisher = reader.GetBoolean(24),
+                CarbonMonoxideDetector = reader.GetBoolean(25),
+                LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
+                AverageRating = reader.GetDecimal(27),
+                ReviewCount = reader.GetInt32(28),
+                NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
+                Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30),
+                InstantBook = reader.GetBoolean(31),
+                CreatedAt = reader.GetDateTime(32),
+                UpdatedAt = reader.GetDateTime(33)
+            };
+        }
+
         public List<Property> GetProperties()
         {
             var properties = new List<Property>();
@@ -421,6 +557,25 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
+        public bool UpdatePropertyPhoto(PropertyPhoto photo)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"UPDATE t_property_photos SET 
+                property_id=@property_id, 
+                file_path=@file_path, 
+                is_cover=@is_cover 
+                WHERE id=@id", conn);
+
+            cmd.Parameters.AddWithValue("id", photo.Id);
+            cmd.Parameters.AddWithValue("property_id", photo.PropertyId);
+            cmd.Parameters.AddWithValue("file_path", photo.FilePath);
+            cmd.Parameters.AddWithValue("is_cover", photo.IsCover);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
         public bool DeletePropertyPhoto(Guid photoId)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -430,6 +585,27 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public PropertyPhoto? GetPropertyPhotoById(Guid photoId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, property_id, file_path, is_cover, created_at FROM t_property_photos WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", photoId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new PropertyPhoto
+            {
+                Id = reader.GetGuid(0),
+                PropertyId = reader.GetGuid(1),
+                FilePath = reader.GetString(2),
+                IsCover = reader.GetBoolean(3),
+                CreatedAt = reader.GetDateTime(4)
+            };
+        }
+
         public List<PropertyPhoto> GetPropertyPhotos(Guid propertyId)
         {
             var list = new List<PropertyPhoto>();
@@ -437,6 +613,27 @@ namespace SashaServer.Data
             conn.Open();
             var cmd = new NpgsqlCommand("SELECT id, property_id, file_path, is_cover, created_at FROM t_property_photos WHERE property_id=@property_id", conn);
             cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PropertyPhoto
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    FilePath = reader.GetString(2),
+                    IsCover = reader.GetBoolean(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        public List<PropertyPhoto> GetAllPropertyPhotos()
+        {
+            var list = new List<PropertyPhoto>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, file_path, is_cover, created_at FROM t_property_photos", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -495,6 +692,26 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public Amenity? GetAmenityById(Guid amenityId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, code, name, category, created_at FROM t_amenities WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", amenityId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new Amenity
+            {
+                Id = reader.GetGuid(0),
+                Code = reader.GetString(1),
+                Name = reader.GetString(2),
+                Category = reader.IsDBNull(3) ? null : reader.GetString(3),
+                CreatedAt = reader.GetDateTime(4)
+            };
+        }
+
         public List<Amenity> GetAmenities()
         {
             var list = new List<Amenity>();
@@ -537,6 +754,25 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
+        public bool UpdatePropertyAmenity(PropertyAmenity pa)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"UPDATE t_property_amenities SET 
+                property_id=@property_id, 
+                amenity_id=@amenity_id, 
+                description=@description 
+                WHERE id=@id", conn);
+
+            cmd.Parameters.AddWithValue("id", pa.Id);
+            cmd.Parameters.AddWithValue("property_id", pa.PropertyId);
+            cmd.Parameters.AddWithValue("amenity_id", pa.AmenityId);
+            cmd.Parameters.AddWithValue("description", (object?)pa.Description ?? DBNull.Value);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
         public bool DeletePropertyAmenity(Guid id)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -546,6 +782,26 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public PropertyAmenity? GetPropertyAmenityById(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, amenity_id, description, created_at FROM t_property_amenities WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", id);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new PropertyAmenity
+            {
+                Id = reader.GetGuid(0),
+                PropertyId = reader.GetGuid(1),
+                AmenityId = reader.GetGuid(2),
+                Description = reader.IsDBNull(3) ? null : reader.GetString(3),
+                CreatedAt = reader.GetDateTime(4)
+            };
+        }
+
         public List<PropertyAmenity> GetPropertyAmenities(Guid propertyId)
         {
             var list = new List<PropertyAmenity>();
@@ -553,6 +809,27 @@ namespace SashaServer.Data
             conn.Open();
             var cmd = new NpgsqlCommand("SELECT id, property_id, amenity_id, description, created_at FROM t_property_amenities WHERE property_id=@property_id", conn);
             cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PropertyAmenity
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    AmenityId = reader.GetGuid(2),
+                    Description = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        public List<PropertyAmenity> GetAllPropertyAmenities()
+        {
+            var list = new List<PropertyAmenity>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, amenity_id, description, created_at FROM t_property_amenities", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -611,6 +888,26 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public Activity? GetActivityById(Guid activityId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, code, name, category, created_at FROM t_activities WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", activityId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new Activity
+            {
+                Id = reader.GetGuid(0),
+                Code = reader.GetString(1),
+                Name = reader.GetString(2),
+                Category = reader.IsDBNull(3) ? null : reader.GetString(3),
+                CreatedAt = reader.GetDateTime(4)
+            };
+        }
+
         public List<Activity> GetActivities()
         {
             var list = new List<Activity>();
@@ -653,6 +950,25 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
+        public bool UpdatePropertyActivity(PropertyActivity pa)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"UPDATE t_property_activities SET 
+                property_id=@property_id, 
+                activity_id=@activity_id, 
+                notes=@notes 
+                WHERE id=@id", conn);
+
+            cmd.Parameters.AddWithValue("id", pa.Id);
+            cmd.Parameters.AddWithValue("property_id", pa.PropertyId);
+            cmd.Parameters.AddWithValue("activity_id", pa.ActivityId);
+            cmd.Parameters.AddWithValue("notes", (object?)pa.Notes ?? DBNull.Value);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
         public bool DeletePropertyActivity(Guid id)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -662,6 +978,26 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public PropertyActivity? GetPropertyActivityById(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, activity_id, notes, created_at FROM t_property_activities WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", id);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new PropertyActivity
+            {
+                Id = reader.GetGuid(0),
+                PropertyId = reader.GetGuid(1),
+                ActivityId = reader.GetGuid(2),
+                Notes = reader.IsDBNull(3) ? null : reader.GetString(3),
+                CreatedAt = reader.GetDateTime(4)
+            };
+        }
+
         public List<PropertyActivity> GetPropertyActivities(Guid propertyId)
         {
             var list = new List<PropertyActivity>();
@@ -669,6 +1005,27 @@ namespace SashaServer.Data
             conn.Open();
             var cmd = new NpgsqlCommand("SELECT id, property_id, activity_id, notes, created_at FROM t_property_activities WHERE property_id=@property_id", conn);
             cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PropertyActivity
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    ActivityId = reader.GetGuid(2),
+                    Notes = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        public List<PropertyActivity> GetAllPropertyActivities()
+        {
+            var list = new List<PropertyActivity>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, activity_id, notes, created_at FROM t_property_activities", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -746,6 +1103,30 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public Booking? GetBookingById(Guid bookingId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT * FROM t_bookings WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", bookingId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new Booking
+            {
+                Id = reader.GetGuid(0),
+                PropertyId = reader.GetGuid(1),
+                UserId = reader.GetGuid(2),
+                StartDate = reader.GetDateTime(3),
+                EndDate = reader.GetDateTime(4),
+                TotalPrice = reader.GetDecimal(5),
+                Status = reader.GetString(6),
+                CreatedAt = reader.GetDateTime(7),
+                UpdatedAt = reader.GetDateTime(8)
+            };
+        }
+
         public List<Booking> GetBookingsForUser(Guid userId)
         {
             var list = new List<Booking>();
@@ -753,6 +1134,31 @@ namespace SashaServer.Data
             conn.Open();
             var cmd = new NpgsqlCommand("SELECT * FROM t_bookings WHERE user_id=@user_id", conn);
             cmd.Parameters.AddWithValue("user_id", userId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Booking
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    UserId = reader.GetGuid(2),
+                    StartDate = reader.GetDateTime(3),
+                    EndDate = reader.GetDateTime(4),
+                    TotalPrice = reader.GetDecimal(5),
+                    Status = reader.GetString(6),
+                    CreatedAt = reader.GetDateTime(7),
+                    UpdatedAt = reader.GetDateTime(8)
+                });
+            }
+            return list;
+        }
+
+        public List<Booking> GetAllBookings()
+        {
+            var list = new List<Booking>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT * FROM t_bookings", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -817,6 +1223,27 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public Review? GetReviewById(Guid reviewId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, user_id, rating, comment, created_at FROM t_reviews WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", reviewId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new Review
+            {
+                Id = reader.GetGuid(0),
+                PropertyId = reader.GetGuid(1),
+                UserId = reader.GetGuid(2),
+                Rating = reader.GetInt16(3),
+                Comment = reader.IsDBNull(4) ? null : reader.GetString(4),
+                CreatedAt = reader.GetDateTime(5)
+            };
+        }
+
         public List<Review> GetReviewsForProperty(Guid propertyId)
         {
             var list = new List<Review>();
@@ -824,6 +1251,28 @@ namespace SashaServer.Data
             conn.Open();
             var cmd = new NpgsqlCommand("SELECT id, property_id, user_id, rating, comment, created_at FROM t_reviews WHERE property_id=@property_id", conn);
             cmd.Parameters.AddWithValue("property_id", propertyId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Review
+                {
+                    Id = reader.GetGuid(0),
+                    PropertyId = reader.GetGuid(1),
+                    UserId = reader.GetGuid(2),
+                    Rating = reader.GetInt16(3),
+                    Comment = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    CreatedAt = reader.GetDateTime(5)
+                });
+            }
+            return list;
+        }
+
+        public List<Review> GetAllReviews()
+        {
+            var list = new List<Review>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, property_id, user_id, rating, comment, created_at FROM t_reviews", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -883,6 +1332,69 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public Notification? GetNotificationById(Guid notificationId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, user_id, message, read, created_at FROM t_notifications WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", notificationId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new Notification
+            {
+                Id = reader.GetGuid(0),
+                UserId = reader.GetGuid(1),
+                Message = reader.GetString(2),
+                Read = reader.GetBoolean(3),
+                CreatedAt = reader.GetDateTime(4)
+            };
+        }
+
+        public List<Notification> GetNotificationsForUser(Guid userId)
+        {
+            var list = new List<Notification>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, user_id, message, read, created_at FROM t_notifications WHERE user_id=@user_id", conn);
+            cmd.Parameters.AddWithValue("user_id", userId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Notification
+                {
+                    Id = reader.GetGuid(0),
+                    UserId = reader.GetGuid(1),
+                    Message = reader.GetString(2),
+                    Read = reader.GetBoolean(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
+        public List<Notification> GetAllNotifications()
+        {
+            var list = new List<Notification>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, user_id, message, read, created_at FROM t_notifications", conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Notification
+                {
+                    Id = reader.GetGuid(0),
+                    UserId = reader.GetGuid(1),
+                    Message = reader.GetString(2),
+                    Read = reader.GetBoolean(3),
+                    CreatedAt = reader.GetDateTime(4)
+                });
+            }
+            return list;
+        }
+
         // ================================
         // 1️⃣2️⃣ QR CHECK-IN
         // ================================
@@ -933,6 +1445,51 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+        public QrCheckin? GetQrCheckinById(Guid qrId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, booking_id, qr_code, checked_in, checked_out, created_at, updated_at FROM t_qr_checkin WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", qrId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new QrCheckin
+            {
+                Id = reader.GetGuid(0),
+                BookingId = reader.GetGuid(1),
+                QrCode = reader.GetString(2),
+                CheckedIn = reader.GetBoolean(3),
+                CheckedOut = reader.GetBoolean(4),
+                CreatedAt = reader.GetDateTime(5),
+                UpdatedAt = reader.GetDateTime(6)
+            };
+        }
+
+        public List<QrCheckin> GetAllQrCheckins()
+        {
+            var list = new List<QrCheckin>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("SELECT id, booking_id, qr_code, checked_in, checked_out, created_at, updated_at FROM t_qr_checkin", conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new QrCheckin
+                {
+                    Id = reader.GetGuid(0),
+                    BookingId = reader.GetGuid(1),
+                    QrCode = reader.GetString(2),
+                    CheckedIn = reader.GetBoolean(3),
+                    CheckedOut = reader.GetBoolean(4),
+                    CreatedAt = reader.GetDateTime(5),
+                    UpdatedAt = reader.GetDateTime(6)
+                });
+            }
+            return list;
+        }
+
         // ================================
         // 1️⃣3️⃣ USER HISTORY
         // ================================
@@ -959,6 +1516,29 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
+        public bool UpdateUserHistory(UserHistory history)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"UPDATE t_user_history SET 
+                property_name=@property_name,
+                location=@location,
+                start_date=@start_date,
+                end_date=@end_date,
+                rating=@rating
+                WHERE id=@id", conn);
+
+            cmd.Parameters.AddWithValue("id", history.Id);
+            cmd.Parameters.AddWithValue("property_name", history.PropertyName);
+            cmd.Parameters.AddWithValue("location", (object?)history.Location ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("start_date", history.StartDate);
+            cmd.Parameters.AddWithValue("end_date", history.EndDate);
+            cmd.Parameters.AddWithValue("rating", (object?)history.Rating ?? DBNull.Value);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
         public bool DeleteUserHistory(Guid id)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -966,6 +1546,31 @@ namespace SashaServer.Data
             var cmd = new NpgsqlCommand("DELETE FROM t_user_history WHERE id=@id", conn);
             cmd.Parameters.AddWithValue("id", id);
             return cmd.ExecuteNonQuery() > 0;
+        }
+
+        public UserHistory? GetUserHistoryById(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, property_id, property_name, location, start_date, end_date, rating, created_at FROM t_user_history WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", id);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new UserHistory
+            {
+                Id = reader.GetGuid(0),
+                UserId = reader.GetGuid(1),
+                PropertyId = reader.GetGuid(2),
+                PropertyName = reader.GetString(3),
+                Location = reader.IsDBNull(4) ? null : reader.GetString(4),
+                StartDate = reader.GetDateTime(5),
+                EndDate = reader.GetDateTime(6),
+                Rating = reader.IsDBNull(7) ? null : reader.GetInt16(7),
+                CreatedAt = reader.GetDateTime(8)
+            };
         }
 
         public List<UserHistory> GetUserHistory(Guid userId)
@@ -990,6 +1595,200 @@ namespace SashaServer.Data
                     StartDate = reader.GetDateTime(5),
                     EndDate = reader.GetDateTime(6),
                     Rating = reader.IsDBNull(7) ? null : reader.GetInt16(7),
+                    CreatedAt = reader.GetDateTime(8)
+                });
+            }
+            return list;
+        }
+
+        public List<UserHistory> GetAllUserHistory()
+        {
+            var list = new List<UserHistory>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, property_id, property_name, location, start_date, end_date, rating, created_at FROM t_user_history ORDER BY created_at DESC", conn);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new UserHistory
+                {
+                    Id = reader.GetGuid(0),
+                    UserId = reader.GetGuid(1),
+                    PropertyId = reader.GetGuid(2),
+                    PropertyName = reader.GetString(3),
+                    Location = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    StartDate = reader.GetDateTime(5),
+                    EndDate = reader.GetDateTime(6),
+                    Rating = reader.IsDBNull(7) ? null : reader.GetInt16(7),
+                    CreatedAt = reader.GetDateTime(8)
+                });
+            }
+            return list;
+        }
+
+        // ================================
+        // 1️⃣4️⃣ PENDING APPROVE
+        // ================================
+
+        public void AddPendingApprove(PendingApprove pendingApprove)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO pending_approve 
+                  (id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at) 
+                  VALUES (@id, @user_id, @first_name, @last_name, @cnp, @photo, @status, @fail_reason, @created_at)",
+                conn);
+
+            cmd.Parameters.AddWithValue("id", pendingApprove.Id);
+            cmd.Parameters.AddWithValue("user_id", pendingApprove.UserId);
+            cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName);
+            cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName);
+            cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp);
+            cmd.Parameters.AddWithValue("photo", (object?)pendingApprove.Photo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("status", pendingApprove.Status);
+            cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", pendingApprove.CreatedAt);
+
+            cmd.ExecuteNonQuery();
+        }
+
+        public bool UpdatePendingApprove(PendingApprove pendingApprove)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                @"UPDATE pending_approve SET 
+                first_name=@first_name,
+                last_name=@last_name,
+                cnp=@cnp,
+                photo=@photo,
+                status=@status,
+                fail_reason=@fail_reason
+                WHERE id=@id", conn);
+
+            cmd.Parameters.AddWithValue("id", pendingApprove.Id);
+            cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName);
+            cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName);
+            cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp);
+            cmd.Parameters.AddWithValue("photo", (object?)pendingApprove.Photo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("status", pendingApprove.Status);
+            cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
+        public bool DeletePendingApprove(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand("DELETE FROM pending_approve WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", id);
+            return cmd.ExecuteNonQuery() > 0;
+        }
+
+        public PendingApprove? GetPendingApproveById(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve WHERE id=@id", conn);
+            cmd.Parameters.AddWithValue("id", id);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new PendingApprove
+            {
+                Id = reader.GetGuid(0),
+                UserId = reader.GetGuid(1),
+                FirstName = reader.GetString(2),
+                LastName = reader.GetString(3),
+                Cnp = reader.GetString(4),
+                Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
+                Status = reader.GetString(6),
+                FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
+                CreatedAt = reader.GetDateTime(8)
+            };
+        }
+
+        public PendingApprove? GetPendingApproveByUserId(Guid userId)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve WHERE user_id=@user_id", conn);
+            cmd.Parameters.AddWithValue("user_id", userId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new PendingApprove
+            {
+                Id = reader.GetGuid(0),
+                UserId = reader.GetGuid(1),
+                FirstName = reader.GetString(2),
+                LastName = reader.GetString(3),
+                Cnp = reader.GetString(4),
+                Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
+                Status = reader.GetString(6),
+                FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
+                CreatedAt = reader.GetDateTime(8)
+            };
+        }
+
+        public List<PendingApprove> GetAllPendingApprove()
+        {
+            var list = new List<PendingApprove>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve ORDER BY created_at DESC", conn);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PendingApprove
+                {
+                    Id = reader.GetGuid(0),
+                    UserId = reader.GetGuid(1),
+                    FirstName = reader.GetString(2),
+                    LastName = reader.GetString(3),
+                    Cnp = reader.GetString(4),
+                    Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    Status = reader.GetString(6),
+                    FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    CreatedAt = reader.GetDateTime(8)
+                });
+            }
+            return list;
+        }
+
+        public List<PendingApprove> GetPendingApproveByStatus(string status)
+        {
+            var list = new List<PendingApprove>();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            var cmd = new NpgsqlCommand(
+                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve WHERE status=@status ORDER BY created_at DESC", conn);
+            cmd.Parameters.AddWithValue("status", status);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PendingApprove
+                {
+                    Id = reader.GetGuid(0),
+                    UserId = reader.GetGuid(1),
+                    FirstName = reader.GetString(2),
+                    LastName = reader.GetString(3),
+                    Cnp = reader.GetString(4),
+                    Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    Status = reader.GetString(6),
+                    FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
                     CreatedAt = reader.GetDateTime(8)
                 });
             }
