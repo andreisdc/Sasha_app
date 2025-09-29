@@ -1,9 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  inject,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { DropdownMenu } from './dropdown-menu/dropdown-menu';
@@ -16,8 +11,6 @@ import { DropdownMenu } from './dropdown-menu/dropdown-menu';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchSection {
-  private cdr = inject(ChangeDetectorRef);
-
   // TODO: Migrate <img [src]="searchImgPath" /> to NgOptimizedImage with ngSrc in the template
   searchImgPath = 'assets/images/search-bar-bg.jpg';
 
@@ -29,11 +22,10 @@ export class SearchSection {
     });
   }
 
-  showGuestDropdown = false;
+  showGuestDropdown = signal(false);
 
   toggleGuestDropdown() {
-    this.showGuestDropdown = !this.showGuestDropdown;
-    this.cdr.detectChanges();
+    this.showGuestDropdown.update((value) => !value);
     console.log('Guest dropdown toggled!');
   }
 }

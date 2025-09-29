@@ -1,24 +1,38 @@
 <div class="component-body">
-  @if (isGuestsOpen) {
-  <div class="guests-dropdown">
+  <div class="guests-dropdown" [class.show]="isGuestsOpen">
     <ul class="guests-list">
       <li>
         <p>Adults</p>
-        <input type="text" />
+        <div>
+          <button>-</button>
+          <input type="text" />
+          <button>+</button>
+        </div>
       </li>
       <li>
         <p>Children</p>
-        <input type="text" />
+        <div>
+          <button>-</button>
+          <input type="text" />
+          <button>+</button>
+        </div>
       </li>
       <li>
         <p>Infants</p>
-        <input type="text" />
+        <div>
+          <button>-</button>
+          <input type="text" />
+          <button>+</button>
+        </div>
       </li>
       <li>
         <p>Pets</p>
-        <input type="text" />
+        <div>
+          <button>-</button>
+          <input type="text" />
+          <button>+</button>
+        </div>
       </li>
     </ul>
   </div>
-  }
 </div>

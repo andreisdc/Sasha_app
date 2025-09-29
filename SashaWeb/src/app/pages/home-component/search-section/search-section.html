@@ -14,10 +14,11 @@
             type="button"
             value="How many guests..."
             (click)="toggleGuestDropdown()"
+            class="guests-button"
           />
         </div>
       </form>
-      <app-dropdown-menu [isGuestsOpen]="showGuestDropdown" />
+      <app-dropdown-menu [isGuestsOpen]="showGuestDropdown()" />
     </div>
 
     <div
