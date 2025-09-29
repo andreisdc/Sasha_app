@@ -7,12 +7,17 @@
         <div class="field">
           <input type="text" placeholder="Search place..." />
         </div>
-        <div class="field"><input type="date" /></div>
-        <div class="field"><input type="date" /></div>
+        <div class="field">
+          <input type="date" />
+        </div>
+        <div class="field">
+          <input type="date" />
+        </div>
         <div class="field">
           <input
-            type="button"
-            value="How many guests..."
+            type="input"
+            readonly
+            placeholder="{{guestsPlaceholder}}"
             (click)="toggleGuestDropdown()"
             class="guests-button"
           />
