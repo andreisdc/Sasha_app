@@ -96,65 +96,69 @@ namespace SashaServer.Controllers
 
         // --- POST: api/pendingapprove/create
         [HttpPost("create")]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Create(
-            [FromForm] Guid UserId,
-            [FromForm] string FirstName,
-            [FromForm] string LastName,
-            [FromForm] string Cnp,
-            [FromForm] IFormFile Photo)
+[Consumes("multipart/form-data")]
+public async Task<IActionResult> Create(
+    [FromForm] Guid UserId,
+    [FromForm] string FirstName,
+    [FromForm] string LastName,
+    [FromForm] string Cnp,
+    [FromForm] IFormFile Photo)
+{
+    try
+    {
+        if (Photo == null || Photo.Length == 0)
+            return BadRequest(new { message = "Photo is required" });
+
+        // Creează obiectul PendingApprove
+        var pendingApprove = new PendingApprove
         {
-            try
-            {
-                if (Photo == null || Photo.Length == 0)
-                    return BadRequest(new { message = "Photo is required" });
+            Id = Guid.NewGuid(),
+            UserId = UserId,
+            FirstName = FirstName,
+            LastName = LastName,
+            Status = "pending",
+            CreatedAt = DateTime.UtcNow,
+            Cnp = _cnpHelper.EncryptCnp(Cnp)
+        };
 
-                var pendingApprove = new PendingApprove
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = UserId,
-                    FirstName = FirstName,
-                    LastName = LastName,
-                    Status = "pending",
-                    CreatedAt = DateTime.UtcNow,
-                    Cnp = _cnpHelper.EncryptCnp(Cnp)
-                };
+        // Upload foto în GCP
+        using var ms = new MemoryStream();
+        await Photo.CopyToAsync(ms);
+        ms.Position = 0;
 
-                // Upload photo to GCP
-                using var ms = new MemoryStream();
-                await Photo.CopyToAsync(ms);
-                ms.Position = 0;
+        var fileName = $"{pendingApprove.Id}.png";
+        var uploadResult = await _googleCloudService.UploadFileAsync(ms, fileName, "image/png");
 
-                var fileName = $"{pendingApprove.Id}.png";
-                var uploadResult = await _googleCloudService.UploadFileAsync(ms, fileName, "image/png");
+        if (!uploadResult.Success)
+            return StatusCode(500, new { message = "Failed to upload photo", error = uploadResult.ErrorMessage });
 
-                if (!uploadResult.Success)
-                    return StatusCode(500, new { message = "Failed to upload photo", error = uploadResult.ErrorMessage });
+        // Stocăm URL-ul în baza de date
+        pendingApprove.Photo = uploadResult.FileUrl;
 
-                pendingApprove.Photo = uploadResult.FileUrl;
+        // Adaugă în baza de date (nu mai facem Convert.FromBase64String)
+        _data.AddPendingApprove(pendingApprove);
 
-                _data.AddPendingApprove(pendingApprove);
+        // Răspuns către client
+        var response = new
+        {
+            pendingApprove.Id,
+            pendingApprove.UserId,
+            pendingApprove.FirstName,
+            pendingApprove.LastName,
+            Cnp = _cnpHelper.MaskCnp(Cnp),
+            pendingApprove.Photo,
+            pendingApprove.Status,
+            pendingApprove.CreatedAt
+        };
 
-                var response = new
-                {
-                    pendingApprove.Id,
-                    pendingApprove.UserId,
-                    pendingApprove.FirstName,
-                    pendingApprove.LastName,
-                    Cnp = _cnpHelper.MaskCnp(Cnp),
-                    pendingApprove.Photo,
-                    pendingApprove.Status,
-                    pendingApprove.CreatedAt
-                };
-
-                return CreatedAtAction(nameof(GetById), new { id = pendingApprove.Id }, response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating pending approval with photo");
-                return StatusCode(500, new { message = "Internal server error" });
-            }
-        }
+        return CreatedAtAction(nameof(GetById), new { id = pendingApprove.Id }, response);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error creating pending approval with photo");
+        return StatusCode(500, new { message = "Internal server error" });
+    }
+}
 
 
         // --- PUT: api/pendingapprove/{id}

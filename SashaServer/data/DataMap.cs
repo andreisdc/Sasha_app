@@ -1650,24 +1650,24 @@ public void AddPendingApprove(PendingApprove pendingApprove)
     cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
     cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
     cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
-    
-    // Converteste base64 string în byte array dacă există
+
+    // Folosim direct URL-ul în loc de Base64
     if (!string.IsNullOrEmpty(pendingApprove.Photo))
     {
-        byte[] photoBytes = Convert.FromBase64String(pendingApprove.Photo);
-        cmd.Parameters.AddWithValue("photo", photoBytes);
+        cmd.Parameters.AddWithValue("photo", pendingApprove.Photo);
     }
     else
     {
         cmd.Parameters.AddWithValue("photo", DBNull.Value);
     }
-    
+
     cmd.Parameters.AddWithValue("status", pendingApprove.Status ?? "pending");
     cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
     cmd.Parameters.AddWithValue("created_at", pendingApprove.CreatedAt);
 
     cmd.ExecuteNonQuery();
 }
+
     
 
         public bool UpdatePendingApprove(PendingApprove pendingApprove)

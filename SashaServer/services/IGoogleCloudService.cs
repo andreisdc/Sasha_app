@@ -30,27 +30,24 @@ namespace SashaServer.Services
 
             try
             {
-                // Verifică dacă calea către credentials există
                 if (string.IsNullOrEmpty(_cloudConfig.CredentialsPath))
-                {
                     throw new InvalidOperationException("GCP credentials path is not configured");
-                }
 
                 if (!File.Exists(_cloudConfig.CredentialsPath))
-                {
                     throw new FileNotFoundException($"GCP credentials file not found at: {_cloudConfig.CredentialsPath}");
-                }
 
                 var credential = GoogleCredential.FromFile(_cloudConfig.CredentialsPath);
                 _storageClient = StorageClient.Create(credential);
                 _urlSigner = UrlSigner.FromCredential(credential);
-                
-                _logger.LogInformation("Google Cloud Storage initialized for project: {ProjectId}, bucket: {BucketName}", 
-                    _cloudConfig.ProjectId, _cloudConfig.BucketName);
+
+                _logger.LogInformation(
+                    "✅ Google Cloud Storage initialized for project: {ProjectId}, bucket: {BucketName}",
+                    _cloudConfig.ProjectId, _cloudConfig.BucketName
+                );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to initialize Google Cloud Storage");
+                _logger.LogError(ex, "❌ Failed to initialize Google Cloud Storage");
                 throw;
             }
         }
@@ -59,9 +56,7 @@ namespace SashaServer.Services
         {
             try
             {
-                // Generate unique filename to avoid collisions
                 var uniqueFileName = GenerateUniqueFileName(fileName);
-                
                 var objectName = $"uploads/{DateTime.UtcNow:yyyy/MM/dd}/{uniqueFileName}";
 
                 var uploadObject = new Google.Apis.Storage.v1.Data.Object
@@ -72,15 +67,11 @@ namespace SashaServer.Services
                     Metadata = metadata
                 };
 
-                var result = await _storageClient.UploadObjectAsync(
-                    uploadObject,
-                    fileStream
-                );
+                var result = await _storageClient.UploadObjectAsync(uploadObject, fileStream);
 
-                var fileUrl = $"{_cloudConfig.BaseUrl}/{_cloudConfig.BucketName}/{objectName}";
+                var fileUrl = $"https://storage.googleapis.com/{_cloudConfig.BucketName}/{objectName}";
 
-                _logger.LogInformation("File uploaded successfully: {FileName} -> {ObjectName}, Size: {Size} bytes", 
-                    fileName, objectName, result.Size ?? 0);
+                _logger.LogInformation("✅ File uploaded: {ObjectName}, Size: {Size} bytes", objectName, result.Size ?? 0);
 
                 return new FileUploadResult
                 {
@@ -93,12 +84,8 @@ namespace SashaServer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error uploading file {FileName} to Google Cloud Storage", fileName);
-                return new FileUploadResult
-                {
-                    Success = false,
-                    ErrorMessage = ex.Message
-                };
+                _logger.LogError(ex, "❌ Error uploading file {FileName}", fileName);
+                return new FileUploadResult { Success = false, ErrorMessage = ex.Message };
             }
         }
 
@@ -106,9 +93,8 @@ namespace SashaServer.Services
         {
             try
             {
-                // Remove data URL prefix if present
-                var base64Data = base64String.Contains(",") 
-                    ? base64String.Split(',')[1] 
+                var base64Data = base64String.Contains(",")
+                    ? base64String.Split(',')[1]
                     : base64String;
 
                 var fileBytes = Convert.FromBase64String(base64Data);
@@ -118,12 +104,8 @@ namespace SashaServer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error uploading base64 file {FileName} to Google Cloud Storage", fileName);
-                return new FileUploadResult
-                {
-                    Success = false,
-                    ErrorMessage = ex.Message
-                };
+                _logger.LogError(ex, "❌ Error uploading base64 file {FileName}", fileName);
+                return new FileUploadResult { Success = false, ErrorMessage = ex.Message };
             }
         }
 
@@ -132,12 +114,12 @@ namespace SashaServer.Services
             try
             {
                 await _storageClient.DeleteObjectAsync(_cloudConfig.BucketName, fileName);
-                _logger.LogInformation("File deleted successfully: {FileName}", fileName);
+                _logger.LogInformation("🗑️ File deleted: {FileName}", fileName);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting file {FileName} from Google Cloud Storage", fileName);
+                _logger.LogError(ex, "❌ Error deleting file {FileName}", fileName);
                 return false;
             }
         }
@@ -147,22 +129,22 @@ namespace SashaServer.Services
             try
             {
                 var storageObject = await _storageClient.GetObjectAsync(_cloudConfig.BucketName, fileName);
-                
+
                 return new CloudFileInfo
                 {
                     FileName = storageObject.Name,
-                    FileUrl = $"{_cloudConfig.BaseUrl}/{_cloudConfig.BucketName}/{storageObject.Name}",
+                    FileUrl = $"https://storage.googleapis.com/{_cloudConfig.BucketName}/{storageObject.Name}",
                     FileSize = (long)(storageObject.Size ?? 0),
                     ContentType = storageObject.ContentType,
                     UploadedAt = storageObject.TimeCreatedDateTimeOffset?.UtcDateTime ?? DateTime.UtcNow,
-                    Metadata = storageObject.Metadata != null 
+                    Metadata = storageObject.Metadata != null
                         ? new Dictionary<string, string>(storageObject.Metadata)
                         : new Dictionary<string, string>()
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting file info for {FileName}", fileName);
+                _logger.LogError(ex, "❌ Error getting file info: {FileName}", fileName);
                 return null;
             }
         }
@@ -178,12 +160,12 @@ namespace SashaServer.Services
                     HttpMethod.Get
                 );
 
-                _logger.LogInformation("Generated signed URL for {FileName}, expires in {Expiration}", fileName, expiration);
+                _logger.LogInformation("🔑 Signed URL generated for {FileName}", fileName);
                 return url;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating signed URL for {FileName}", fileName);
+                _logger.LogError(ex, "❌ Error generating signed URL for {FileName}", fileName);
                 throw;
             }
         }
@@ -201,7 +183,7 @@ namespace SashaServer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking if file exists: {FileName}", fileName);
+                _logger.LogError(ex, "❌ Error checking if file exists: {FileName}", fileName);
                 return false;
             }
         }
@@ -209,18 +191,13 @@ namespace SashaServer.Services
         private string GenerateUniqueFileName(string originalFileName)
         {
             var extension = Path.GetExtension(originalFileName);
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalFileName);
-            
-            // Sanitize filename
-            var sanitizedFileName = string.Join("_", fileNameWithoutExtension.Split(Path.GetInvalidFileNameChars()));
-            
-            // Truncate if too long
-            if (sanitizedFileName.Length > 50)
-            {
-                sanitizedFileName = sanitizedFileName.Substring(0, 50);
-            }
-            
-            return $"{sanitizedFileName}_{Guid.NewGuid():N}{extension}";
+            var name = Path.GetFileNameWithoutExtension(originalFileName);
+
+            // Sanitize
+            var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+            if (safeName.Length > 50) safeName = safeName.Substring(0, 50);
+
+            return $"{safeName}_{Guid.NewGuid():N}{extension}";
         }
     }
 
@@ -241,7 +218,6 @@ namespace SashaServer.Services
         public long FileSize { get; set; }
         public string? ContentType { get; set; }
         public DateTime UploadedAt { get; set; }
-        public Dictionary<string, string> Metadata { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> Metadata { get; set; } = new();
     }
-
 }
