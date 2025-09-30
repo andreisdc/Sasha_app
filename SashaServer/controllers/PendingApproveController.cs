@@ -3,7 +3,6 @@ using SashaServer.Data;
 using SashaServer.Models;
 using SashaServer.Services;
 using SashaServer.Helpers;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.IO;
@@ -33,13 +32,14 @@ namespace SashaServer.Controllers
             _cnpHelper = cnpHelper;
         }
 
-        // --- GET: api/pendingapprove
-        [HttpGet]
-        public IActionResult GetAll()
+        // --- GET: api/pendingapprove/pending
+        [HttpGet("pending")]
+        public IActionResult GetPendingRequests()
         {
             try
             {
-                var pendingApproves = _data.GetAllPendingApprove()
+                var pendingRequests = _data.GetAllPendingApprove()
+                    .Where(p => p.Status == "pending")
                     .Select(p => new
                     {
                         p.Id,
@@ -47,30 +47,102 @@ namespace SashaServer.Controllers
                         p.FirstName,
                         p.LastName,
                         Cnp = _cnpHelper.MaskCnp(_cnpHelper.DecryptCnp(p.Cnp)),
-                        p.Photo,
+                        Photo = p.Photo,
+                        Address = p.Address,
                         p.Status,
-                        p.FailReason,
                         p.CreatedAt
-                    });
+                    })
+                    .ToList();
 
-                return Ok(pendingApproves);
+                return Ok(pendingRequests);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting all pending approvals");
+                _logger.LogError(ex, "Error getting pending requests");
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
 
-        // --- GET: api/pendingapprove/{id}
-        [HttpGet("{id}")]
-        public IActionResult GetById(Guid id)
+        // --- GET: api/pendingapprove/history
+        [HttpGet("history")]
+        public IActionResult GetApprovalHistory()
         {
             try
             {
-                var pendingApprove = _data.GetPendingApproveById(id);
-                if (pendingApprove == null)
-                    return NotFound(new { message = "Pending approval not found" });
+                var history = _data.GetAllPendingApprove()
+                    .Where(p => p.Status != "pending")
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.UserId,
+                        p.FirstName,
+                        p.LastName,
+                        p.Status,
+                        p.FailReason,
+                        UpdatedAt = p.UpdatedAt ?? p.CreatedAt,
+                        p.CreatedAt
+                    })
+                    .OrderByDescending(p => p.UpdatedAt)
+                    .ToList();
+
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting approval history");
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        // --- POST: api/pendingapprove/create
+        [HttpPost("create")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Create(
+            [FromForm] Guid UserId,
+            [FromForm] string FirstName,
+            [FromForm] string LastName,
+            [FromForm] string Cnp,
+            [FromForm] string Address,
+            [FromForm] IFormFile Photo)
+        {
+            try
+            {
+                if (Photo == null || Photo.Length == 0)
+                    return BadRequest(new { message = "Photo is required" });
+
+                // Verifică dacă user-ul are deja o cerere pending
+                var existingRequest = _data.GetAllPendingApprove()
+                    .FirstOrDefault(p => p.UserId == UserId && p.Status == "pending");
+                
+                if (existingRequest != null)
+                    return Conflict(new { message = "You already have a pending verification request" });
+
+                // Creează obiectul PendingApprove
+                var pendingApprove = new PendingApprove
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = UserId,
+                    FirstName = FirstName,
+                    LastName = LastName,
+                    Address = Address,
+                    Status = "pending",
+                    CreatedAt = DateTime.UtcNow,
+                    Cnp = _cnpHelper.EncryptCnp(Cnp)
+                };
+
+                // Upload foto în GCP
+                using var ms = new MemoryStream();
+                await Photo.CopyToAsync(ms);
+                ms.Position = 0;
+
+                var fileName = $"verification_{pendingApprove.Id}.png";
+                var uploadResult = await _googleCloudService.UploadFileAsync(ms, fileName, "image/png");
+
+                if (!uploadResult.Success)
+                    return StatusCode(500, new { message = "Failed to upload photo", error = uploadResult.ErrorMessage });
+
+                pendingApprove.Photo = uploadResult.FileUrl;
+                _data.AddPendingApprove(pendingApprove);
 
                 var response = new
                 {
@@ -78,10 +150,10 @@ namespace SashaServer.Controllers
                     pendingApprove.UserId,
                     pendingApprove.FirstName,
                     pendingApprove.LastName,
-                    Cnp = _cnpHelper.MaskCnp(_cnpHelper.DecryptCnp(pendingApprove.Cnp)),
+                    Cnp = _cnpHelper.MaskCnp(Cnp),
+                    pendingApprove.Address,
                     pendingApprove.Photo,
                     pendingApprove.Status,
-                    pendingApprove.FailReason,
                     pendingApprove.CreatedAt
                 };
 
@@ -89,130 +161,14 @@ namespace SashaServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting pending approval by id: {Id}", id);
-                return StatusCode(500, new { message = "Internal server error" });
-            }
-        }
-
-        // --- POST: api/pendingapprove/create
-        [HttpPost("create")]
-[Consumes("multipart/form-data")]
-public async Task<IActionResult> Create(
-    [FromForm] Guid UserId,
-    [FromForm] string FirstName,
-    [FromForm] string LastName,
-    [FromForm] string Cnp,
-    [FromForm] IFormFile Photo)
-{
-    try
-    {
-        if (Photo == null || Photo.Length == 0)
-            return BadRequest(new { message = "Photo is required" });
-
-        // Creează obiectul PendingApprove
-        var pendingApprove = new PendingApprove
-        {
-            Id = Guid.NewGuid(),
-            UserId = UserId,
-            FirstName = FirstName,
-            LastName = LastName,
-            Status = "pending",
-            CreatedAt = DateTime.UtcNow,
-            Cnp = _cnpHelper.EncryptCnp(Cnp)
-        };
-
-        // Upload foto în GCP
-        using var ms = new MemoryStream();
-        await Photo.CopyToAsync(ms);
-        ms.Position = 0;
-
-        var fileName = $"{pendingApprove.Id}.png";
-        var uploadResult = await _googleCloudService.UploadFileAsync(ms, fileName, "image/png");
-
-        if (!uploadResult.Success)
-            return StatusCode(500, new { message = "Failed to upload photo", error = uploadResult.ErrorMessage });
-
-        // Stocăm URL-ul în baza de date
-        pendingApprove.Photo = uploadResult.FileUrl;
-
-        // Adaugă în baza de date (nu mai facem Convert.FromBase64String)
-        _data.AddPendingApprove(pendingApprove);
-
-        // Răspuns către client
-        var response = new
-        {
-            pendingApprove.Id,
-            pendingApprove.UserId,
-            pendingApprove.FirstName,
-            pendingApprove.LastName,
-            Cnp = _cnpHelper.MaskCnp(Cnp),
-            pendingApprove.Photo,
-            pendingApprove.Status,
-            pendingApprove.CreatedAt
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = pendingApprove.Id }, response);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error creating pending approval with photo");
-        return StatusCode(500, new { message = "Internal server error" });
-    }
-}
-
-
-        // --- PUT: api/pendingapprove/{id}
-        [HttpPut("{id}")]
-        public IActionResult Update(Guid id, [FromBody] PendingApprove pendingApprove)
-        {
-            try
-            {
-                if (id != pendingApprove.Id)
-                    return BadRequest(new { message = "ID mismatch" });
-
-                var existing = _data.GetPendingApproveById(id);
-                if (existing == null)
-                    return NotFound(new { message = "Pending approval not found" });
-
-                var success = _data.UpdatePendingApprove(pendingApprove);
-                if (!success)
-                    return StatusCode(500, new { message = "Failed to update pending approval" });
-
-                return Ok(pendingApprove);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating pending approval: {Id}", id);
-                return StatusCode(500, new { message = "Internal server error" });
-            }
-        }
-
-        // --- DELETE: api/pendingapprove/{id}
-        [HttpDelete("{id}")]
-        public IActionResult Delete(Guid id)
-        {
-            try
-            {
-                var existing = _data.GetPendingApproveById(id);
-                if (existing == null)
-                    return NotFound(new { message = "Pending approval not found" });
-
-                var success = _data.DeletePendingApprove(id);
-                if (!success)
-                    return StatusCode(500, new { message = "Failed to delete pending approval" });
-
-                return Ok(new { message = "Pending approval deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting pending approval: {Id}", id);
+                _logger.LogError(ex, "Error creating pending approval");
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
 
         // --- PUT: api/pendingapprove/{id}/approve
         [HttpPut("{id}/approve")]
-        public IActionResult Approve(Guid id)
+        public async Task<IActionResult> Approve(Guid id)
         {
             try
             {
@@ -220,22 +176,43 @@ public async Task<IActionResult> Create(
                 if (pendingApprove == null)
                     return NotFound(new { message = "Pending approval not found" });
 
+                // Șterge datele sensibile din baza de date
+                _data.CleanSensitiveData(id);
+
+                // Șterge poza din Google Cloud
+                if (!string.IsNullOrEmpty(pendingApprove.Photo))
+                {
+                    var fileName = Path.GetFileName(pendingApprove.Photo);
+                    await _googleCloudService.DeleteFileAsync(fileName);
+                }
+
+                // Actualizează status
                 pendingApprove.Status = "approved";
                 pendingApprove.FailReason = null;
+                pendingApprove.UpdatedAt = DateTime.UtcNow;
+                pendingApprove.Cnp = null;
+                pendingApprove.Address = null;
+                pendingApprove.Photo = null;
 
+                _data.UpdatePendingApprove(pendingApprove);
+
+                // Actualizează user-ul
                 var user = _data.GetUserById(pendingApprove.UserId);
                 if (user != null)
                 {
                     user.IsVerified = true;
-                    user.IsHost = true;
+                    user.IsSeller = true;
                     _data.UpdateUser(user);
                 }
 
-                var success = _data.UpdatePendingApprove(pendingApprove);
-                if (!success)
-                    return StatusCode(500, new { message = "Failed to approve request" });
-
-                return Ok(pendingApprove);
+                return Ok(new
+                {
+                    pendingApprove.Id,
+                    pendingApprove.FirstName,
+                    pendingApprove.LastName,
+                    pendingApprove.Status,
+                    pendingApprove.UpdatedAt
+                });
             }
             catch (Exception ex)
             {
@@ -246,7 +223,7 @@ public async Task<IActionResult> Create(
 
         // --- PUT: api/pendingapprove/{id}/reject
         [HttpPut("{id}/reject")]
-        public IActionResult Reject(Guid id, [FromBody] RejectRequest request)
+        public async Task<IActionResult> Reject(Guid id, [FromBody] RejectRequest request)
         {
             try
             {
@@ -254,14 +231,35 @@ public async Task<IActionResult> Create(
                 if (pendingApprove == null)
                     return NotFound(new { message = "Pending approval not found" });
 
+                // Șterge datele sensibile din baza de date
+                _data.CleanSensitiveData(id);
+
+                // Șterge poza din Google Cloud
+                if (!string.IsNullOrEmpty(pendingApprove.Photo))
+                {
+                    var fileName = Path.GetFileName(pendingApprove.Photo);
+                    await _googleCloudService.DeleteFileAsync(fileName);
+                }
+
+                // Actualizează status
                 pendingApprove.Status = "rejected";
                 pendingApprove.FailReason = request.Reason;
+                pendingApprove.UpdatedAt = DateTime.UtcNow;
+                pendingApprove.Cnp = null;
+                pendingApprove.Address = null;
+                pendingApprove.Photo = null;
 
-                var success = _data.UpdatePendingApprove(pendingApprove);
-                if (!success)
-                    return StatusCode(500, new { message = "Failed to reject request" });
+                _data.UpdatePendingApprove(pendingApprove);
 
-                return Ok(pendingApprove);
+                return Ok(new
+                {
+                    pendingApprove.Id,
+                    pendingApprove.FirstName,
+                    pendingApprove.LastName,
+                    pendingApprove.Status,
+                    pendingApprove.FailReason,
+                    pendingApprove.UpdatedAt
+                });
             }
             catch (Exception ex)
             {
@@ -269,28 +267,10 @@ public async Task<IActionResult> Create(
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
-
-        private string CleanBase64(string base64)
-{
-    if (string.IsNullOrEmpty(base64))
-        return string.Empty;
-
-    // elimină prefix dacă vine cumva cu "data:image/.."
-    var commaIndex = base64.IndexOf(",");
-    if (commaIndex >= 0)
-        base64 = base64.Substring(commaIndex + 1);
-
-    // elimină spații, newline etc.
-    return base64.Trim().Replace(" ", "").Replace("\n", "").Replace("\r", "");
-}
     }
 
     public class RejectRequest
     {
         public string Reason { get; set; } = string.Empty;
     }
-
-    
 }
-
-

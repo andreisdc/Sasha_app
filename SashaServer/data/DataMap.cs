@@ -11,7 +11,7 @@ namespace SashaServer.Data
 
         public DataMap(IConfiguration configuration, ILogger<DataMap> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? 
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ??
                 throw new InvalidOperationException("Database connection string is not set in configuration.");
             _logger = logger;
         }
@@ -1635,72 +1635,78 @@ namespace SashaServer.Data
         // 1️⃣4️⃣ PENDING APPROVE
         // ================================
 
-public void AddPendingApprove(PendingApprove pendingApprove)
-{
-    using var conn = new NpgsqlConnection(_connectionString);
-    conn.Open();
+        public void AddPendingApprove(PendingApprove pendingApprove)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
 
-    var cmd = new NpgsqlCommand(
-        @"INSERT INTO pending_approve 
-          (user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at) 
-          VALUES (@user_id, @first_name, @last_name, @cnp, @photo, @status, @fail_reason, @created_at)",
-        conn);
+            var cmd = new NpgsqlCommand(
+                @"INSERT INTO pending_approve 
+          (id, user_id, first_name, last_name, cnp, address, photo, status, fail_reason, created_at, updated_at) 
+          VALUES (@id, @user_id, @first_name, @last_name, @cnp, @address, @photo, @status, @fail_reason, @created_at, @updated_at)",
+                conn);
 
-    cmd.Parameters.AddWithValue("user_id", pendingApprove.UserId);
-    cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
-    cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
-    cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
+            cmd.Parameters.AddWithValue("id", pendingApprove.Id);
+            cmd.Parameters.AddWithValue("user_id", pendingApprove.UserId);
+            cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
+            cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
+            cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
+            cmd.Parameters.AddWithValue("address", pendingApprove.Address ?? ""); // ✅ ADAUGĂ ADDRESS
 
-    // Folosim direct URL-ul în loc de Base64
-    if (!string.IsNullOrEmpty(pendingApprove.Photo))
-    {
-        cmd.Parameters.AddWithValue("photo", pendingApprove.Photo);
-    }
-    else
-    {
-        cmd.Parameters.AddWithValue("photo", DBNull.Value);
-    }
+            if (!string.IsNullOrEmpty(pendingApprove.Photo))
+            {
+                cmd.Parameters.AddWithValue("photo", pendingApprove.Photo);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("photo", DBNull.Value);
+            }
 
-    cmd.Parameters.AddWithValue("status", pendingApprove.Status ?? "pending");
-    cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
-    cmd.Parameters.AddWithValue("created_at", pendingApprove.CreatedAt);
+            cmd.Parameters.AddWithValue("status", pendingApprove.Status ?? "pending");
+            cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("created_at", pendingApprove.CreatedAt);
+            cmd.Parameters.AddWithValue("updated_at", (object?)pendingApprove.UpdatedAt ?? DBNull.Value);
 
-    cmd.ExecuteNonQuery();
-}
-
-    
+            cmd.ExecuteNonQuery();
+        }
 
         public bool UpdatePendingApprove(PendingApprove pendingApprove)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
+
             var cmd = new NpgsqlCommand(
                 @"UPDATE pending_approve SET 
-                first_name=@first_name,
-                last_name=@last_name,
-                cnp=@cnp,
-                photo=@photo,
-                status=@status,
-                fail_reason=@fail_reason
-                WHERE id=@id", conn);
+          first_name = @first_name,
+          last_name = @last_name,
+          cnp = @cnp,
+          address = @address, -- ✅ ADAUGĂ ADDRESS
+          photo = @photo,
+          status = @status,
+          fail_reason = @fail_reason,
+          updated_at = @updated_at -- ✅ ADAUGĂ UPDATED_AT
+          WHERE id = @id",
+                conn);
 
             cmd.Parameters.AddWithValue("id", pendingApprove.Id);
-            cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName);
-            cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName);
-            cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp);
-            cmd.Parameters.AddWithValue("photo", (object?)pendingApprove.Photo ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("status", pendingApprove.Status);
+            cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
+            cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
+            cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
+            cmd.Parameters.AddWithValue("address", pendingApprove.Address ?? ""); // ✅ ADAUGĂ ADDRESS
+
+            if (!string.IsNullOrEmpty(pendingApprove.Photo))
+            {
+                cmd.Parameters.AddWithValue("photo", pendingApprove.Photo);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("photo", DBNull.Value);
+            }
+
+            cmd.Parameters.AddWithValue("status", pendingApprove.Status ?? "pending");
             cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow); // ✅ SETEAZĂ UPDATED_AT
 
-            return cmd.ExecuteNonQuery() > 0;
-        }
-
-        public bool DeletePendingApprove(Guid id)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand("DELETE FROM pending_approve WHERE id=@id", conn);
-            cmd.Parameters.AddWithValue("id", id);
             return cmd.ExecuteNonQuery() > 0;
         }
 
@@ -1708,8 +1714,12 @@ public void AddPendingApprove(PendingApprove pendingApprove)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
+
             var cmd = new NpgsqlCommand(
-                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve WHERE id=@id", conn);
+                @"SELECT id, user_id, first_name, last_name, cnp, address, photo, status, fail_reason, created_at, updated_at 
+          FROM pending_approve WHERE id = @id",
+                conn);
+
             cmd.Parameters.AddWithValue("id", id);
 
             using var reader = cmd.ExecuteReader();
@@ -1722,35 +1732,12 @@ public void AddPendingApprove(PendingApprove pendingApprove)
                 FirstName = reader.GetString(2),
                 LastName = reader.GetString(3),
                 Cnp = reader.GetString(4),
-                Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
-                Status = reader.GetString(6),
-                FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
-                CreatedAt = reader.GetDateTime(8)
-            };
-        }
-
-        public PendingApprove? GetPendingApproveByUserId(Guid userId)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve WHERE user_id=@user_id", conn);
-            cmd.Parameters.AddWithValue("user_id", userId);
-
-            using var reader = cmd.ExecuteReader();
-            if (!reader.Read()) return null;
-
-            return new PendingApprove
-            {
-                Id = reader.GetGuid(0),
-                UserId = reader.GetGuid(1),
-                FirstName = reader.GetString(2),
-                LastName = reader.GetString(3),
-                Cnp = reader.GetString(4),
-                Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
-                Status = reader.GetString(6),
-                FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
-                CreatedAt = reader.GetDateTime(8)
+                Address = reader.IsDBNull(5) ? "" : reader.GetString(5), // ✅ CITESTE ADDRESS
+                Photo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                Status = reader.GetString(7),
+                FailReason = reader.IsDBNull(8) ? null : reader.GetString(8),
+                CreatedAt = reader.GetDateTime(9),
+                UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10) // ✅ CITESTE UPDATED_AT
             };
         }
 
@@ -1759,8 +1746,11 @@ public void AddPendingApprove(PendingApprove pendingApprove)
             var list = new List<PendingApprove>();
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
+
             var cmd = new NpgsqlCommand(
-                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve ORDER BY created_at DESC", conn);
+                @"SELECT id, user_id, first_name, last_name, cnp, address, photo, status, fail_reason, created_at, updated_at 
+          FROM pending_approve ORDER BY created_at DESC",
+                conn);
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -1772,41 +1762,36 @@ public void AddPendingApprove(PendingApprove pendingApprove)
                     FirstName = reader.GetString(2),
                     LastName = reader.GetString(3),
                     Cnp = reader.GetString(4),
-                    Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    Status = reader.GetString(6),
-                    FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    CreatedAt = reader.GetDateTime(8)
+                    Address = reader.IsDBNull(5) ? "" : reader.GetString(5), // ✅ CITESTE ADDRESS
+                    Photo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    Status = reader.GetString(7),
+                    FailReason = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    CreatedAt = reader.GetDateTime(9),
+                    UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10) // ✅ CITESTE UPDATED_AT
                 });
             }
             return list;
         }
 
-        public List<PendingApprove> GetPendingApproveByStatus(string status)
+        // ✅ METODĂ NOUĂ - Clean sensitive data
+        public bool CleanSensitiveData(Guid id)
         {
-            var list = new List<PendingApprove>();
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
-            var cmd = new NpgsqlCommand(
-                "SELECT id, user_id, first_name, last_name, cnp, photo, status, fail_reason, created_at FROM pending_approve WHERE status=@status ORDER BY created_at DESC", conn);
-            cmd.Parameters.AddWithValue("status", status);
 
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(new PendingApprove
-                {
-                    Id = reader.GetGuid(0),
-                    UserId = reader.GetGuid(1),
-                    FirstName = reader.GetString(2),
-                    LastName = reader.GetString(3),
-                    Cnp = reader.GetString(4),
-                    Photo = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    Status = reader.GetString(6),
-                    FailReason = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    CreatedAt = reader.GetDateTime(8)
-                });
-            }
-            return list;
+            var cmd = new NpgsqlCommand(
+                @"UPDATE pending_approve SET 
+          cnp = NULL,
+          address = NULL,
+          photo = NULL,
+          updated_at = @updated_at
+          WHERE id = @id",
+                conn);
+
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+
+            return cmd.ExecuteNonQuery() > 0;
         }
     }
 }
