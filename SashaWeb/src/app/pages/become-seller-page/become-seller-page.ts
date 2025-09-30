@@ -296,77 +296,57 @@ export class BecomeSellerPageComponent implements OnInit {
   }
 
   async submitVerification(): Promise<void> {
-    if (!this.canSubmitVerification()) return;
+  if (!this.canSubmitVerification()) return;
 
-    this.isSubmitting = true;
-    this.submitError = '';
-    this.submissionStatus = 'idle';
+  this.isSubmitting = true;
+  this.submitError = '';
+  this.submissionStatus = 'idle';
 
-    try {
-      console.log('Starting verification submission...');
+  try {
+    console.log('Starting verification submission...');
 
-      // Folosim endpoint-ul /me pentru a obține user-ul curent
-      const currentUser = await this.authService.me().toPromise();
-      console.log('Current user:', currentUser);
-
-      if (!currentUser || !currentUser.id) {
-        throw new Error('You must be logged in to submit verification');
-      }
-
-      const userId = currentUser.id;
-      console.log('User ID:', userId);
-
-      // Convertim fișierul în base64
-      console.log('Converting file to base64...');
-      const photoBase64 = await this.fileToBase64(this.formData.idDocument!);
-      console.log('File converted, length:', photoBase64?.length);
-
-      const pendingApproveData = {
-        userId: userId,
-        firstName: this.formData.firstName,
-        lastName: this.formData.lastName,
-        cnp: this.formData.cnp,
-        photo: photoBase64,
-        status: 'pending' as const,
-        createdAt: new Date(),
-      };
-
-      console.log('Sending data to server:', {
-        userId: pendingApproveData.userId,
-        firstName: pendingApproveData.firstName,
-        lastName: pendingApproveData.lastName,
-        cnp: pendingApproveData.cnp,
-        photoLength: pendingApproveData.photo?.length,
-        status: pendingApproveData.status,
-      });
-
-      await this.pendingApproveService
-        .createPendingApprove(pendingApproveData)
-        .toPromise();
-      console.log('Server response received successfully');
-
-      // Succes
-      this.submissionStatus = 'success';
-      this.nextStep();
-    } catch (error: any) {
-      console.error('Error submitting verification:', error);
-
-      // Afișează mai multe detalii despre eroare
-      if (error.error) {
-        console.error('Error details from server:', error.error);
-        this.submitError =
-          error.error.message || error.error.details || error.message;
-      } else {
-        this.submitError =
-          error.message || 'Failed to submit verification. Please try again.';
-      }
-
-      this.submissionStatus = 'error';
-      this.nextStep();
-    } finally {
-      this.isSubmitting = false;
+    // ia user-ul curent
+    const currentUser = await this.authService.me().toPromise();
+    if (!currentUser || !currentUser.id) {
+      throw new Error('You must be logged in to submit verification');
     }
+
+    const userId = currentUser.id;
+    console.log('User ID:', userId);
+
+    // pregătim FormData
+    const formData = new FormData();
+    formData.append("UserId", userId);
+    formData.append("FirstName", this.formData.firstName);
+    formData.append("LastName", this.formData.lastName);
+    formData.append("Cnp", this.formData.cnp);
+    if (this.formData.idDocument) {
+      formData.append("Photo", this.formData.idDocument);
+    }
+
+    console.log("Sending form data:", formData);
+
+    await this.pendingApproveService.createPendingApprove(formData).toPromise();
+
+    // succes
+    this.submissionStatus = 'success';
+    this.nextStep();
+  } catch (error: any) {
+    console.error('Error submitting verification:', error);
+
+    if (error.error) {
+      this.submitError = error.error.message || error.message;
+    } else {
+      this.submitError = error.message || 'Failed to submit verification.';
+    }
+
+    this.submissionStatus = 'error';
+    this.nextStep();
+  } finally {
+    this.isSubmitting = false;
   }
+}
+
 
   retrySubmission(): void {
     this.currentStep = 3;

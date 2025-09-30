@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "decent-essence-473515-h6",
+  "private_key_id": "06234063a0554797e9f48843ef4dcee97e225950",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCo7lhqHZiDZ1Bb\nPQdyxWlE4kbPyREqbHuaHevn9/1hNBxy/oLQef3bhwPgApULS8v4GDSEHsefqnuW\nyc3QJg9xNUf3oM4nP5aJJzNo2SCllDkiF80amfp69D2rSXJjlfWwcGERGOcwMM1j\nTmDf3THJVkJ2FQ4aHd9OeuxZeupoCipwujLnsFlqullKQ3HPFwIu/j7GNJx+XP27\nl0TRm/GfB99zmH/CAI0wZ7WELTiDmljUADcIdMwIJW06dpHrwbibVatDa/0g9L4+\nxiRUQXvdO+QfjyUuo7t/Y9uFN/bgu3/JvSnX20SEcyGn3n4+NyjAgNuQJBatsGcI\nquiIGKBhAgMBAAECggEAAq8t37rKaX0e52I9/+5/3Ji5XhQgdhN8988VqG0V/UFM\nGe4uIzSrCl3X+4ti9afdzPqKfBZ2ntSBS/03LGFscaSyeO541CIUKOgC7r2zgXoM\nWdy1tUBg3OsMX1BGlWtEuQniGvjRtJ/z5Ynxa2E7CStaGUD+pT7YBWnZ31afCqnn\nEghiJVi61jlZoBBAEcF2lDckMI9X+Eqg9tokoG5h6QmoBj1wvpPAFozRs58xgw3/\nI+mdd/LgZH7VzdtskKPBGCJw/n9/Y6skT+rLZaLB1e9cBKMA1xJxvE6/1kfh6uTX\nBUGjf++qGEzNAXoUFG+Yhpi4PoxzH6dCxlEfGUTiYQKBgQDbu+O4tVZhzMX5ARnn\nEFbdN+cZUAkStH9l5v3lwBncMEEp7h898gSSDzJAtI60IqiPKpj5NmaKj7Ium1+d\nTblReoHJ55bgpoejfIddYvZ7TMCAdQKngVorYmwjb5ZDuXS7ITlZ+zjsfX/gEK2i\n/6kIIhXQ6REVrGaz47Rd0WYIsQKBgQDEz/OoBJirg3tnZ8SQ28/TbdVBvm+AqN6b\nD8lnxu11LARtdSJ7u0ZF2Ws7HgDBGVBiSETS7kWbMuLWtiQ3/U4hR1pBbmUCoBd/\n12QYun8n2YmRFYKCg3UPe5WwpAkVYuNZ+cC+ygDD5K7Hd+Nv5+NY5aXtDnWCGe4N\n1gv6/f3+sQKBgFxhXPcN/hg2AFGUvfAgNXTiCN3igT4E9r6/46TRI84n122qeCYR\n9wv1KZp8jrZ7D8TJEvFLhsbgbPgdSJCY2b3AtIpPPGaMfOAl/b8sWRYziYc4KnqD\n7oXo5i/rvRASC1qVOEh1T1RV2wo32Nh7hfQuaF+hbRZgmfktVWpQHAaxAoGAe0Uk\nf6AhX4vCx0mfPHvw96RbZgo5HISoqMaCh5V5NWKUg1pSdt0dbrJ3D1gDcO7CAkzx\njove3Q5KNeFvXgIx5XYjecgDTFmpXlEySKrG6da+6zhlvglIUKI/Z5vWdKazb6+W\noek0AX5CWn0k3vqG0y9Dde8QeqRzDgd7CYH8jIECgYAZUK0MFDZlri33o48ZS4ec\nNYb+jdSnNY0NFhfMcxksjudYQcWE7+n7kyULGm59qmHDAlr4VOxP2/r7Y0qrJCYG\nuwUqo+SMV81CDvZVrXTKM1+JX+tujiQqtnniLEDPFEt4PTVpLvDjGT5j6hhXM0Gk\nJN3w9R3VZJicJZG8zmOp8w==\n-----END PRIVATE KEY-----\n",
+  "client_email": "sasha-app-sa@decent-essence-473515-h6.iam.gserviceaccount.com",
+  "client_id": "114550886506537613186",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sasha-app-sa%40decent-essence-473515-h6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

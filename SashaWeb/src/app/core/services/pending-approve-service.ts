@@ -23,13 +23,12 @@ export class PendingApproveService {
   }
 
   // POST: Crează o cerere nouă
-  createPendingApprove(pendingApprove: PendingApprove): Observable<PendingApprove> {
-    console.log("Am ajuns aici");
-    return this.http.post<PendingApprove>(this.baseUrl, pendingApprove, { 
-      headers: { 'Content-Type': 'application/json' },
-      withCredentials: true 
+  createPendingApprove(formData: FormData): Observable<any> {
+    return this.http.post<any>(this.baseUrl + "/create", formData, {
+      withCredentials: true
     });
   }
+
 
   // PUT: Actualizează o cerere existentă
   updatePendingApprove(id: string, pendingApprove: PendingApprove): Observable<PendingApprove> {
