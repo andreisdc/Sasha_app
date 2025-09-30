@@ -11,8 +11,8 @@
           <i class="fas fa-users"></i>
         </div>
         <div class="stat-info">
-          <h3>24</h3>
-          <span>Total Users</span>
+          <h3>{{ pendingRequests.length }}</h3>
+          <span>Pending Verifications</span>
         </div>
       </div>
       <div class="stat-card">
@@ -44,156 +44,63 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading pending requests...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
     <div class="recent-activity">
-      <h2>Recent Activity</h2>
-      <div class="activity-table">
+      <h2>Pending Verification Requests ({{ pendingRequests.length }})</h2>
+      
+      <div *ngIf="!isLoading && pendingRequests.length === 0" class="empty-state">
+        <i class="fas fa-check-circle"></i>
+        <h3>No Pending Requests</h3>
+        <p>All verification requests have been processed.</p>
+      </div>
+
+      <div *ngIf="!isLoading && pendingRequests.length > 0" class="activity-table">
         <div class="table-header">
-          <div class="col-icon">Type</div>
+          <div class="col-icon">User</div>
           <div class="col-details">Details</div>
-          <div class="col-time">Time</div>
+          <div class="col-time">Submitted</div>
           <div class="col-actions">Actions</div>
         </div>
         
         <div class="table-body">
-          <!-- User Activities -->
-          <div class="table-row">
+          <div *ngFor="let request of pendingRequests" class="table-row">
             <div class="col-icon">
               <div class="icon-wrapper user">
                 <i class="fas fa-user"></i>
               </div>
             </div>
             <div class="col-details">
-              <div class="item-title">New User Registration</div>
-              <div class="item-subtitle">john_doe • john@example.com</div>
-            </div>
-            <div class="col-time">
-              <div class="time">2 minutes ago</div>
-              <div class="date">Dec 15, 2024</div>
-            </div>
-            <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-edit">Edit</button>
-            </div>
-          </div>
-
-          <div class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper user">
-                <i class="fas fa-user"></i>
+              <div class="item-title">{{ request.firstName }} {{ request.lastName }}</div>
+              <div class="item-subtitle">
+                <div><strong>CNP:</strong> {{ request.cnp }}</div>
+                <div><strong>Address:</strong> {{ request.address }}</div>
               </div>
             </div>
-            <div class="col-details">
-              <div class="item-title">User Profile Updated</div>
-              <div class="item-subtitle">sarah_smith • sarah@email.com</div>
-            </div>
             <div class="col-time">
-              <div class="time">15 minutes ago</div>
-              <div class="date">Dec 15, 2024</div>
+              <div class="time">{{ getTimeAgo(request.createdAt) }}</div>
+              <div class="date">{{ request.createdAt | date:'MMM d, y' }}</div>
             </div>
             <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-edit">Edit</button>
-            </div>
-          </div>
-
-          <!-- Property Activities -->
-          <div class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper property">
-                <i class="fas fa-home"></i>
-              </div>
-            </div>
-            <div class="col-details">
-              <div class="item-title">New Property Listed</div>
-              <div class="item-subtitle">Luxury Villa in Mountains • 5 bedrooms</div>
-            </div>
-            <div class="col-time">
-              <div class="time">1 hour ago</div>
-              <div class="date">Dec 15, 2024</div>
-            </div>
-            <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-approve">Approve</button>
-            </div>
-          </div>
-
-          <div class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper property">
-                <i class="fas fa-home"></i>
-              </div>
-            </div>
-            <div class="col-details">
-              <div class="item-title">Property Booking</div>
-              <div class="item-subtitle">Beach House • Booked by mike_johnson</div>
-            </div>
-            <div class="col-time">
-              <div class="time">3 hours ago</div>
-              <div class="date">Dec 15, 2024</div>
-            </div>
-            <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-details">Details</button>
-            </div>
-          </div>
-
-          <div class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper user">
-                <i class="fas fa-user"></i>
-              </div>
-            </div>
-            <div class="col-details">
-              <div class="item-title">User Became Seller</div>
-              <div class="item-subtitle">alex_wilson • Upgraded to seller account</div>
-            </div>
-            <div class="col-time">
-              <div class="time">5 hours ago</div>
-              <div class="date">Dec 15, 2024</div>
-            </div>
-            <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-verify">Verify</button>
-            </div>
-          </div>
-
-          <div class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper property">
-                <i class="fas fa-home"></i>
-              </div>
-            </div>
-            <div class="col-details">
-              <div class="item-title">Property Review Added</div>
-              <div class="item-subtitle">City Apartment • 4.5★ rating by emma_davis</div>
-            </div>
-            <div class="col-time">
-              <div class="time">1 day ago</div>
-              <div class="date">Dec 14, 2024</div>
-            </div>
-            <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-review">Review</button>
-            </div>
-          </div>
-
-          <div class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper user">
-                <i class="fas fa-user"></i>
-              </div>
-            </div>
-            <div class="col-details">
-              <div class="item-title">User Suspended</div>
-              <div class="item-subtitle">spam_account • Violation of terms</div>
-            </div>
-            <div class="col-time">
-              <div class="time">2 days ago</div>
-              <div class="date">Dec 13, 2024</div>
-            </div>
-            <div class="col-actions">
-              <button class="btn-view">View</button>
-              <button class="btn-restore">Restore</button>
+              <button (click)="viewPhoto(request.photo)" class="btn-view" [disabled]="!request.photo">
+                <i class="fas fa-eye"></i> View Photo
+              </button>
+              <button (click)="approveRequest(request)" class="btn-approve">
+                <i class="fas fa-check"></i> Approve
+              </button>
+              <button (click)="rejectRequest(request)" class="btn-reject">
+                <i class="fas fa-times"></i> Reject
+              </button>
             </div>
           </div>
         </div>

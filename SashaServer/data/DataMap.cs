@@ -1793,5 +1793,41 @@ namespace SashaServer.Data
 
             return cmd.ExecuteNonQuery() > 0;
         }
+
+        public bool DeletePendingApprove(Guid id)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    // întâi citesc data creării
+    var checkCmd = new NpgsqlCommand(
+        @"SELECT created_at FROM pending_approve WHERE id = @id",
+        conn
+    );
+    checkCmd.Parameters.AddWithValue("id", id);
+
+    var createdAtObj = checkCmd.ExecuteScalar();
+    if (createdAtObj == null) return false;
+
+    var createdAt = (DateTime)createdAtObj;
+
+    // dacă nu a trecut o lună, nu ștergem
+    if (createdAt > DateTime.UtcNow.AddMonths(-1))
+    {
+        return false;
     }
+
+    // altfel, ștergem efectiv
+    var deleteCmd = new NpgsqlCommand(
+        @"DELETE FROM pending_approve WHERE id = @id",
+        conn
+    );
+    deleteCmd.Parameters.AddWithValue("id", id);
+
+    return deleteCmd.ExecuteNonQuery() > 0;
+}
+
+    }
+
+    
 }

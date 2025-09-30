@@ -3,11 +3,12 @@ using SashaServer.Data;
 using SashaServer.Models;
 using SashaServer.Services;
 using SashaServer.Helpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace SashaServer.Controllers
 {
@@ -32,25 +33,65 @@ namespace SashaServer.Controllers
             _cnpHelper = cnpHelper;
         }
 
+        // --- GET: api/pendingapprove
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            try
+            {
+                var all = _data.GetAllPendingApprove()
+                    .Select(p => new
+                    {
+                        p.FirstName,
+                        p.LastName,
+                        p.Status,
+                        p.FailReason,
+                        CreatedAt = p.CreatedAt,
+                        UpdatedAt = p.UpdatedAt
+                    })
+                    .ToList();
+
+                return Ok(all);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all approvals");
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
         // --- GET: api/pendingapprove/pending
         [HttpGet("pending")]
         public IActionResult GetPendingRequests()
         {
             try
             {
+                // Funcție helper pentru decriptare sigură
+                string TryDecrypt(string encryptedCnp)
+                {
+                    if (string.IsNullOrEmpty(encryptedCnp)) return null;
+                    try
+                    {
+                        return _cnpHelper.MaskCnp(_cnpHelper.DecryptCnp(encryptedCnp));
+                    }
+                    catch
+                    {
+                        _logger.LogWarning("Invalid CNP encountered, skipping decryption");
+                        return null;
+                    }
+                }
+
                 var pendingRequests = _data.GetAllPendingApprove()
                     .Where(p => p.Status == "pending")
                     .Select(p => new
                     {
-                        p.Id,
-                        p.UserId,
                         p.FirstName,
                         p.LastName,
-                        Cnp = _cnpHelper.MaskCnp(_cnpHelper.DecryptCnp(p.Cnp)),
-                        Photo = p.Photo,
-                        Address = p.Address,
+                        Cnp = TryDecrypt(p.Cnp),
+                        p.Photo,
+                        p.Address,
                         p.Status,
-                        p.CreatedAt
+                        CreatedAt = p.CreatedAt
                     })
                     .ToList();
 
@@ -73,8 +114,6 @@ namespace SashaServer.Controllers
                     .Where(p => p.Status != "pending")
                     .Select(p => new
                     {
-                        p.Id,
-                        p.UserId,
                         p.FirstName,
                         p.LastName,
                         p.Status,
@@ -98,7 +137,6 @@ namespace SashaServer.Controllers
         [HttpPost("create")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> Create(
-            [FromForm] Guid UserId,
             [FromForm] string FirstName,
             [FromForm] string LastName,
             [FromForm] string Cnp,
@@ -110,18 +148,8 @@ namespace SashaServer.Controllers
                 if (Photo == null || Photo.Length == 0)
                     return BadRequest(new { message = "Photo is required" });
 
-                // Verifică dacă user-ul are deja o cerere pending
-                var existingRequest = _data.GetAllPendingApprove()
-                    .FirstOrDefault(p => p.UserId == UserId && p.Status == "pending");
-                
-                if (existingRequest != null)
-                    return Conflict(new { message = "You already have a pending verification request" });
-
-                // Creează obiectul PendingApprove
                 var pendingApprove = new PendingApprove
                 {
-                    Id = Guid.NewGuid(),
-                    UserId = UserId,
                     FirstName = FirstName,
                     LastName = LastName,
                     Address = Address,
@@ -130,12 +158,11 @@ namespace SashaServer.Controllers
                     Cnp = _cnpHelper.EncryptCnp(Cnp)
                 };
 
-                // Upload foto în GCP
                 using var ms = new MemoryStream();
                 await Photo.CopyToAsync(ms);
                 ms.Position = 0;
 
-                var fileName = $"verification_{pendingApprove.Id}.png";
+                var fileName = $"verification_{Guid.NewGuid()}.png";
                 var uploadResult = await _googleCloudService.UploadFileAsync(ms, fileName, "image/png");
 
                 if (!uploadResult.Success)
@@ -146,8 +173,6 @@ namespace SashaServer.Controllers
 
                 var response = new
                 {
-                    pendingApprove.Id,
-                    pendingApprove.UserId,
                     pendingApprove.FirstName,
                     pendingApprove.LastName,
                     Cnp = _cnpHelper.MaskCnp(Cnp),
@@ -172,21 +197,18 @@ namespace SashaServer.Controllers
         {
             try
             {
-                var pendingApprove = _data.GetPendingApproveById(id);
+                var pendingApprove = _data.GetAllPendingApprove().FirstOrDefault(p => p.Id == id);
                 if (pendingApprove == null)
                     return NotFound(new { message = "Pending approval not found" });
 
-                // Șterge datele sensibile din baza de date
                 _data.CleanSensitiveData(id);
 
-                // Șterge poza din Google Cloud
                 if (!string.IsNullOrEmpty(pendingApprove.Photo))
                 {
                     var fileName = Path.GetFileName(pendingApprove.Photo);
                     await _googleCloudService.DeleteFileAsync(fileName);
                 }
 
-                // Actualizează status
                 pendingApprove.Status = "approved";
                 pendingApprove.FailReason = null;
                 pendingApprove.UpdatedAt = DateTime.UtcNow;
@@ -196,18 +218,8 @@ namespace SashaServer.Controllers
 
                 _data.UpdatePendingApprove(pendingApprove);
 
-                // Actualizează user-ul
-                var user = _data.GetUserById(pendingApprove.UserId);
-                if (user != null)
-                {
-                    user.IsVerified = true;
-                    user.IsSeller = true;
-                    _data.UpdateUser(user);
-                }
-
                 return Ok(new
                 {
-                    pendingApprove.Id,
                     pendingApprove.FirstName,
                     pendingApprove.LastName,
                     pendingApprove.Status,
@@ -227,21 +239,18 @@ namespace SashaServer.Controllers
         {
             try
             {
-                var pendingApprove = _data.GetPendingApproveById(id);
+                var pendingApprove = _data.GetAllPendingApprove().FirstOrDefault(p => p.Id == id);
                 if (pendingApprove == null)
                     return NotFound(new { message = "Pending approval not found" });
 
-                // Șterge datele sensibile din baza de date
                 _data.CleanSensitiveData(id);
 
-                // Șterge poza din Google Cloud
                 if (!string.IsNullOrEmpty(pendingApprove.Photo))
                 {
                     var fileName = Path.GetFileName(pendingApprove.Photo);
                     await _googleCloudService.DeleteFileAsync(fileName);
                 }
 
-                // Actualizează status
                 pendingApprove.Status = "rejected";
                 pendingApprove.FailReason = request.Reason;
                 pendingApprove.UpdatedAt = DateTime.UtcNow;
@@ -253,7 +262,6 @@ namespace SashaServer.Controllers
 
                 return Ok(new
                 {
-                    pendingApprove.Id,
                     pendingApprove.FirstName,
                     pendingApprove.LastName,
                     pendingApprove.Status,
@@ -264,6 +272,25 @@ namespace SashaServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error rejecting pending request: {Id}", id);
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        // --- DELETE: api/pendingapprove/{id}
+        [HttpDelete("{id}")]
+        public IActionResult Delete(Guid id)
+        {
+            try
+            {
+                var result = _data.DeletePendingApprove(id);
+                if (!result)
+                    return BadRequest(new { message = "Cannot delete this request. You can only delete requests older than 1 month." });
+
+                return Ok(new { message = "Deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting pending approval {Id}", id);
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }

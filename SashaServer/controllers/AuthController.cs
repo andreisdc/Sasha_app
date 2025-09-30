@@ -51,20 +51,31 @@ namespace SashaServer.Controllers
         }
 
         [HttpGet("check-admin")]
-        [Authorize]
+
         public IActionResult CheckAdminAccess()
         {
             try
             {
                 if (!Request.Cookies.TryGetValue("AuthToken", out var token))
+                {
+                    _logger.LogWarning("No AuthToken cookie found");
                     return Ok(new { hasAccess = false });
+                }
 
                 var user = _data.GetUserByToken(token);
-                
-                // ✅ Verifică în baza de date DE FIECARE DATĂ
-                if (user == null  || !user.IsAdmin)
+
+                if (user == null)
                 {
-                    _logger.LogWarning($"Unauthorized admin access attempt by user: {user?.Email}");
+                    _logger.LogWarning($"User not found for token: {token}");
+                    return Ok(new { hasAccess = false });
+                }
+
+                // 🔹 Log valoarea IsAdmin
+                _logger.LogInformation($"User {user.Email} IsAdmin = {user.IsAdmin}");
+
+                if (!user.IsAdmin)
+                {
+                    _logger.LogWarning($"Unauthorized admin access attempt by user: {user.Email}");
                     return Ok(new { hasAccess = false });
                 }
 
@@ -77,8 +88,8 @@ namespace SashaServer.Controllers
             }
         }
 
+
         [HttpGet("check-seller")]
-        [Authorize]
         public IActionResult CheckSellerAccess()
         {
             try
