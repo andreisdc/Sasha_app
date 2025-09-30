@@ -1,36 +1,46 @@
 <div class="component-body">
+  <div class="search-dropdown" [class.show]="isSearchActive">
+    <ul class="search-list">
+      <li>
+        <p>Adults</p>
+      </li>
+      <li>
+        <p>Children</p>
+      </li>
+    </ul>
+  </div>
   <div class="guests-dropdown" [class.show]="isGuestsOpen">
     <ul class="guests-list">
       <li>
         <p>Adults</p>
         <div>
-          <button>-</button>
-          <input type="text" />
-          <button>+</button>
+          <button (click)="removeAdult()">-</button>
+          <p class="counter">{{adultsCounter()}}</p>
+          <button (click)="addAdult()">+</button>
         </div>
       </li>
       <li>
         <p>Children</p>
         <div>
-          <button>-</button>
-          <input type="text" />
-          <button>+</button>
+          <button (click)="removeChild()">-</button>
+          <p class="counter">{{childrenCounter()}}</p>
+          <button (click)="addChild()">+</button>
         </div>
       </li>
       <li>
         <p>Infants</p>
         <div>
-          <button>-</button>
-          <input type="text" />
-          <button>+</button>
+          <button (click)="removeInfant()">-</button>
+          <p class="counter">{{infantsCounter()}}</p>
+          <button (click)="addInfant()">+</button>
         </div>
       </li>
       <li>
         <p>Pets</p>
         <div>
-          <button>-</button>
-          <input type="text" />
-          <button>+</button>
+          <button (click)="removePet()">-</button>
+          <p class="counter">{{petsCounter()}}</p>
+          <button (click)="addPet()">+</button>
         </div>
       </li>
     </ul>
