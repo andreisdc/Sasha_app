@@ -35,6 +35,7 @@ export class SearchSection {
   }
 
   showGuestDropdown = signal(false);
+  showSearchDropdown = signal(false);
   adultsCount = 0;
   childrenCount = 0;
   infantsCount = 0;
@@ -54,5 +55,10 @@ export class SearchSection {
   toggleGuestDropdown() {
     this.showGuestDropdown.update((value) => !value);
     console.log('Guest dropdown toggled!');
+  }
+
+  toggleSearchDropdown() {
+    this.showSearchDropdown.update((value) => !value);
+    console.log('Search dropdown opened!');
   }
 }

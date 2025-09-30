@@ -14,7 +14,7 @@ import {
 })
 export class DropdownMenu {
   @Input() isGuestsOpen = false;
-  @Input() isSearchActive = true;
+  @Input() isSearchActive = false;
 
   adultsCounter = signal(0);
   childrenCounter = signal(0);

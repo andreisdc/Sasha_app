@@ -5,7 +5,11 @@
       <p class="motto-text">Find the place that feels</p>
       <form class="search-bar">
         <div class="field">
-          <input type="text" placeholder="Search place..." />
+          <input
+            type="text"
+            placeholder="Search place..."
+            (focus)="toggleSearchDropdown()"
+          />
         </div>
         <div class="field">
           <input type="date" />
@@ -23,7 +27,10 @@
           />
         </div>
       </form>
-      <app-dropdown-menu [isGuestsOpen]="showGuestDropdown()" />
+      <app-dropdown-menu
+        [isGuestsOpen]="showGuestDropdown()"
+        [isSearchActive]="showSearchDropdown()"
+      />
     </div>
 
     <div
