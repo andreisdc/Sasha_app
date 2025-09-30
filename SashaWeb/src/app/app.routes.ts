@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from '../app/core/guard/auth-guard';
+import { AdminGuard } from '../app/core/guard/admin-guard'; // ✅ Adaugă Admin Guard
 
 export const routes: Routes = [
   {
@@ -27,7 +28,14 @@ export const routes: Routes = [
     path: 'becomeSeller',
     loadComponent: () =>
       import('./pages/become-seller-page/become-seller-page').then((m) => m.BecomeSellerPageComponent),
-    canActivate: [AuthGuard], // 🔒 Doar utilizatorii autentificați pot deveni sellers
+    canActivate: [AuthGuard],
+  },
+  // ✅ Adaugă ruta de admin securizată
+  {
+    path: 'admin/dashboard',
+    loadComponent: () =>
+      import('./pages/admin-page/admin-page').then((m) => m.AdminPage),
+    canActivate: [AuthGuard, AdminGuard], // 🔒 Dublă securizare
   },
   {
     path: '',

@@ -84,6 +84,20 @@ export class AuthService {
       );
   }
 
+   // ✅ METODĂ NOUĂ - Verifică acces admin cu backend-ul
+  checkAdminAccess(): Observable<{ hasAccess: boolean }> {
+    return this.http.get<{ hasAccess: boolean }>(`${this.baseUrl}/check-admin`, { 
+      withCredentials: true 
+    });
+  }
+
+  // ✅ METODĂ NOUĂ - Verifică acces seller cu backend-ul
+  checkSellerAccess(): Observable<{ hasAccess: boolean }> {
+    return this.http.get<{ hasAccess: boolean }>(`${this.baseUrl}/check-seller`, { 
+      withCredentials: true 
+    });
+  }
+
   updateUser(data: Partial<AuthUser>): Observable<AuthUser> {
     return this.http.put(`${this.baseUrl}/update`, data, {
       headers: { 'Content-Type': 'application/json' },

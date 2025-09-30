@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SashaServer.Data;
 using SashaServer.Models;
@@ -47,6 +48,59 @@ namespace SashaServer.Controllers
 
             _data.AddUser(user);
             return Ok(new { message = "User registered successfully" });
+        }
+
+        [HttpGet("check-admin")]
+        [Authorize]
+        public IActionResult CheckAdminAccess()
+        {
+            try
+            {
+                if (!Request.Cookies.TryGetValue("AuthToken", out var token))
+                    return Ok(new { hasAccess = false });
+
+                var user = _data.GetUserByToken(token);
+                
+                // ✅ Verifică în baza de date DE FIECARE DATĂ
+                if (user == null  || !user.IsAdmin)
+                {
+                    _logger.LogWarning($"Unauthorized admin access attempt by user: {user?.Email}");
+                    return Ok(new { hasAccess = false });
+                }
+
+                return Ok(new { hasAccess = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking admin access");
+                return Ok(new { hasAccess = false });
+            }
+        }
+
+        [HttpGet("check-seller")]
+        [Authorize]
+        public IActionResult CheckSellerAccess()
+        {
+            try
+            {
+                if (!Request.Cookies.TryGetValue("AuthToken", out var token))
+                    return Ok(new { hasAccess = false });
+
+                var user = _data.GetUserByToken(token);
+                
+                // ✅ Verifică în baza de date DE FIECARE DATĂ
+                if (user == null || !user.IsSeller)
+                {
+                    return Ok(new { hasAccess = false });
+                }
+
+                return Ok(new { hasAccess = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking seller access");
+                return Ok(new { hasAccess = false });
+            }
         }
 
         [HttpPost("login")]
