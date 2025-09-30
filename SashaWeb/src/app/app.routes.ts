@@ -17,6 +17,11 @@ export const routes: Routes = [
         (m) => m.HomeComponent,
       ),
   },
+  { 
+    path: 'property/:id',
+    loadComponent: () =>
+      import('./pages/property-details/property-details').then(m => m.PropertyDetails) 
+  },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: '**', redirectTo: 'home', pathMatch: 'full' },
 ];

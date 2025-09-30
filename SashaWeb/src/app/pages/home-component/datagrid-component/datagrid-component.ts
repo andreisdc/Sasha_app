@@ -18,6 +18,7 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { Property } from '../../../core/interfaces/property.interface';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-datagrid-component',
@@ -34,6 +35,7 @@ import { Property } from '../../../core/interfaces/property.interface';
     NzAvatarModule,
     NzSpinModule,
     NzCarouselModule,
+    RouterModule
   ],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less',
@@ -41,6 +43,7 @@ import { Property } from '../../../core/interfaces/property.interface';
 })
 export class DatagridComponent {
   private propertyService = inject(PropertyService);
+  private router = inject(Router);
 
   // local UI state as signals
   private readonly _currentIndex = signal<Record<number, number>>({});
@@ -101,6 +104,12 @@ export class DatagridComponent {
 
   onPageChange(page: number): void {
     this._pageIndex.set(page);
+  }
+
+  onCardClick(id: number) 
+  {
+    this.router.navigate(['/property', id]);
+    console.log('Navigating to property with ID: ${id}');
   }
 
   next(prop: Property) {
