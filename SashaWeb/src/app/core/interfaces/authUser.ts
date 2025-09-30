@@ -10,4 +10,5 @@ export interface AuthUser {
   rating?: number;
   profilePicture?: string;  // data URL sau URL imagine
   isSeller?: boolean;       // adaugă aici
+  isAdmin?: boolean | undefined;
 }

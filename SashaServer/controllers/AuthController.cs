@@ -39,6 +39,9 @@ namespace SashaServer.Controllers
                 PhoneNumber = req.PhoneNumber,
                 PasswordHash = HashPassword(req.Password),
                 Rating = 0,
+                IsSeller = false,        // ✅ Default false la înregistrare
+                IsAdmin = false,         // ✅ Default false la înregistrare
+                IsVerified = false,      // ✅ Default false - necesită verificare email/etc
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -46,45 +49,45 @@ namespace SashaServer.Controllers
             return Ok(new { message = "User registered successfully" });
         }
 
-       [HttpPost("login")]
-public IActionResult Login([FromBody] LoginRequest req)
-{
-    var user = _data.GetUserByEmail(req.Email);
-    if (user == null || user.PasswordHash != HashPassword(req.Password))
-        return Unauthorized(new { message = "Invalid credentials" });
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest req)
+        {
+            var user = _data.GetUserByEmail(req.Email);
+            if (user == null || user.PasswordHash != HashPassword(req.Password))
+                return Unauthorized(new { message = "Invalid credentials" });
 
-    // Ștergem toate sesiunile existente pentru acest user
-    _data.DeleteAllSessionsForUser(user.Id);
+            // Ștergem toate sesiunile existente pentru acest user
+            _data.DeleteAllSessionsForUser(user.Id);
 
-    // Creăm sesiunea nouă
-    var token = Guid.NewGuid().ToString();
-    var expiresAt = req.RememberMe ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddDays(1);
-    _data.AddSession(user.Id, token, expiresAt);
+            // Creăm sesiunea nouă
+            var token = Guid.NewGuid().ToString();
+            var expiresAt = req.RememberMe ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddDays(1);
+            _data.AddSession(user.Id, token, expiresAt);
 
-    Response.Cookies.Append("AuthToken", token, new CookieOptions
-    {
-        HttpOnly = true,
-        Secure = false, // pune true în producție cu HTTPS
-        Expires = expiresAt,
-        SameSite = SameSiteMode.Strict
-    });
+            Response.Cookies.Append("AuthToken", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, // pune true în producție cu HTTPS
+                Expires = expiresAt,
+                SameSite = SameSiteMode.Strict
+            });
 
-    return Ok(new
-    {
-        token,
-        username = user.Username,
-        email = user.Email,
-        phoneNumber = user.PhoneNumber,
-        firstName = user.FirstName,
-        lastName = user.LastName,
-        rating = user.Rating,
-        profilePicture = user.ProfilePicture,
-        isSeller = user.IsSeller,
-        expiresAt
-    });
-}
-
-
+            return Ok(new
+            {
+                token,
+                username = user.Username,
+                email = user.Email,
+                phoneNumber = user.PhoneNumber,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                rating = user.Rating,
+                profilePicture = user.ProfilePicture,
+                isSeller = user.IsSeller,    // ✅ Pentru UX în frontend
+                isAdmin = user.IsAdmin,      // ✅ Pentru UX în frontend
+                isVerified = user.IsVerified,// ✅ Pentru UX în frontend
+                expiresAt
+            });
+        }
 
         [HttpPost("logout")]
         public IActionResult Logout()
@@ -116,7 +119,10 @@ public IActionResult Login([FromBody] LoginRequest req)
                 user.FirstName,
                 user.LastName,
                 user.Rating,
-                user.ProfilePicture
+                user.ProfilePicture,
+                isSeller = user.IsSeller,    // ✅ Pentru UX în frontend
+                isAdmin = user.IsAdmin,      // ✅ Pentru UX în frontend
+                isVerified = user.IsVerified // ✅ Pentru UX în frontend
             });
         }
 
@@ -134,7 +140,17 @@ public IActionResult Login([FromBody] LoginRequest req)
             user.ProfilePicture = req.ProfilePicture ?? user.ProfilePicture;
 
             _data.UpdateUser(user);
-            return Ok(new { message = "User updated", user });
+            return Ok(new { 
+                message = "User updated", 
+                user = new {
+                    user.Username,
+                    user.PhoneNumber,
+                    user.ProfilePicture,
+                    isSeller = user.IsSeller,    // ✅ Include și noile câmpuri
+                    isAdmin = user.IsAdmin,
+                    isVerified = user.IsVerified
+                }
+            });
         }
 
         private static string HashPassword(string password)

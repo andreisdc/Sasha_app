@@ -497,17 +497,87 @@
     }
   }
 }
+.admin-badge {
+  margin-left: 4px;
+  color: #ff4757;
+  font-size: 0.8em;
+  animation: pulse 2s infinite;
+}
 
+.admin-indicator {
+  margin-left: 6px;
+  color: #ff4757;
+  font-size: 0.9em;
+}
+
+.view-mode-indicator {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  font-weight: 600;
+  
+  &.admin-mode {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+  }
+  
+  &.user-mode {
+    background: rgba(30, 167, 253, 0.1);
+    color: #1ea7fd;
+    border: 1px solid rgba(30, 167, 253, 0.3);
+  }
+}
+
+.admin-option {
+  color: #ff4757 !important;
+  border-top: 1px solid rgba(225, 229, 233, 0.6) !important;
+  border-bottom: 1px solid rgba(225, 229, 233, 0.6) !important;
+  margin: 4px 0 !important;
+  
+  &:hover {
+    background: rgba(255, 71, 87, 0.1) !important;
+    color: #ff4757 !important;
+    
+    i {
+      color: #ff4757 !important;
+      animation: spin 1s ease-in-out;
+    }
+  }
+}
+
+.admin-nav {
+  background: linear-gradient(135deg, #ff4757, #ff3742) !important;
+  color: white !important;
+  
+  i {
+    color: white !important;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #ff3742, #ff2e3a) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Asigură-te că indicatorul de status rămâne vizibil
 .status-dot {
   position: absolute;
   bottom: 0px;
   right: 0px;
-  width: 12px; // Ușor mai mare pentru vizibilitate
+  width: 12px;
   height: 12px;
   background: #00d2d3;
   border: 2px solid white;
   border-radius: 50%;
   animation: statusPulse 2s ease-in-out infinite;
-  z-index: 100; // MULT mai mare, în fața imaginii
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // Shadow pentru contrast
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

@@ -19,6 +19,7 @@ export class Navbar implements OnInit {
   avatarColor = '';
   dropdownOpen = false;
   isBrowser: boolean;
+  isAdminView = false; // ✅ Nouă variabilă pentru modul admin
 
   constructor(
     private router: Router,
@@ -29,23 +30,33 @@ export class Navbar implements OnInit {
   }
 
   async ngOnInit() {
-    if (this.isBrowser) {
-      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-      if (storedUser) {
-        this.user = JSON.parse(storedUser);
-        this.isLoggedIn = true;
-      } else {
-        try {
-          this.user = await firstValueFrom(this.authService.me());
-          this.isLoggedIn = !!this.user;
-        } catch {
-          this.user = null;
-          this.isLoggedIn = false;
+  if (this.isBrowser) {
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (storedUser) {
+      this.user = JSON.parse(storedUser);
+      this.isLoggedIn = true;
+      
+      // ✅ Folosește ?? false pentru a trata undefined
+      const adminView = localStorage.getItem('adminView') || sessionStorage.getItem('adminView');
+      this.isAdminView = adminView === 'true' && (this.user?.isAdmin ?? false);
+    } else {
+      try {
+        this.user = await firstValueFrom(this.authService.me());
+        this.isLoggedIn = !!this.user;
+        
+        // ✅ Aici la fel
+        if (this.user?.isAdmin) {
+          const adminView = localStorage.getItem('adminView') || sessionStorage.getItem('adminView');
+          this.isAdminView = adminView === 'true' && (this.user?.isAdmin ?? false);
         }
+      } catch {
+        this.user = null;
+        this.isLoggedIn = false;
       }
-      this.setAvatarColor();
     }
+    this.setAvatarColor();
   }
+}
 
   toggleDropdown() { this.dropdownOpen = !this.dropdownOpen; }
 
@@ -63,7 +74,35 @@ export class Navbar implements OnInit {
   goToProperties() { this.dropdownOpen = false; this.router.navigate(['/properties']); }
   goToHistory() { this.dropdownOpen = false; this.router.navigate(['/history']); }
 
+  // ✅ Nouă metodă pentru comutarea între moduri
+  toggleAdminView() {
+    if (this.user?.isAdmin) {
+      this.isAdminView = !this.isAdminView;
+      
+      // Salvează preferința
+      if (this.isBrowser) {
+        const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
+        storage.setItem('adminView', this.isAdminView.toString());
+      }
+      
+      // Redirecționează către dashboard-ul admin sau înapoi la home
+      if (this.isAdminView) {
+        this.router.navigate(['/admin/dashboard']);
+      } else {
+        this.router.navigate(['/home']);
+      }
+      
+      this.dropdownOpen = false;
+    }
+  }
+
   logout() {
+    // ✅ Resetează și modul admin la logout
+    if (this.isBrowser) {
+      localStorage.removeItem('adminView');
+      sessionStorage.removeItem('adminView');
+    }
+    this.isAdminView = false;
     this.authService.logout();
     this.isLoggedIn = false;
     this.user = null;
