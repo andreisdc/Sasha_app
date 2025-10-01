@@ -19,7 +19,7 @@ export class Navbar implements OnInit {
   avatarColor = '';
   dropdownOpen = false;
   isBrowser: boolean;
-  isAdminView = false; // ✅ Nouă variabilă pentru modul admin
+  isAdminView = false; // ✅ Variabilă pentru modul admin
 
   constructor(
     private router: Router,
@@ -30,33 +30,33 @@ export class Navbar implements OnInit {
   }
 
   async ngOnInit() {
-  if (this.isBrowser) {
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (storedUser) {
-      this.user = JSON.parse(storedUser);
-      this.isLoggedIn = true;
-      
-      // ✅ Folosește ?? false pentru a trata undefined
-      const adminView = localStorage.getItem('adminView') || sessionStorage.getItem('adminView');
-      this.isAdminView = adminView === 'true' && (this.user?.isAdmin ?? false);
-    } else {
-      try {
-        this.user = await firstValueFrom(this.authService.me());
-        this.isLoggedIn = !!this.user;
+    if (this.isBrowser) {
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (storedUser) {
+        this.user = JSON.parse(storedUser);
+        this.isLoggedIn = true;
         
-        // ✅ Aici la fel
-        if (this.user?.isAdmin) {
-          const adminView = localStorage.getItem('adminView') || sessionStorage.getItem('adminView');
-          this.isAdminView = adminView === 'true' && (this.user?.isAdmin ?? false);
+        // ✅ Restabilește starea adminView
+        const adminView = localStorage.getItem('adminView') || sessionStorage.getItem('adminView');
+        this.isAdminView = adminView === 'true' && (this.user?.isAdmin ?? false);
+      } else {
+        try {
+          this.user = await firstValueFrom(this.authService.me());
+          this.isLoggedIn = !!this.user;
+          
+          // ✅ Restabilește starea adminView și pentru user-ul din me()
+          if (this.user?.isAdmin) {
+            const adminView = localStorage.getItem('adminView') || sessionStorage.getItem('adminView');
+            this.isAdminView = adminView === 'true' && (this.user?.isAdmin ?? false);
+          }
+        } catch {
+          this.user = null;
+          this.isLoggedIn = false;
         }
-      } catch {
-        this.user = null;
-        this.isLoggedIn = false;
       }
+      this.setAvatarColor();
     }
-    this.setAvatarColor();
   }
-}
 
   toggleDropdown() { this.dropdownOpen = !this.dropdownOpen; }
 
@@ -74,8 +74,25 @@ export class Navbar implements OnInit {
   goToProperties() { this.dropdownOpen = false; this.router.navigate(['/properties']); }
   goToHistory() { this.dropdownOpen = false; this.router.navigate(['/history']); }
 
-  // ✅ Nouă metodă pentru comutarea între moduri
+  // ✅ Navigare directă către Admin Dashboard
+  goToAdminDashboard() {
+    console.log('🎯 goToAdminDashboard - Navigare către dashboard');
+    if (this.user?.isAdmin) {
+      this.isAdminView = true;
+      
+      // Salvează preferința
+      if (this.isBrowser) {
+        const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
+        storage.setItem('adminView', 'true');
+      }
+      
+      this.router.navigate(['/admin/dashboard']);
+    }
+  }
+
+  // ✅ Comutare mod admin fără navigare
   toggleAdminView() {
+    console.log('🔄 toggleAdminView - Comutare mod');
     if (this.user?.isAdmin) {
       this.isAdminView = !this.isAdminView;
       
@@ -85,19 +102,16 @@ export class Navbar implements OnInit {
         storage.setItem('adminView', this.isAdminView.toString());
       }
       
-      // Redirecționează către dashboard-ul admin sau înapoi la home
-      if (this.isAdminView) {
-        this.router.navigate(['/admin/dashboard']);
-      } else {
-        this.router.navigate(['/home']);
-      }
-      
+      console.log('✅ toggleAdminView - Mod admin:', this.isAdminView);
       this.dropdownOpen = false;
+      
+      // ✅ Doar comută modul, nu navighează
+      // Utilizatorul rămâne pe pagina curentă
     }
   }
 
   logout() {
-    // ✅ Resetează și modul admin la logout
+    // ✅ Resetează modul admin la logout
     if (this.isBrowser) {
       localStorage.removeItem('adminView');
       sessionStorage.removeItem('adminView');

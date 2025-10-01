@@ -10,9 +10,12 @@
     <a routerLink="/destinations" class="nav-link"><i class="fas fa-map-marked-alt"></i> <span>Destinations</span></a>
     <a routerLink="/experiences" class="nav-link"><i class="fas fa-star"></i> <span>Experiences</span></a>
     
-    <!-- ✅ Afișează Admin Dashboard dacă este în mod admin -->
-    <a *ngIf="isAdminView" routerLink="/admin/dashboard" class="nav-link admin-nav">
-      <i class="fas fa-shield-alt"></i> <span>Admin Dashboard</span>
+    <!-- ✅ Buton Admin Dashboard care duce direct la dashboard -->
+      <a *ngIf="user?.isAdmin && isAdminView" 
+       (click)="goToAdminDashboard()" 
+       class="nav-link admin-nav active">
+      <i class="fas fa-shield-alt"></i> 
+      <span>Admin Dashboard</span>
     </a>
   </div>
 
@@ -37,7 +40,7 @@
             <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
           </ng-container>
           <ng-template #initial>
-            {{ (user?.username?.charAt(0) || 'U') | uppercase }}
+            {{ userInitial }}
           </ng-template>
         </div>
         <div class="status-dot"></div>
@@ -50,7 +53,7 @@
                 <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
               </ng-container>
               <ng-template #initialDropdown>
-                {{ (user?.username?.charAt(0) || 'U') | uppercase }}
+                {{ userInitial }}
               </ng-template>
             </div>
             <div class="user-details">
@@ -76,10 +79,10 @@
           <div class="dropdown-menu">
             <a (click)="goToProfile()"><i class="fas fa-user"></i> My Profile</a>
             
-            <!-- ✅ Opțiunea de comutare între moduri pentru admini -->
+            <!-- ✅ Switch-ul care doar comută modul, fără navigare -->
             <a *ngIf="user?.isAdmin" (click)="toggleAdminView()" class="admin-option">
               <i class="fas fa-sync-alt"></i> 
-              {{ isAdminView ? 'Switch to User' : 'Switch to Admin' }}
+              {{ isAdminView ? 'Switch to User View' : 'Switch to Admin View' }}
             </a>
             
             <a *ngIf="!user?.isSeller && !isAdminView" (click)="becomeSeller()" class="seller-option">

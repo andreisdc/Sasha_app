@@ -1772,18 +1772,47 @@ namespace SashaServer.Data
             return list;
         }
 
-       public bool RejectAndCleanData(Guid id, string failReason)
+      
+
+
+
+        // ✅ METODĂ SEPARATĂ pentru aprobare (opțional)
+      // ✅ METODĂ pentru aprobare - setează spații goale
+public bool ApproveAndCleanData(Guid id)
 {
     using var conn = new NpgsqlConnection(_connectionString);
     conn.Open();
 
     var cmd = new NpgsqlCommand(
         @"UPDATE pending_approve SET 
+          status = 'approved',
+          fail_reason = NULL,
           cnp = ' ',
           address = ' ',
           photo = ' ',
+          updated_at = @updated_at
+          WHERE id = @id",
+        conn);
+
+    cmd.Parameters.AddWithValue("id", id);
+    cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+
+    return cmd.ExecuteNonQuery() > 0;
+}
+
+// ✅ METODĂ pentru respingere - setează spații goale
+public bool RejectAndCleanData(Guid id, string failReason)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"UPDATE pending_approve SET 
           status = 'rejected',
           fail_reason = @fail_reason,
+          cnp = ' ',
+          address = ' ',
+          photo = ' ',
           updated_at = @updated_at
           WHERE id = @id",
         conn);
@@ -1795,6 +1824,7 @@ namespace SashaServer.Data
     return cmd.ExecuteNonQuery() > 0;
 }
 
+// ✅ Ștergeți sau modificați CleanSensitiveData să nu mai fie folosită
 public bool CleanSensitiveData(Guid id)
 {
     using var conn = new NpgsqlConnection(_connectionString);
@@ -1814,29 +1844,6 @@ public bool CleanSensitiveData(Guid id)
 
     return cmd.ExecuteNonQuery() > 0;
 }
-
-        // ✅ METODĂ SEPARATĂ pentru aprobare (opțional)
-        public bool ApproveAndCleanData(Guid id)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-
-            var cmd = new NpgsqlCommand(
-                @"UPDATE pending_approve SET 
-          cnp = '[REDACTED]',
-          address = '[REDACTED]',
-          photo = '[REDACTED]',
-          status = 'approved',
-          fail_reason = NULL,
-          updated_at = @updated_at
-          WHERE id = @id",
-                conn);
-
-            cmd.Parameters.AddWithValue("id", id);
-            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
-
-            return cmd.ExecuteNonQuery() > 0;
-        }
 
         public bool DeletePendingApprove(Guid id)
         {
