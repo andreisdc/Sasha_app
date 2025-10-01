@@ -1774,58 +1774,84 @@ namespace SashaServer.Data
         }
 
         // ✅ METODĂ NOUĂ - Clean sensitive data
-        public bool CleanSensitiveData(Guid id)
+        public bool CleanSensitiveData(Guid id, string failReason = null)
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
 
             var cmd = new NpgsqlCommand(
                 @"UPDATE pending_approve SET 
-          cnp = NULL,
-          address = NULL,
-          photo = NULL,
+          cnp = '[REDACTED]',
+          address = '[REDACTED]',
+          photo = '[REDACTED]',
+          status = 'rejected',
+          fail_reason = @fail_reason,
           updated_at = @updated_at
           WHERE id = @id",
                 conn);
 
             cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("fail_reason", failReason ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
 
             return cmd.ExecuteNonQuery() > 0;
         }
 
-        public bool DeletePendingApprove(Guid id)
+public bool RejectAndCleanData(Guid id, string failReason)
 {
     using var conn = new NpgsqlConnection(_connectionString);
     conn.Open();
 
-    // întâi citesc data creării
-    var checkCmd = new NpgsqlCommand(
-        @"SELECT created_at FROM pending_approve WHERE id = @id",
-        conn
-    );
-    checkCmd.Parameters.AddWithValue("id", id);
+    var cmd = new NpgsqlCommand(
+        @"UPDATE pending_approve SET 
+          cnp = '[REDACTED]',
+          address = '[REDACTED]',
+          photo = '[REDACTED]',
+          status = 'rejected',
+          fail_reason = @fail_reason,
+          updated_at = @updated_at
+          WHERE id = @id",
+        conn);
 
-    var createdAtObj = checkCmd.ExecuteScalar();
-    if (createdAtObj == null) return false;
+    cmd.Parameters.AddWithValue("id", id);
+    cmd.Parameters.AddWithValue("fail_reason", failReason ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
 
-    var createdAt = (DateTime)createdAtObj;
-
-    // dacă nu a trecut o lună, nu ștergem
-    if (createdAt > DateTime.UtcNow.AddMonths(-1))
-    {
-        return false;
-    }
-
-    // altfel, ștergem efectiv
-    var deleteCmd = new NpgsqlCommand(
-        @"DELETE FROM pending_approve WHERE id = @id",
-        conn
-    );
-    deleteCmd.Parameters.AddWithValue("id", id);
-
-    return deleteCmd.ExecuteNonQuery() > 0;
+    return cmd.ExecuteNonQuery() > 0;
 }
+
+        public bool DeletePendingApprove(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+
+            // întâi citesc data creării
+            var checkCmd = new NpgsqlCommand(
+                @"SELECT created_at FROM pending_approve WHERE id = @id",
+                conn
+            );
+            checkCmd.Parameters.AddWithValue("id", id);
+
+            var createdAtObj = checkCmd.ExecuteScalar();
+            if (createdAtObj == null) return false;
+
+            var createdAt = (DateTime)createdAtObj;
+
+            // dacă nu a trecut o lună, nu ștergem
+            if (createdAt > DateTime.UtcNow.AddMonths(-1))
+            {
+                return false;
+            }
+
+            // altfel, ștergem efectiv
+            var deleteCmd = new NpgsqlCommand(
+                @"DELETE FROM pending_approve WHERE id = @id",
+                conn
+            );
+            deleteCmd.Parameters.AddWithValue("id", id);
+
+            return deleteCmd.ExecuteNonQuery() > 0;
+        }
 
     }
 

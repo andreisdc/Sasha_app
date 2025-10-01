@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { PendingApproveService } from '../../core/services/pending-approve-service';
 import { AuthService } from '../../core/services/auth-service';
 import { PendingApprove } from '../../core/interfaces/pendingApproveInterface';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-admin-page',
@@ -17,78 +18,108 @@ export class AdminPage implements OnInit {
   isLoading = true;
   errorMessage = '';
 
-  constructor(
-    private adminDashboardService: PendingApproveService,
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef); // ✅ ADAUGĂ ASTA
+  private adminDashboardService = inject(PendingApproveService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   async ngOnInit() {
     try {
-      const hasAccess = await this.authService.checkAdminAccess().toPromise();
+      const hasAccess = await firstValueFrom(this.authService.checkAdminAccess());
       if (!hasAccess?.hasAccess) {
         this.router.navigate(['/access-denied']);
         return;
       }
-      this.loadPendingRequests();
+      await this.loadPendingRequests();
     } catch (error) {
       console.error('Admin access check failed:', error);
       this.router.navigate(['/access-denied']);
     }
   }
 
-  loadPendingRequests() {
+  async loadPendingRequests() {
+    console.log('🔹 1. Setting isLoading to true');
     this.isLoading = true;
     this.errorMessage = '';
+    this.cdr.detectChanges(); // ✅ Forțează update imediat
 
-    this.adminDashboardService.getAllPendingApprovals().subscribe({
-      next: (requests) => {
-        this.pendingRequests = requests;
+    try {
+      console.log('🔹 2. Making API call...');
+      const requests = await firstValueFrom(
+        this.adminDashboardService.getAllPendingApprovals()
+      );
+      
+      console.log('🔹 3. API response received:', requests?.length);
+
+      this.ngZone.run(() => {
+        console.log('🔹 4. Inside ngZone.run');
+        this.pendingRequests = requests || [];
         this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading pending requests:', error);
+        console.log('🔹 5. isLoading set to:', this.isLoading);
+        this.cdr.detectChanges(); // ✅ Forțează update UI
+      });
+
+    } catch (error) {
+      console.error('❌ Error loading pending requests:', error);
+      
+      this.ngZone.run(() => {
         this.errorMessage = 'Failed to load pending requests';
         this.isLoading = false;
-      }
-    });
+        this.pendingRequests = [];
+        this.cdr.detectChanges(); // ✅ Forțează update UI
+      });
+    }
   }
 
-  approveRequest(request: PendingApprove) {
+  async approveRequest(request: PendingApprove) {
     if (!confirm('Are you sure you want to approve this verification request?')) {
       return;
     }
 
-    this.adminDashboardService.approvePendingApprove(request).subscribe({
-      next: () => {
+    try {
+      await firstValueFrom(this.adminDashboardService.approvePendingApprove(request));
+      
+      this.ngZone.run(() => {
         alert('Request approved successfully!');
-        this.loadPendingRequests();
-      },
-      error: (error) => {
-        console.error('Error approving request:', error);
+        this.pendingRequests = this.pendingRequests.filter(req => req.cnp !== request.cnp);
+        this.cdr.detectChanges(); // ✅ Forțează update UI
+      });
+
+    } catch (error) {
+      console.error('Error approving request:', error);
+      this.ngZone.run(() => {
         alert('Error approving request. Please try again.');
-      }
-    });
+      });
+    }
   }
 
-  rejectRequest(request: PendingApprove) {
+  async rejectRequest(request: PendingApprove) {
     const reason = prompt('Please enter the reason for rejection:');
+    console.log(request.id);
     if (reason === null) return;
     if (!reason?.trim()) {
       alert('Please provide a rejection reason');
       return;
     }
 
-    this.adminDashboardService.rejectPendingApprove(request, reason.trim()).subscribe({
-      next: () => {
+    try {
+      await firstValueFrom(
+        this.adminDashboardService.rejectPendingApprove(request.id, reason.trim())
+      );
+
+      this.ngZone.run(() => {
         alert('Request rejected successfully!');
-        this.loadPendingRequests();
-      },
-      error: (error) => {
-        console.error('Error rejecting request:', error);
+        this.pendingRequests = this.pendingRequests.filter(req => req.cnp !== request.cnp);
+        this.cdr.detectChanges(); // ✅ Forțează update UI
+      });
+
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      this.ngZone.run(() => {
         alert('Error rejecting request. Please try again.');
-      }
-    });
+      });
+    }
   }
 
   viewPhoto(photoUrl?: string) {

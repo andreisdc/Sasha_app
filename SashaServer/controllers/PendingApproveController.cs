@@ -85,6 +85,7 @@ namespace SashaServer.Controllers
                     .Where(p => p.Status == "pending")
                     .Select(p => new
                     {
+                        p.Id,
                         p.FirstName,
                         p.LastName,
                         Cnp = TryDecrypt(p.Cnp),
@@ -114,6 +115,7 @@ namespace SashaServer.Controllers
                     .Where(p => p.Status != "pending")
                     .Select(p => new
                     {
+                        p.Id,
                         p.FirstName,
                         p.LastName,
                         p.Status,
@@ -234,47 +236,49 @@ namespace SashaServer.Controllers
         }
 
         // --- PUT: api/pendingapprove/{id}/reject
-        [HttpPut("{id}/reject")]
-        public async Task<IActionResult> Reject(Guid id, [FromBody] RejectRequest request)
+       [HttpPut("{id}/reject")]
+public async Task<IActionResult> Reject(Guid id, [FromBody] RejectRequest request)
+{
+    try
+    {
+        var pendingApprove = _data.GetAllPendingApprove().FirstOrDefault(p => p.Id == id);
+        if (pendingApprove == null)
+            return NotFound(new { message = "Pending approval not found" });
+
+        // Șterge fișierul foto din Google Cloud dacă există
+        if (!string.IsNullOrEmpty(pendingApprove.Photo) && pendingApprove.Photo != "[REDACTED]")
         {
-            try
-            {
-                var pendingApprove = _data.GetAllPendingApprove().FirstOrDefault(p => p.Id == id);
-                if (pendingApprove == null)
-                    return NotFound(new { message = "Pending approval not found" });
-
-                _data.CleanSensitiveData(id);
-
-                if (!string.IsNullOrEmpty(pendingApprove.Photo))
-                {
-                    var fileName = Path.GetFileName(pendingApprove.Photo);
-                    await _googleCloudService.DeleteFileAsync(fileName);
-                }
-
-                pendingApprove.Status = "rejected";
-                pendingApprove.FailReason = request.Reason;
-                pendingApprove.UpdatedAt = DateTime.UtcNow;
-                pendingApprove.Cnp = null;
-                pendingApprove.Address = null;
-                pendingApprove.Photo = null;
-
-                _data.UpdatePendingApprove(pendingApprove);
-
-                return Ok(new
-                {
-                    pendingApprove.FirstName,
-                    pendingApprove.LastName,
-                    pendingApprove.Status,
-                    pendingApprove.FailReason,
-                    pendingApprove.UpdatedAt
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error rejecting pending request: {Id}", id);
-                return StatusCode(500, new { message = "Internal server error" });
-            }
+            var fileName = Path.GetFileName(pendingApprove.Photo);
+            await _googleCloudService.DeleteFileAsync(fileName);
         }
+
+        // ✅ Mai întâi curăță datele sensibile
+        var cleanSuccess = _data.CleanSensitiveData(id);
+        
+        // ✅ Apoi actualizează statusul și motivul
+        if (cleanSuccess)
+        {
+            pendingApprove.Status = "rejected";
+            pendingApprove.FailReason = request.Reason;
+            pendingApprove.UpdatedAt = DateTime.UtcNow;
+            _data.UpdatePendingApprove(pendingApprove);
+        }
+
+        return Ok(new
+        {
+            pendingApprove.FirstName,
+            pendingApprove.LastName,
+            Status = "rejected",
+            FailReason = request.Reason,
+            UpdatedAt = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error rejecting pending request: {Id}", id);
+        return StatusCode(500, new { message = "Internal server error" });
+    }
+}
 
         // --- DELETE: api/pendingapprove/{id}
         [HttpDelete("{id}")]

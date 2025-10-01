@@ -42,16 +42,20 @@ export class PendingApproveService {
   }
 
   // 🔹 PUT: Respinge o cerere (trimite obiectul + motivul)
-  rejectPendingApprove(request: PendingApprove, reason: string): Observable<PendingApprove> {
-    const payload: RejectRequest & PendingApprove = {
-      ...request,
-      reason
-    };
-    return this.http.put<PendingApprove>(`${this.baseUrl}/reject`, payload, {
+rejectPendingApprove(id: string, reason: string): Observable<PendingApprove> {
+  const payload: RejectRequest = {
+    reason: reason
+  };
+  
+  return this.http.put<PendingApprove>(
+    `${this.baseUrl}/${id}/reject`,  // ✅ Adaugă ID-ul în URL
+    payload, 
+    {
       headers: { 'Content-Type': 'application/json' },
       withCredentials: true
-    });
-  }
+    }
+  );
+}
 
   // 🔹 DELETE: Șterge o cerere (în backend poți să o ștergi după 30 zile)
   deletePendingApprove(request: PendingApprove): Observable<any> {

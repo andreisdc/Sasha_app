@@ -1,4 +1,5 @@
 export interface PendingApprove {
+  id: string;
   firstName: string;
   lastName: string;
   cnp: string; // mascat în listă, complet doar la creare
