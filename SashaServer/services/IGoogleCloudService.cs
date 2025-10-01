@@ -14,6 +14,7 @@ namespace SashaServer.Services
         Task<CloudFileInfo?> GetFileInfoAsync(string fileName);
         Task<string> GenerateSignedUrlAsync(string fileName, TimeSpan expiration);
         Task<bool> FileExistsAsync(string fileName);
+        Task<Stream> DownloadFileAsync(string fileName); // ✅ ADAUGAT
     }
 
     public class GoogleCloudService : IGoogleCloudService
@@ -49,6 +50,55 @@ namespace SashaServer.Services
             {
                 _logger.LogError(ex, "❌ Failed to initialize Google Cloud Storage");
                 throw;
+            }
+        }
+
+        // ✅ METODĂ NOUĂ - Descarcă fișierul ca Stream
+        public async Task<Stream> DownloadFileAsync(string fileName)
+        {
+            try
+            {
+                _logger.LogInformation("📥 Downloading file: {FileName}", fileName);
+
+                var memoryStream = new MemoryStream();
+                
+                await _storageClient.DownloadObjectAsync(_cloudConfig.BucketName, fileName, memoryStream);
+                
+                memoryStream.Position = 0; // Important: reset stream position
+                
+                _logger.LogInformation("✅ File downloaded successfully: {FileName}, Size: {Size} bytes", 
+                    fileName, memoryStream.Length);
+                
+                return memoryStream;
+            }
+            catch (Google.GoogleApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("❌ File not found in storage: {FileName}", fileName);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error downloading file {FileName}", fileName);
+                return null;
+            }
+        }
+
+        // ✅ METODĂ ADIȚIONALĂ - Descarcă ca byte array (opțional)
+        public async Task<byte[]> DownloadFileAsBytesAsync(string fileName)
+        {
+            try
+            {
+                using var stream = await DownloadFileAsync(fileName);
+                if (stream == null) return null;
+
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                return memoryStream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error downloading file as bytes: {FileName}", fileName);
+                return null;
             }
         }
 

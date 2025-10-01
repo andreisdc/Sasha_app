@@ -33,6 +33,14 @@ export class PendingApproveService {
     });
   }
 
+  // ✅ METODĂ NOUĂ - Obține poza ca Blob
+  getPhoto(id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${id}/photo`, {
+      responseType: 'blob',
+      withCredentials: true
+    });
+  }
+
   // 🔹 PUT: Aprobă o cerere (trimite obiectul întreg)
   approvePendingApprove(request: PendingApprove): Observable<PendingApprove> {
     return this.http.put<PendingApprove>(`${this.baseUrl}/approve`, request, {

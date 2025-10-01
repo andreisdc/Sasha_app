@@ -319,6 +319,7 @@ export class BecomeSellerPageComponent implements OnInit {
     formData.append("UserId", userId);
     formData.append("FirstName", this.formData.firstName);
     formData.append("LastName", this.formData.lastName);
+    formData.append("Address", this.formData.address)
     formData.append("Cnp", this.formData.cnp);
     if (this.formData.idDocument) {
       formData.append("Photo", this.formData.idDocument);

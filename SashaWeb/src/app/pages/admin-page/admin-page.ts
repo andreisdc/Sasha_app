@@ -17,9 +17,11 @@ export class AdminPage implements OnInit {
   pendingRequests: PendingApprove[] = [];
   isLoading = true;
   errorMessage = '';
+  isViewingPhoto = false;
+  currentPhotoUrl: string | null = null;
 
   private ngZone = inject(NgZone);
-  private cdr = inject(ChangeDetectorRef); // ✅ ADAUGĂ ASTA
+  private cdr = inject(ChangeDetectorRef);
   private adminDashboardService = inject(PendingApproveService);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -38,38 +40,86 @@ export class AdminPage implements OnInit {
     }
   }
 
-  async loadPendingRequests() {
-    console.log('🔹 1. Setting isLoading to true');
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.cdr.detectChanges(); // ✅ Forțează update imediat
+  // Adăugați logging în loadPendingRequests
+async loadPendingRequests() {
+  console.log('🔹 1. Setting isLoading to true');
+  this.isLoading = true;
+  this.errorMessage = '';
+  this.cdr.detectChanges();
+
+  try {
+    console.log('🔹 2. Making API call...');
+    const requests = await firstValueFrom(
+      this.adminDashboardService.getAllPendingApprovals()
+    );
+    
+    console.log('🔹 3. API response received:', requests);
+    
+    // ✅ DEBUG: Verificați structura fiecărui request
+    if (requests && requests.length > 0) {
+      console.log('🔹 First request structure:', requests[0]);
+      console.log('🔹 First request ID:', requests[0].id);
+      console.log('🔹 First request photo:', requests[0].photo);
+    }
+
+    this.ngZone.run(() => {
+      console.log('🔹 4. Inside ngZone.run');
+      this.pendingRequests = requests || [];
+      this.isLoading = false;
+      console.log('🔹 5. isLoading set to:', this.isLoading);
+      this.cdr.detectChanges();
+    });
+
+  } catch (error) {
+    console.error('❌ Error loading pending requests:', error);
+    
+    this.ngZone.run(() => {
+      this.errorMessage = 'Failed to load pending requests';
+      this.isLoading = false;
+      this.pendingRequests = [];
+      this.cdr.detectChanges();
+    });
+  }
+}
+
+  // ✅ METODĂ NOUĂ - Afișează poza
+  async viewPhoto(request: PendingApprove) {
+    if (!request.id) {
+      alert('No photo available');
+      return;
+    }
 
     try {
-      console.log('🔹 2. Making API call...');
-      const requests = await firstValueFrom(
-        this.adminDashboardService.getAllPendingApprovals()
-      );
+      console.log('📷 Loading photo for request:', request.id);
       
-      console.log('🔹 3. API response received:', requests?.length);
+      const photoBlob = await firstValueFrom(
+        this.adminDashboardService.getPhoto(request.id)
+      );
 
+      // Creează URL temporar pentru blob
+      const photoUrl = URL.createObjectURL(photoBlob);
+      
       this.ngZone.run(() => {
-        console.log('🔹 4. Inside ngZone.run');
-        this.pendingRequests = requests || [];
-        this.isLoading = false;
-        console.log('🔹 5. isLoading set to:', this.isLoading);
-        this.cdr.detectChanges(); // ✅ Forțează update UI
+        this.currentPhotoUrl = photoUrl;
+        this.isViewingPhoto = true;
+        this.cdr.detectChanges();
       });
 
     } catch (error) {
-      console.error('❌ Error loading pending requests:', error);
-      
+      console.error('❌ Error loading photo:', error);
       this.ngZone.run(() => {
-        this.errorMessage = 'Failed to load pending requests';
-        this.isLoading = false;
-        this.pendingRequests = [];
-        this.cdr.detectChanges(); // ✅ Forțează update UI
+        alert('Error loading photo. Please try again.');
       });
     }
+  }
+
+  // ✅ METODĂ NOUĂ - Închide poza
+  closePhoto() {
+    if (this.currentPhotoUrl) {
+      URL.revokeObjectURL(this.currentPhotoUrl); // Cleanup memory
+    }
+    this.isViewingPhoto = false;
+    this.currentPhotoUrl = null;
   }
 
   async approveRequest(request: PendingApprove) {
@@ -82,8 +132,8 @@ export class AdminPage implements OnInit {
       
       this.ngZone.run(() => {
         alert('Request approved successfully!');
-        this.pendingRequests = this.pendingRequests.filter(req => req.cnp !== request.cnp);
-        this.cdr.detectChanges(); // ✅ Forțează update UI
+        this.pendingRequests = this.pendingRequests.filter(req => req.id !== request.id);
+        this.cdr.detectChanges();
       });
 
     } catch (error) {
@@ -96,7 +146,6 @@ export class AdminPage implements OnInit {
 
   async rejectRequest(request: PendingApprove) {
     const reason = prompt('Please enter the reason for rejection:');
-    console.log(request.id);
     if (reason === null) return;
     if (!reason?.trim()) {
       alert('Please provide a rejection reason');
@@ -110,8 +159,8 @@ export class AdminPage implements OnInit {
 
       this.ngZone.run(() => {
         alert('Request rejected successfully!');
-        this.pendingRequests = this.pendingRequests.filter(req => req.cnp !== request.cnp);
-        this.cdr.detectChanges(); // ✅ Forțează update UI
+        this.pendingRequests = this.pendingRequests.filter(req => req.id !== request.id);
+        this.cdr.detectChanges();
       });
 
     } catch (error) {
@@ -119,12 +168,6 @@ export class AdminPage implements OnInit {
       this.ngZone.run(() => {
         alert('Error rejecting request. Please try again.');
       });
-    }
-  }
-
-  viewPhoto(photoUrl?: string) {
-    if (photoUrl) {
-      window.open(photoUrl, '_blank');
     }
   }
 

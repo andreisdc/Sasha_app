@@ -92,7 +92,7 @@
               <div class="date">{{ request.createdAt | date:'MMM d, y' }}</div>
             </div>
             <div class="col-actions">
-              <button (click)="viewPhoto(request.photo)" class="btn-view" [disabled]="!request.photo">
+              <button (click)="viewPhoto(request)" class="btn-view">
                 <i class="fas fa-eye"></i> View Photo
               </button>
               <button (click)="approveRequest(request)" class="btn-approve">
@@ -103,6 +103,19 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Photo Modal -->
+    <div *ngIf="isViewingPhoto" class="photo-modal" (click)="closePhoto()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>ID Verification Photo</h3>
+          <button class="close-btn" (click)="closePhoto()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <img [src]="currentPhotoUrl" alt="ID Photo" class="photo-image" />
         </div>
       </div>
     </div>

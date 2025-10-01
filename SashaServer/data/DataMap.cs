@@ -1634,7 +1634,6 @@ namespace SashaServer.Data
         // ================================
         // 1️⃣4️⃣ PENDING APPROVE
         // ================================
-
         public void AddPendingApprove(PendingApprove pendingApprove)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -1651,7 +1650,7 @@ namespace SashaServer.Data
             cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
             cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
             cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
-            cmd.Parameters.AddWithValue("address", pendingApprove.Address ?? ""); // ✅ ADAUGĂ ADDRESS
+            cmd.Parameters.AddWithValue("address", pendingApprove.Address ?? "");
 
             if (!string.IsNullOrEmpty(pendingApprove.Photo))
             {
@@ -1680,11 +1679,11 @@ namespace SashaServer.Data
           first_name = @first_name,
           last_name = @last_name,
           cnp = @cnp,
-          address = @address, -- ✅ ADAUGĂ ADDRESS
+          address = @address,
           photo = @photo,
           status = @status,
           fail_reason = @fail_reason,
-          updated_at = @updated_at -- ✅ ADAUGĂ UPDATED_AT
+          updated_at = @updated_at
           WHERE id = @id",
                 conn);
 
@@ -1692,7 +1691,7 @@ namespace SashaServer.Data
             cmd.Parameters.AddWithValue("first_name", pendingApprove.FirstName ?? "");
             cmd.Parameters.AddWithValue("last_name", pendingApprove.LastName ?? "");
             cmd.Parameters.AddWithValue("cnp", pendingApprove.Cnp ?? "");
-            cmd.Parameters.AddWithValue("address", pendingApprove.Address ?? ""); // ✅ ADAUGĂ ADDRESS
+            cmd.Parameters.AddWithValue("address", pendingApprove.Address ?? "");
 
             if (!string.IsNullOrEmpty(pendingApprove.Photo))
             {
@@ -1705,7 +1704,7 @@ namespace SashaServer.Data
 
             cmd.Parameters.AddWithValue("status", pendingApprove.Status ?? "pending");
             cmd.Parameters.AddWithValue("fail_reason", (object?)pendingApprove.FailReason ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow); // ✅ SETEAZĂ UPDATED_AT
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
 
             return cmd.ExecuteNonQuery() > 0;
         }
@@ -1732,12 +1731,12 @@ namespace SashaServer.Data
                 FirstName = reader.GetString(2),
                 LastName = reader.GetString(3),
                 Cnp = reader.GetString(4),
-                Address = reader.IsDBNull(5) ? "" : reader.GetString(5), // ✅ CITESTE ADDRESS
+                Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
                 Photo = reader.IsDBNull(6) ? null : reader.GetString(6),
                 Status = reader.GetString(7),
                 FailReason = reader.IsDBNull(8) ? null : reader.GetString(8),
                 CreatedAt = reader.GetDateTime(9),
-                UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10) // ✅ CITESTE UPDATED_AT
+                UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10)
             };
         }
 
@@ -1762,51 +1761,27 @@ namespace SashaServer.Data
                     FirstName = reader.GetString(2),
                     LastName = reader.GetString(3),
                     Cnp = reader.GetString(4),
-                    Address = reader.IsDBNull(5) ? "" : reader.GetString(5), // ✅ CITESTE ADDRESS
+                    Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
                     Photo = reader.IsDBNull(6) ? null : reader.GetString(6),
                     Status = reader.GetString(7),
                     FailReason = reader.IsDBNull(8) ? null : reader.GetString(8),
                     CreatedAt = reader.GetDateTime(9),
-                    UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10) // ✅ CITESTE UPDATED_AT
+                    UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10)
                 });
             }
             return list;
         }
 
-        // ✅ METODĂ NOUĂ - Clean sensitive data
-        public bool CleanSensitiveData(Guid id, string failReason = null)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-
-            var cmd = new NpgsqlCommand(
-                @"UPDATE pending_approve SET 
-          cnp = '[REDACTED]',
-          address = '[REDACTED]',
-          photo = '[REDACTED]',
-          status = 'rejected',
-          fail_reason = @fail_reason,
-          updated_at = @updated_at
-          WHERE id = @id",
-                conn);
-
-            cmd.Parameters.AddWithValue("id", id);
-            cmd.Parameters.AddWithValue("fail_reason", failReason ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
-
-            return cmd.ExecuteNonQuery() > 0;
-        }
-
-public bool RejectAndCleanData(Guid id, string failReason)
+       public bool RejectAndCleanData(Guid id, string failReason)
 {
     using var conn = new NpgsqlConnection(_connectionString);
     conn.Open();
 
     var cmd = new NpgsqlCommand(
         @"UPDATE pending_approve SET 
-          cnp = '[REDACTED]',
-          address = '[REDACTED]',
-          photo = '[REDACTED]',
+          cnp = ' ',
+          address = ' ',
+          photo = ' ',
           status = 'rejected',
           fail_reason = @fail_reason,
           updated_at = @updated_at
@@ -1819,6 +1794,49 @@ public bool RejectAndCleanData(Guid id, string failReason)
 
     return cmd.ExecuteNonQuery() > 0;
 }
+
+public bool CleanSensitiveData(Guid id)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"UPDATE pending_approve SET 
+          cnp = ' ',
+          address = ' ',
+          photo = ' ',
+          updated_at = @updated_at
+          WHERE id = @id",
+        conn);
+
+    cmd.Parameters.AddWithValue("id", id);
+    cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+
+    return cmd.ExecuteNonQuery() > 0;
+}
+
+        // ✅ METODĂ SEPARATĂ pentru aprobare (opțional)
+        public bool ApproveAndCleanData(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+
+            var cmd = new NpgsqlCommand(
+                @"UPDATE pending_approve SET 
+          cnp = '[REDACTED]',
+          address = '[REDACTED]',
+          photo = '[REDACTED]',
+          status = 'approved',
+          fail_reason = NULL,
+          updated_at = @updated_at
+          WHERE id = @id",
+                conn);
+
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+
+            return cmd.ExecuteNonQuery() > 0;
+        }
 
         public bool DeletePendingApprove(Guid id)
         {
@@ -1852,8 +1870,6 @@ public bool RejectAndCleanData(Guid id, string failReason)
 
             return deleteCmd.ExecuteNonQuery() > 0;
         }
-
     }
-
     
 }
