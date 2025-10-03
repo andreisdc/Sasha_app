@@ -49,6 +49,8 @@ namespace SashaServer.Data
             cmd.ExecuteNonQuery();
         }
 
+        
+
         public bool UpdateUser(User user)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -95,6 +97,112 @@ namespace SashaServer.Data
             return cmd.ExecuteNonQuery() > 0;
         }
 
+// ✅ Verifică dacă user-ul există și este activ
+public bool UserExistsAndActive(Guid userId)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"SELECT COUNT(1) FROM t_users WHERE id = @user_id",
+        conn);
+
+    cmd.Parameters.AddWithValue("user_id", userId);
+
+    return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+}
+
+// ✅ Verifică dacă user-ul este deja verificat ca seller
+public bool IsUserAlreadyVerified(Guid userId)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"SELECT COUNT(1) FROM pending_approve 
+          WHERE user_id = @user_id AND status = 'approved'",
+        conn);
+
+    cmd.Parameters.AddWithValue("user_id", userId);
+
+    return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+}
+
+// ✅ Verifică dacă user-ul are o cerere în așteptare
+public bool HasUserPendingRequest(Guid userId)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"SELECT COUNT(1) FROM pending_approve 
+          WHERE user_id = @user_id AND status = 'pending'",
+        conn);
+
+    cmd.Parameters.AddWithValue("user_id", userId);
+
+    return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+}
+
+// ✅ Obține toate cererile pentru un user (pentru debugging)
+public List<PendingApprove> GetPendingApprovesByUserId(Guid userId)
+{
+    var list = new List<PendingApprove>();
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"SELECT id, user_id, first_name, last_name, cnp, address, photo, status, fail_reason, created_at, updated_at 
+          FROM pending_approve 
+          WHERE user_id = @user_id 
+          ORDER BY created_at DESC",
+        conn);
+
+    cmd.Parameters.AddWithValue("user_id", userId);
+
+    using var reader = cmd.ExecuteReader();
+    while (reader.Read())
+    {
+        list.Add(new PendingApprove
+        {
+            Id = reader.GetGuid(0),
+            UserId = reader.GetGuid(1),
+            FirstName = reader.GetString(2),
+            LastName = reader.GetString(3),
+            Cnp = reader.GetString(4),
+            Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
+            Photo = reader.IsDBNull(6) ? null : reader.GetString(6),
+            Status = reader.GetString(7),
+            FailReason = reader.IsDBNull(8) ? null : reader.GetString(8),
+            CreatedAt = reader.GetDateTime(9),
+            UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10)
+        });
+    }
+    return list;
+}
+
+// ✅ Actualizează user-ul cu IsSeller = true și IsVerified = true
+public bool UpdateUserAsSeller(Guid userId)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"UPDATE t_users SET 
+          is_seller = true,
+          is_verified = true
+          WHERE id = @user_id",
+        conn);
+
+    cmd.Parameters.AddWithValue("user_id", userId);
+
+    var rowsAffected = cmd.ExecuteNonQuery();
+    
+    _logger.LogInformation("✅ Actualizare user ca seller: UserId={UserId}, RowsAffected={RowsAffected}", 
+        userId, rowsAffected);
+
+    return rowsAffected > 0;
+}
         public User? GetUserById(Guid userId)
         {
             using var conn = new NpgsqlConnection(_connectionString);
@@ -126,6 +234,41 @@ namespace SashaServer.Data
                 IsVerified = reader.GetBoolean(13)
             };
         }
+
+        // ✅ Verifică dacă există o cerere pentru un user specific
+public PendingApprove? GetPendingApproveByUserId(Guid userId)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"SELECT id, user_id, first_name, last_name, cnp, address, photo, status, fail_reason, created_at, updated_at 
+          FROM pending_approve 
+          WHERE user_id = @user_id 
+          ORDER BY created_at DESC 
+          LIMIT 1",
+        conn);
+
+    cmd.Parameters.AddWithValue("user_id", userId);
+
+    using var reader = cmd.ExecuteReader();
+    if (!reader.Read()) return null;
+
+    return new PendingApprove
+    {
+        Id = reader.GetGuid(0),
+        UserId = reader.GetGuid(1),
+        FirstName = reader.GetString(2),
+        LastName = reader.GetString(3),
+        Cnp = reader.GetString(4),
+        Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
+        Photo = reader.IsDBNull(6) ? null : reader.GetString(6),
+        Status = reader.GetString(7),
+        FailReason = reader.IsDBNull(8) ? null : reader.GetString(8),
+        CreatedAt = reader.GetDateTime(9),
+        UpdatedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10)
+    };
+}
 
         public User? GetUserByEmail(string email)
         {
@@ -1772,19 +1915,19 @@ namespace SashaServer.Data
             return list;
         }
 
-      
+
 
 
 
         // ✅ METODĂ SEPARATĂ pentru aprobare (opțional)
-      // ✅ METODĂ pentru aprobare - setează spații goale
-public bool ApproveAndCleanData(Guid id)
-{
-    using var conn = new NpgsqlConnection(_connectionString);
-    conn.Open();
+        // ✅ METODĂ pentru aprobare - setează spații goale
+        public bool ApproveAndCleanData(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
 
-    var cmd = new NpgsqlCommand(
-        @"UPDATE pending_approve SET 
+            var cmd = new NpgsqlCommand(
+                @"UPDATE pending_approve SET 
           status = 'approved',
           fail_reason = NULL,
           cnp = ' ',
@@ -1792,22 +1935,22 @@ public bool ApproveAndCleanData(Guid id)
           photo = ' ',
           updated_at = @updated_at
           WHERE id = @id",
-        conn);
+                conn);
 
-    cmd.Parameters.AddWithValue("id", id);
-    cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
 
-    return cmd.ExecuteNonQuery() > 0;
-}
+            return cmd.ExecuteNonQuery() > 0;
+        }
 
-// ✅ METODĂ pentru respingere - setează spații goale
-public bool RejectAndCleanData(Guid id, string failReason)
-{
-    using var conn = new NpgsqlConnection(_connectionString);
-    conn.Open();
+        // ✅ METODĂ pentru respingere - setează spații goale
+        public bool RejectAndCleanData(Guid id, string failReason)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
 
-    var cmd = new NpgsqlCommand(
-        @"UPDATE pending_approve SET 
+            var cmd = new NpgsqlCommand(
+                @"UPDATE pending_approve SET 
           status = 'rejected',
           fail_reason = @fail_reason,
           cnp = ' ',
@@ -1815,35 +1958,35 @@ public bool RejectAndCleanData(Guid id, string failReason)
           photo = ' ',
           updated_at = @updated_at
           WHERE id = @id",
-        conn);
+                conn);
 
-    cmd.Parameters.AddWithValue("id", id);
-    cmd.Parameters.AddWithValue("fail_reason", failReason ?? (object)DBNull.Value);
-    cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("fail_reason", failReason ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
 
-    return cmd.ExecuteNonQuery() > 0;
-}
+            return cmd.ExecuteNonQuery() > 0;
+        }
 
-// ✅ Ștergeți sau modificați CleanSensitiveData să nu mai fie folosită
-public bool CleanSensitiveData(Guid id)
-{
-    using var conn = new NpgsqlConnection(_connectionString);
-    conn.Open();
+        // ✅ Ștergeți sau modificați CleanSensitiveData să nu mai fie folosită
+        public bool CleanSensitiveData(Guid id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
 
-    var cmd = new NpgsqlCommand(
-        @"UPDATE pending_approve SET 
+            var cmd = new NpgsqlCommand(
+                @"UPDATE pending_approve SET 
           cnp = ' ',
           address = ' ',
           photo = ' ',
           updated_at = @updated_at
           WHERE id = @id",
-        conn);
+                conn);
 
-    cmd.Parameters.AddWithValue("id", id);
-    cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("updated_at", DateTime.UtcNow);
 
-    return cmd.ExecuteNonQuery() > 0;
-}
+            return cmd.ExecuteNonQuery() > 0;
+        }
 
         public bool DeletePendingApprove(Guid id)
         {
@@ -1877,6 +2020,10 @@ public bool CleanSensitiveData(Guid id)
 
             return deleteCmd.ExecuteNonQuery() > 0;
         }
+
+        
     }
+    
+    
     
 }

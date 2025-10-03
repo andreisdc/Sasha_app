@@ -210,17 +210,52 @@ namespace SashaServer.Controllers
             [FromForm] string LastName,
             [FromForm] string Cnp,
             [FromForm] string Address,
-            [FromForm] IFormFile Photo)
+            [FromForm] IFormFile Photo,
+            [FromForm] Guid UserId) // ✅ Adaugă UserId ca parametru
         {
             try
             {
+                _logger.LogInformation("🔄 Încep procesul de creare cerere verificare pentru UserId: {UserId}", UserId);
+
                 if (Photo == null || Photo.Length == 0)
                     return BadRequest(new { message = "Photo is required" });
+
+                // ✅ VERIFICĂ DACA USER-UL EXISTĂ
+                var existingUser = _data.GetUserById(UserId);
+                if (existingUser == null)
+                {
+                    _logger.LogWarning("❌ UserId {UserId} nu există în baza de date", UserId);
+                    return BadRequest(new { message = "User not found" });
+                }
+
+                _logger.LogInformation("✅ UserId {UserId} există în baza de date", UserId);
+
+                // ✅ VERIFICĂ DACA USER-UL ARE DEJA O CERERE ACTIVĂ
+                var existingPendingApprove = _data.GetPendingApproveByUserId(UserId);
+                if (existingPendingApprove != null)
+                {
+                    if (existingPendingApprove.Status == "pending")
+                    {
+                        _logger.LogWarning("❌ UserId {UserId} are deja o cerere în așteptare (ID: {PendingId})", 
+                            UserId, existingPendingApprove.Id);
+                        return BadRequest(new { message = "You already have a pending verification request" });
+                    }
+                    else if (existingPendingApprove.Status == "approved")
+                    {
+                        _logger.LogWarning("❌ UserId {UserId} este deja verificat (cerere aprobată ID: {PendingId})", 
+                            UserId, existingPendingApprove.Id);
+                        return BadRequest(new { message = "You are already verified as a seller" });
+                    }
+                    // Dacă statusul este "rejected", permite crearea unei noi cereri
+                    _logger.LogInformation("✅ UserId {UserId} are o cerere respinsă anterior, permite nouă cerere", UserId);
+                }
+
+                _logger.LogInformation("✅ UserId {UserId} poate crea o nouă cerere de verificare", UserId);
 
                 var pendingApprove = new PendingApprove
                 {
                     Id = Guid.NewGuid(),
-                    UserId = Guid.NewGuid(),
+                    UserId = UserId, // ✅ Folosește UserId-ul primit
                     FirstName = FirstName,
                     LastName = LastName,
                     Address = Address,
@@ -242,6 +277,9 @@ namespace SashaServer.Controllers
                 pendingApprove.Photo = uploadResult.FileUrl;
                 _data.AddPendingApprove(pendingApprove);
 
+                _logger.LogInformation("✅ Cerere de verificare creată cu succes pentru UserId: {UserId}, CerereID: {PendingId}", 
+                    UserId, pendingApprove.Id);
+
                 var response = new
                 {
                     pendingApprove.Id,
@@ -258,7 +296,7 @@ namespace SashaServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating pending approval");
+                _logger.LogError(ex, "❌ Eroare la crearea cererii de aprobare pentru UserId: {UserId}", UserId);
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
@@ -269,34 +307,68 @@ namespace SashaServer.Controllers
         {
             try
             {
+                _logger.LogInformation("🔄 Încep procesul de aprobare pentru cererea ID: {Id}", id);
+
                 var pendingApprove = _data.GetPendingApproveById(id);
                 if (pendingApprove == null)
+                {
+                    _logger.LogWarning("❌ Cererea de aprobare cu ID: {Id} nu a fost găsită", id);
                     return NotFound(new { message = "Pending approval not found" });
+                }
+
+                _logger.LogInformation("✅ Cererea găsită pentru UserId: {UserId}", pendingApprove.UserId);
+
+                // ✅ VERIFICĂ DACA USER-UL EXISTĂ ÎN BAZA DE DATE
+                var user = _data.GetUserById(pendingApprove.UserId);
+                if (user == null)
+                {
+                    _logger.LogError("❌ UserId {UserId} din cererea {PendingId} nu există în baza de date", 
+                        pendingApprove.UserId, id);
+                    return BadRequest(new { message = "User associated with this request does not exist" });
+                }
+
+                _logger.LogInformation("✅ User găsit în baza de date: {Username} (ID: {UserId})", 
+                    user.Username, user.Id);
 
                 // ✅ Șterge fișierul foto din Google Cloud dacă există
                 if (!string.IsNullOrEmpty(pendingApprove.Photo) && pendingApprove.Photo != "[REDACTED]" && pendingApprove.Photo != " ")
                 {
+                    _logger.LogInformation("🗑️ Șterg fișierul foto pentru cererea ID: {Id}", id);
                     var filePath = ExtractGcsFilePath(pendingApprove.Photo);
                     await _googleCloudService.DeleteFileAsync(filePath);
+                    _logger.LogInformation("✅ Fișierul foto a fost șters cu succes");
                 }
 
                 // ✅ Folosește metoda unificată pentru aprobare care face totul într-o singură operațiune
                 var success = _data.ApproveAndCleanData(id);
 
                 if (!success)
+                {
+                    _logger.LogError("❌ Eroare la aprobarea și curățarea datelor pentru cererea ID: {Id}", id);
                     return StatusCode(500, new { message = "Failed to approve request" });
+                }
+
+                // ✅ ACTUALIZEAZĂ USER-UL CU IsSeller = true
+                _logger.LogInformation("✅ Actualizez user-ul cu IsSeller = true pentru UserId: {UserId}", user.Id);
+                user.IsSeller = true;
+                user.IsVerified = true;
+                _data.UpdateUser(user);
+
+                _logger.LogInformation("✅ Cererea a fost aprobată cu succes pentru UserId: {UserId}. IsSeller a fost setat pe true.", 
+                    user.Id);
 
                 return Ok(new
                 {
                     pendingApprove.FirstName,
                     pendingApprove.LastName,
                     Status = "approved",
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    IsSellerUpdated = true
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error approving pending request: {Id}", id);
+                _logger.LogError(ex, "❌ Eroare la aprobarea cererii: {Id}", id);
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
@@ -307,22 +379,36 @@ namespace SashaServer.Controllers
         {
             try
             {
+                _logger.LogInformation("🔄 Încep procesul de respingere pentru cererea ID: {Id}", id);
+
                 var pendingApprove = _data.GetPendingApproveById(id);
                 if (pendingApprove == null)
+                {
+                    _logger.LogWarning("❌ Cererea de aprobare cu ID: {Id} nu a fost găsită", id);
                     return NotFound(new { message = "Pending approval not found" });
+                }
+
+                _logger.LogInformation("✅ Cererea găsită pentru UserId: {UserId}", pendingApprove.UserId);
 
                 // ✅ Șterge fișierul foto din Google Cloud dacă există
                 if (!string.IsNullOrEmpty(pendingApprove.Photo) && pendingApprove.Photo != "[REDACTED]" && pendingApprove.Photo != " ")
                 {
+                    _logger.LogInformation("🗑️ Șterg fișierul foto pentru cererea ID: {Id}", id);
                     var filePath = ExtractGcsFilePath(pendingApprove.Photo);
                     await _googleCloudService.DeleteFileAsync(filePath);
+                    _logger.LogInformation("✅ Fișierul foto a fost șters cu succes");
                 }
 
                 // ✅ Folosește metoda unificată pentru respingere care face totul într-o singură operațiune
                 var success = _data.RejectAndCleanData(id, request.Reason);
 
                 if (!success)
+                {
+                    _logger.LogError("❌ Eroare la respingerea și curățarea datelor pentru cererea ID: {Id}", id);
                     return StatusCode(500, new { message = "Failed to reject request" });
+                }
+
+                _logger.LogInformation("✅ Cererea a fost respinsă cu succes pentru UserId: {UserId}", pendingApprove.UserId);
 
                 return Ok(new
                 {
@@ -335,7 +421,7 @@ namespace SashaServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error rejecting pending request: {Id}", id);
+                _logger.LogError(ex, "❌ Eroare la respingerea cererii: {Id}", id);
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
@@ -346,15 +432,22 @@ namespace SashaServer.Controllers
         {
             try
             {
+                _logger.LogInformation("🔄 Încep procesul de ștergere pentru cererea ID: {Id}", id);
+
                 var result = _data.DeletePendingApprove(id);
                 if (!result)
+                {
+                    _logger.LogWarning("❌ Nu se poate șterge cererea ID: {Id} - probabil este mai nouă de 1 lună", id);
                     return BadRequest(new { message = "Cannot delete this request. You can only delete requests older than 1 month." });
+                }
+
+                _logger.LogInformation("✅ Cererea ID: {Id} a fost ștearsă cu succes", id);
 
                 return Ok(new { message = "Deleted successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting pending approval {Id}", id);
+                _logger.LogError(ex, "❌ Eroare la ștergerea cererii {Id}", id);
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }

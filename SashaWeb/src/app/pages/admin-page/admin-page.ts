@@ -122,27 +122,28 @@ async loadPendingRequests() {
     this.currentPhotoUrl = null;
   }
 
-  async approveRequest(request: PendingApprove) {
-    if (!confirm('Are you sure you want to approve this verification request?')) {
-      return;
-    }
-
-    try {
-      await firstValueFrom(this.adminDashboardService.approvePendingApprove(request));
-      
-      this.ngZone.run(() => {
-        alert('Request approved successfully!');
-        this.pendingRequests = this.pendingRequests.filter(req => req.id !== request.id);
-        this.cdr.detectChanges();
-      });
-
-    } catch (error) {
-      console.error('Error approving request:', error);
-      this.ngZone.run(() => {
-        alert('Error approving request. Please try again.');
-      });
-    }
+ async approveRequest(request: PendingApprove) {
+  if (!confirm('Are you sure you want to approve this verification request?')) {
+    return;
   }
+
+  try {
+    // ✅ Folosește ID-ul în loc de întregul obiect
+    await firstValueFrom(this.adminDashboardService.approvePendingApprove(request.id));
+    
+    this.ngZone.run(() => {
+      alert('Request approved successfully!');
+      this.pendingRequests = this.pendingRequests.filter(req => req.id !== request.id);
+      this.cdr.detectChanges();
+    });
+
+  } catch (error) {
+    console.error('Error approving request:', error);
+    this.ngZone.run(() => {
+      alert('Error approving request. Please try again.');
+    });
+  }
+}
 
   async rejectRequest(request: PendingApprove) {
     const reason = prompt('Please enter the reason for rejection:');

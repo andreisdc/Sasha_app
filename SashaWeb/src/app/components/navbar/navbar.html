@@ -1,4 +1,6 @@
-<nav class="navbar">
+<nav class="navbar" *ngIf="!isLoading">
+  <!-- Loading State (ascuns când isLoading este false) -->
+  
   <!-- Left: Logo -->
   <div class="navbar-left">
     <img ngSrc="assets/images/logo.png" alt="Logo" class="logo" width="120" height="40" />
@@ -11,7 +13,7 @@
     <a routerLink="/experiences" class="nav-link"><i class="fas fa-star"></i> <span>Experiences</span></a>
     
     <!-- ✅ Buton Admin Dashboard care duce direct la dashboard -->
-      <a *ngIf="user?.isAdmin && isAdminView" 
+    <a *ngIf="user?.isAdmin && isAdminView" 
        (click)="goToAdminDashboard()" 
        class="nav-link admin-nav active">
       <i class="fas fa-shield-alt"></i> 
@@ -36,7 +38,7 @@
         </span>
 
         <div class="avatar" [style.background-color]="avatarColor" (click)="toggleDropdown()">
-          <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== ''; else initial">
+          <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== 'assets/default-avatar.png'; else initial">
             <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
           </ng-container>
           <ng-template #initial>
@@ -49,7 +51,7 @@
         <div class="dropdown" *ngIf="dropdownOpen">
           <div class="user-profile">
             <div class="dropdown-avatar" [style.background-color]="avatarColor">
-              <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== ''; else initialDropdown">
+              <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== 'assets/default-avatar.png'; else initialDropdown">
                 <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
               </ng-container>
               <ng-template #initialDropdown>

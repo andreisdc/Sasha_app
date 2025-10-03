@@ -48,14 +48,17 @@ export class PendingApproveService {
   }
 
   // 🔹 PUT: Aprobă o cerere (trimite obiectul întreg)
-  approvePendingApprove(request: PendingApprove): Observable<PendingApprove> {
-    console.log('✅ approvePendingApprove - Aprob cererea ID:', request.id, 'pentru:', request.firstName);
-    return this.http.put<PendingApprove>(`${this.baseUrl}/approve`, request, {
-      headers: { 'Content-Type': 'application/json' },
+// 🔹 PUT: Aprobă o cerere (CORECT)
+approvePendingApprove(id: string): Observable<PendingApprove> {
+  console.log('✅ approvePendingApprove - Aprob cererea ID:', id);
+  return this.http.put<PendingApprove>(
+    `${this.baseUrl}/${id}/approve`,  // ✅ Adaugă ID-ul în URL
+    {}, // Body gol sau ce date sunt necesare
+    {
       withCredentials: true
-    });
-  }
-
+    }
+  );
+}
   // 🔹 PUT: Respinge o cerere (trimite obiectul + motivul)
   rejectPendingApprove(id: string, reason: string): Observable<PendingApprove> {
     console.log('❌ rejectPendingApprove - Resping cererea ID:', id, 'Motiv:', reason);

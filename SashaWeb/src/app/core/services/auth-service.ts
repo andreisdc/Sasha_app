@@ -165,7 +165,7 @@ export class AuthService {
   }
 
   // ✅ METODĂ NOUĂ - Verifică acces admin cu backend-ul
-checkAdminAccess(): Observable<{ hasAccess: boolean }> {
+  checkAdminAccess(): Observable<{ hasAccess: boolean }> {
     console.log('👮 CheckAdminAccess - Verificare drepturi admin');
     return this.http.get<{ hasAccess: boolean }>(`${this.baseUrl}/check-admin`, { 
       withCredentials: true 
