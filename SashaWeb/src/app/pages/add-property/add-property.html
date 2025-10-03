@@ -1,0 +1,336 @@
+<div class="add-property-container">
+  <!-- Progress Bar -->
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="(currentStep / totalSteps) * 100"></div>
+    </div>
+    <div class="step-indicators">
+      <div *ngFor="let step of steps; let i = index" 
+           class="step-indicator" 
+           [class.active]="i + 1 === currentStep"
+           [class.completed]="i + 1 < currentStep">
+        <div class="step-number">{{ i + 1 }}</div>
+        <span class="step-label">{{ step.label }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <div class="form-container" [@fadeAnimation]="currentStep">
+    <!-- Step 1: Basic Information -->
+    <div *ngIf="currentStep === 1" class="step-content">
+      <div class="step-header">
+        <h2><i class="fas fa-home"></i> Basic Information</h2>
+        <p>Tell us about your property</p>
+      </div>
+      
+      <form class="property-form" (ngSubmit)="nextStep()">
+        <div class="form-group">
+          <label for="title">Property Title *</label>
+          <input type="text" id="title" [(ngModel)]="propertyData.title" name="title" 
+                 placeholder="e.g., Cozy Apartment in City Center" required>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea id="description" [(ngModel)]="propertyData.description" name="description"
+                    placeholder="Describe your property's features, amenities, and what makes it special..."
+                    rows="4" required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="propertyType">Property Type *</label>
+            <select id="propertyType" [(ngModel)]="propertyData.propertyType" name="propertyType" required>
+              <option value="">Select type</option>
+              <option value="apartment">Apartment</option>
+              <option value="house">House</option>
+              <option value="villa">Villa</option>
+              <option value="studio">Studio</option>
+              <option value="condo">Condo</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="pricePerNight">Price per Night ($) *</label>
+            <input type="number" id="pricePerNight" [(ngModel)]="propertyData.pricePerNight" 
+                   name="pricePerNight" placeholder="0" min="1" required>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="goBack()">
+            <i class="fas fa-arrow-left"></i> Cancel
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="!isStep1Valid()">
+            Next <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 2: Location -->
+    <div *ngIf="currentStep === 2" class="step-content">
+      <div class="step-header">
+        <h2><i class="fas fa-map-marker-alt"></i> Location Details</h2>
+        <p>Where is your property located?</p>
+      </div>
+      
+      <form class="property-form" (ngSubmit)="nextStep()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="country">Country *</label>
+            <select id="country" [(ngModel)]="propertyData.country" name="country" required>
+              <option value="">Select country</option>
+              <option value="Romania">Romania</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input type="text" id="city" [(ngModel)]="propertyData.city" name="city" 
+                   placeholder="e.g., Bucharest" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="address">Full Address *</label>
+          <input type="text" id="address" [(ngModel)]="propertyData.address" name="address" 
+                 placeholder="Street, number, district" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="postalCode">Postal Code</label>
+            <input type="text" id="postalCode" [(ngModel)]="propertyData.postalCode" name="postalCode">
+          </div>
+
+          <div class="form-group">
+            <label for="county">County</label>
+            <input type="text" id="county" [(ngModel)]="propertyData.county" name="county">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="previousStep()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="!isStep2Valid()">
+            Next <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3: Property Details -->
+    <div *ngIf="currentStep === 3" class="step-content">
+      <div class="step-header">
+        <h2><i class="fas fa-info-circle"></i> Property Details</h2>
+        <p>Tell us about the space and amenities</p>
+      </div>
+      
+      <form class="property-form" (ngSubmit)="nextStep()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bedrooms">Bedrooms *</label>
+            <input type="number" id="bedrooms" [(ngModel)]="propertyData.bedrooms" 
+                   name="bedrooms" placeholder="0" min="0" required>
+          </div>
+
+          <div class="form-group">
+            <label for="bathrooms">Bathrooms *</label>
+            <input type="number" id="bathrooms" [(ngModel)]="propertyData.bathrooms" 
+                   name="bathrooms" placeholder="0" min="0" step="0.5" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="maxGuests">Max Guests *</label>
+            <input type="number" id="maxGuests" [(ngModel)]="propertyData.maxGuests" 
+                   name="maxGuests" placeholder="0" min="1" required>
+          </div>
+
+          <div class="form-group">
+            <label for="livingSpace">Living Space (m²)</label>
+            <input type="number" id="livingSpace" [(ngModel)]="propertyData.livingSpace" 
+                   name="livingSpace" placeholder="0" min="0">
+          </div>
+        </div>
+
+        <div class="amenities-section">
+          <h3>Amenities</h3>
+          <div class="amenities-grid">
+            <label class="amenity-checkbox" *ngFor="let amenity of amenities">
+              <input type="checkbox" [(ngModel)]="amenity.selected" [name]="amenity.name">
+              <span class="checkmark"></span>
+              <i [class]="amenity.icon"></i>
+              {{ amenity.label }}
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="previousStep()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="!isStep3Valid()">
+            Next <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 4: Photos & Final Details -->
+    <div *ngIf="currentStep === 4" class="step-content">
+      <div class="step-header">
+        <h2><i class="fas fa-images"></i> Photos & Final Details</h2>
+        <p>Add photos and set availability</p>
+      </div>
+      
+      <!-- ✅ SCHIMBARE AICI: nextStep() în loc de submitProperty() -->
+      <form class="property-form" (ngSubmit)="nextStep()">
+        <div class="photos-section">
+          <h3>Property Photos</h3>
+          <div class="photos-upload">
+            <div class="upload-area" (click)="fileInput.click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to upload photos</p>
+              <span>Recommended: 5-10 high-quality photos</span>
+              <input #fileInput type="file" multiple accept="image/*" (change)="onFileSelected($event)" hidden>
+            </div>
+            
+            <div class="uploaded-photos" *ngIf="propertyData.images.length > 0">
+              <div *ngFor="let image of propertyData.images; let i = index" class="photo-preview">
+                <img [src]="image" alt="Property photo">
+                <button type="button" class="remove-photo" (click)="removePhoto(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="checkInTime">Check-in Time</label>
+            <input type="time" id="checkInTime" [(ngModel)]="propertyData.checkInTime" name="checkInTime">
+          </div>
+
+          <div class="form-group">
+            <label for="checkOutTime">Check-out Time</label>
+            <input type="time" id="checkOutTime" [(ngModel)]="propertyData.checkOutTime" name="checkOutTime">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="minNights">Minimum Nights</label>
+            <input type="number" id="minNights" [(ngModel)]="propertyData.minNights" 
+                   name="minNights" placeholder="1" min="1">
+          </div>
+
+          <div class="form-group">
+            <label for="maxNights">Maximum Nights</label>
+            <input type="number" id="maxNights" [(ngModel)]="propertyData.maxNights" 
+                   name="maxNights" placeholder="30" min="1">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="previousStep()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <!-- ✅ SCHIMBARE AICI: Next în loc de Add Property -->
+          <button type="submit" class="btn-primary" [disabled]="!isStep4Valid()">
+            Next <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 5: Nearby Activities -->
+    <div *ngIf="currentStep === 5" class="step-content">
+      <div class="step-header">
+        <h2><i class="fas fa-hiking"></i> Nearby Activities</h2>
+        <p>What activities are available near your property?</p>
+      </div>
+      
+      <!-- ✅ AICI rămâne submitProperty() pentru etapa finală -->
+      <form class="property-form" (ngSubmit)="submitProperty()">
+        <div class="activities-section">
+          <div class="search-activities">
+            <input type="text" [(ngModel)]="activitySearch" name="activitySearch" 
+                   placeholder="Search activities..." class="search-input"
+                   (input)="filterActivities()">
+          </div>
+
+          <div class="categories-tabs">
+            <button type="button" 
+                    *ngFor="let category of activityCategories" 
+                    class="category-tab"
+                    [class.active]="selectedCategory === category"
+                    (click)="selectCategory(category)">
+              {{ getCategoryLabel(category) }}
+            </button>
+          </div>
+
+          <div class="activities-grid">
+            <div *ngFor="let activity of filteredActivities" 
+                 class="activity-card"
+                 [class.selected]="isActivitySelected(activity.id)"
+                 (click)="toggleActivity(activity)">
+              <div class="activity-icon">
+                <i [class]="getActivityIcon(activity.code)"></i>
+              </div>
+              <div class="activity-info">
+                <h4>{{ activity.name }}</h4>
+                <span class="activity-category">{{ getCategoryLabel(activity.category || '') }}</span>
+              </div>
+              <div class="activity-checkbox">
+                <input type="checkbox" [checked]="isActivitySelected(activity.id)" readonly>
+                <span class="checkmark"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Activities -->
+          <div class="selected-activities" *ngIf="selectedActivities.length > 0">
+            <h3>Selected Activities ({{ selectedActivities.length }})</h3>
+            <div class="selected-list">
+              <div *ngFor="let activity of selectedActivities" class="selected-activity">
+                <i [class]="getActivityIcon(activity.code)"></i>
+                <span>{{ activity.name }}</span>
+                <button type="button" class="remove-activity" (click)="removeActivity(activity)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="filteredActivities.length === 0" class="no-activities">
+            <i class="fas fa-search"></i>
+            <p>No activities found matching your search</p>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="previousStep()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <!-- ✅ AICI rămâne Add Property pentru etapa finală -->
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-plus"></i> Add Property
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Adding your property...</p>
+    </div>
+  </div>
+</div>

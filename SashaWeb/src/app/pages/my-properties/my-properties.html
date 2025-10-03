@@ -1,1 +1,153 @@
-<p>my-properties works!</p>
+<div class="properties-container">
+  <div class="properties-header">
+    <h1><i class="fas fa-home"></i> My Properties</h1>
+    <p>Manage your rental properties and listings</p>
+    <button class="btn-add-property" (click)="addNewProperty()">
+      <i class="fas fa-plus"></i> Add New Property
+    </button>
+  </div>
+
+  <div class="properties-content">
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-icon active">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ activePropertiesCount }}</h3>
+          <span>Active Listings</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon pending">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ pendingPropertiesCount }}</h3>
+          <span>Pending Approval</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bookings">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ totalBookings }}</h3>
+          <span>Total Bookings</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon revenue">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+          <h3>${{ totalRevenue }}</h3>
+          <span>Total Revenue</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading your properties...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <div class="properties-list">
+      <div class="list-header">
+        <h2>Your Properties ({{ properties.length }})</h2>
+        <div class="filter-options">
+          <select [(ngModel)]="selectedFilter" (change)="filterProperties()">
+            <option value="all">All Properties</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+      </div>
+      
+      <div *ngIf="!isLoading && properties.length === 0" class="empty-state">
+        <i class="fas fa-home"></i>
+        <h3>No Properties Found</h3>
+        <p>You haven't listed any properties yet. Start by adding your first property!</p>
+        <button class="btn-primary" (click)="addNewProperty()">
+          <i class="fas fa-plus"></i> Add Your First Property
+        </button>
+      </div>
+
+      <div *ngIf="!isLoading && properties.length > 0" class="properties-grid">
+        <div *ngFor="let property of filteredProperties" class="property-card" [class.pending]="property.status === 'pending'">
+          <div class="property-image">
+            <img [src]="property.images[0] || 'assets/default-property.jpg'" [alt]="property.title" />
+            <div class="property-status" [class]="property.status">
+              {{ property.status | titlecase }}
+            </div>
+            <div class="property-actions">
+              <button class="btn-action" [title]="'Edit ' + property.title" (click)="editProperty(property)">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-action" [title]="'View ' + property.title" (click)="viewProperty(property)">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn-action delete" [title]="'Delete ' + property.title" (click)="deleteProperty(property)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="property-info">
+            <h3 class="property-title">{{ property.title }}</h3>
+            <p class="property-location">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ property.city }}, {{ property.country }}
+            </p>
+            
+            <div class="property-details">
+              <div class="detail">
+                <i class="fas fa-bed"></i>
+                <span>{{ property.bedrooms }} beds</span>
+              </div>
+              <div class="detail">
+                <i class="fas fa-bath"></i>
+                <span>{{ property.bathrooms }} baths</span>
+              </div>
+              <div class="detail">
+                <i class="fas fa-user-friends"></i>
+                <span>Up to {{ property.maxGuests }} guests</span>
+              </div>
+            </div>
+            
+            <div class="property-meta">
+              <div class="price">
+                <strong>${{ property.pricePerNight }}</strong>
+                <span>/ night</span>
+              </div>
+              <div class="rating" *ngIf="property.averageRating > 0">
+                <i class="fas fa-star"></i>
+                <span>{{ property.averageRating }}</span>
+                <span>({{ property.reviewCount }})</span>
+              </div>
+            </div>
+            
+            <div class="property-footer">
+              <div class="dates">
+                <small>Created: {{ property.createdAt | date:'MMM d, y' }}</small>
+              </div>
+              <div class="quick-stats">
+                <span class="bookings" *ngIf="property.totalBookings > 0">
+                  {{ property.totalBookings }} bookings
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

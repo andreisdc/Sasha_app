@@ -1,0 +1,291 @@
+<div class="property-details-container" *ngIf="!isLoading; else loadingTemplate">
+  <!-- Header cu butoane de acțiune -->
+  <div class="property-header">
+    <button class="btn-back" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Back to Properties
+    </button>
+    
+    <div class="property-actions" *ngIf="isOwner">
+      <button class="btn-secondary" (click)="editProperty()">
+        <i class="fas fa-edit"></i> Edit
+      </button>
+      <button class="btn-danger" (click)="deleteProperty()">
+        <i class="fas fa-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Container principal cu layout side-by-side -->
+  <div class="main-layout-container">
+    <!-- Coloana stângă - Conținut principal -->
+    <div class="left-content-column">
+      <!-- Galerie imagini -->
+      <div class="property-gallery-section">
+        <div class="gallery-container">
+          <!-- Imaginea principală -->
+          <div class="main-image">
+            <img [src]="property.images[currentMainImageIndex]" 
+                 [alt]="property.title"
+                 (click)="openImageModal(currentMainImageIndex)">
+          </div>
+          
+          <!-- Thumbnails și controale -->
+          <div class="gallery-controls">
+            <div class="thumbnails-container">
+              <div *ngFor="let image of property.images; let i = index" 
+                   class="thumbnail"
+                   [class.active]="i === currentMainImageIndex"
+                   (click)="setMainImage(i)">
+                <img [src]="image" [alt]="property.title + ' image ' + (i + 1)">
+              </div>
+            </div>
+            
+            <!-- Butoane de navigare -->
+            <div class="gallery-nav-buttons" *ngIf="property.images.length > 4">
+              <button class="nav-btn prev" (click)="scrollThumbnails(-1)" [disabled]="thumbnailScrollOffset >= 0">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="nav-btn next" (click)="scrollThumbnails(1)" 
+                      [disabled]="thumbnailScrollOffset <= -(property.images.length - 4) * 80">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Contor poze -->
+          <div class="image-counter">
+            {{ currentMainImageIndex + 1 }} / {{ property.images.length }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Toate detaliile proprietății -->
+      <div class="property-details-content">
+        <!-- Titlu și locație -->
+        <div class="property-header-info">
+          <h1>{{ property.title }}</h1>
+          <div class="property-location">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>{{ property.city }}, {{ property.country }}</span>
+            <button class="btn-map" (click)="showOnMap()">
+              <i class="fas fa-map"></i> Show on map
+            </button>
+          </div>
+        </div>
+
+        <!-- Detalii rapide -->
+        <div class="property-highlights">
+          <div class="highlight-item">
+            <i class="fas fa-star"></i>
+            <div>
+              <strong>{{ property.averageRating || 'New' }}</strong>
+              <span>{{ property.reviewCount ? '(' + property.reviewCount + ' reviews)' : 'No reviews yet' }}</span>
+            </div>
+          </div>
+          <div class="highlight-item">
+            <i class="fas fa-home"></i>
+            <div>
+              <strong>{{ property.propertyType | titlecase }}</strong>
+              <span>Property type</span>
+            </div>
+          </div>
+          <div class="highlight-item">
+            <i class="fas fa-user-friends"></i>
+            <div>
+              <strong>{{ property.maxGuests }}</strong>
+              <span>Guests</span>
+            </div>
+          </div>
+          <div class="highlight-item">
+            <i class="fas fa-bed"></i>
+            <div>
+              <strong>{{ property.bedrooms }}</strong>
+              <span>Bedrooms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Descriere -->
+        <div class="property-description">
+          <h2>About this property</h2>
+          <p>{{ property.description }}</p>
+        </div>
+
+        <!-- Amenități -->
+        <div class="property-amenities" *ngIf="property.amenities && property.amenities.length > 0">
+          <h2>Amenities</h2>
+          <div class="amenities-grid">
+            <div *ngFor="let amenity of property.amenities" class="amenity-item">
+              <i [class]="getAmenityIcon(amenity)"></i>
+              <span>{{ getAmenityLabel(amenity) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activitați în apropiere -->
+        <div class="property-activities" *ngIf="property.activities && property.activities.length > 0">
+          <h2>Nearby Activities</h2>
+          <div class="activities-list">
+            <div *ngFor="let activity of property.activities" class="activity-item">
+              <div class="activity-icon">
+                <i [class]="getActivityIcon(activity.code)"></i>
+              </div>
+              <div class="activity-info">
+                <h4>{{ activity.name }}</h4>
+                <span class="activity-category">{{ activity.category }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalii locație -->
+        <div class="property-location-details">
+          <h2>Location</h2>
+          <div class="location-info">
+            <div class="location-item">
+              <i class="fas fa-location-dot"></i>
+              <span>{{ property.address }}</span>
+            </div>
+            <div class="location-item" *ngIf="property.city">
+              <i class="fas fa-city"></i>
+              <span>{{ property.city }}</span>
+            </div>
+            <div class="location-item" *ngIf="property.county">
+              <i class="fas fa-map"></i>
+              <span>{{ property.county }} County</span>
+            </div>
+            <div class="location-item" *ngIf="property.country">
+              <i class="fas fa-globe"></i>
+              <span>{{ property.country }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reguli proprietate -->
+        <div class="property-rules">
+          <h2>House Rules</h2>
+          <div class="rules-grid">
+            <div class="rule-item">
+              <i class="fas fa-door-open"></i>
+              <div>
+                <strong>Check-in</strong>
+                <span>{{ property.checkInTime || '15:00' }}</span>
+              </div>
+            </div>
+            <div class="rule-item">
+              <i class="fas fa-door-closed"></i>
+              <div>
+                <strong>Check-out</strong>
+                <span>{{ property.checkOutTime || '11:00' }}</span>
+              </div>
+            </div>
+            <div class="rule-item">
+              <i class="fas fa-moon"></i>
+              <div>
+                <strong>Min. stay</strong>
+                <span>{{ property.minNights || 1 }} nights</span>
+              </div>
+            </div>
+            <div class="rule-item">
+              <i class="fas fa-calendar"></i>
+              <div>
+                <strong>Max. stay</strong>
+                <span>{{ property.maxNights || 30 }} nights</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coloana dreaptă - Booking Card (sticky) -->
+    <div class="right-booking-column">
+      <div class="booking-card-sticky">
+        <div class="booking-card">
+          <div class="price-section">
+            <span class="price">${{ property.pricePerNight }}</span>
+            <span class="period">per night</span>
+          </div>
+          
+          <div class="booking-dates">
+            <div class="date-input">
+              <label>Check-in</label>
+              <input type="date" [min]="minDate" [(ngModel)]="checkInDate">
+            </div>
+            <div class="date-input">
+              <label>Check-out</label>
+              <input type="date" [min]="checkInDate || minDate" [(ngModel)]="checkOutDate">
+            </div>
+          </div>
+
+          <div class="guests-selector">
+            <label>Guests</label>
+            <select [(ngModel)]="selectedGuests">
+              <option *ngFor="let guest of guestOptions" [value]="guest">
+                {{ guest }} {{ guest === 1 ? 'guest' : 'guests' }}
+              </option>
+            </select>
+          </div>
+
+          <div class="price-breakdown" *ngIf="checkInDate && checkOutDate">
+            <div class="price-item">
+              <span>${{ property.pricePerNight }} x {{ nightsCount }} nights</span>
+              <span>${{ property.pricePerNight * nightsCount }}</span>
+            </div>
+            <div class="price-item">
+              <span>Cleaning fee</span>
+              <span>${{ cleaningFee }}</span>
+            </div>
+            <div class="price-item">
+              <span>Service fee</span>
+              <span>${{ serviceFee }}</span>
+            </div>
+            <div class="price-total">
+              <strong>Total</strong>
+              <strong>${{ totalPrice }}</strong>
+            </div>
+          </div>
+
+          <button class="btn-book" 
+                  [disabled]="!canBook" 
+                  (click)="bookProperty()">
+            <i class="fas fa-calendar-check"></i>
+            {{ isOwner ? 'Manage Bookings' : 'Book Now' }}
+          </button>
+
+          <div class="booking-note" *ngIf="!isOwner">
+            <i class="fas fa-info-circle"></i>
+            <span>You won't be charged yet</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Template -->
+<ng-template #loadingTemplate>
+  <div class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading property details...</p>
+  </div>
+</ng-template>
+
+<!-- Image Modal -->
+<div *ngIf="isImageModalOpen" class="image-modal" (click)="closeImageModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeImageModal()">
+      <i class="fas fa-times"></i>
+    </button>
+    <button class="modal-nav prev" (click)="prevImage()" *ngIf="currentImageIndex > 0">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <img [src]="property.images[currentImageIndex]" [alt]="property.title">
+    <button class="modal-nav next" (click)="nextImage()" *ngIf="currentImageIndex < property.images.length - 1">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+    <div class="image-counter">
+      {{ currentImageIndex + 1 }} / {{ property.images.length }}
+    </div>
+  </div>
+</div>

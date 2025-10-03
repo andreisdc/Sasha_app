@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from '../app/core/guard/auth-guard';
-import { AdminGuard } from '../app/core/guard/admin-guard'; // ✅ Adaugă Admin Guard
+import { AdminGuard } from '../app/core/guard/admin-guard';
 
 export const routes: Routes = [
   {
@@ -25,18 +25,42 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
-    path: 'becomeSeller',
+    path: 'become-seller',
     loadComponent: () =>
       import('./pages/become-seller-page/become-seller-page').then((m) => m.BecomeSellerPageComponent),
     canActivate: [AuthGuard],
   },
-  // ✅ Adaugă ruta de admin securizată
+  
+  // ✅ Rute pentru proprietăți
+  {
+    path: 'properties',
+    loadComponent: () =>
+      import('./pages/my-properties/my-properties').then((m) => m.MyProperties),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'add-property',
+    loadComponent: () =>
+      import('./pages/add-property/add-property').then((m) => m.AddProperty),
+    canActivate: [AuthGuard],
+  },
+
+  {
+    path: 'property/:id', // ✅ RUTA PENTRU VIZUALIZARE PROPRIETATE
+    loadComponent: () =>
+      import('./pages/property-details/property-details').then((m) => m.PropertyDetails),
+  },
+  
+
+
+  // ✅ Ruta de admin securizată
   {
     path: 'admin/dashboard',
     loadComponent: () =>
       import('./pages/admin-page/admin-page').then((m) => m.AdminPage),
-    canActivate: [AuthGuard, AdminGuard], // 🔒 Dublă securizare
+    canActivate: [AuthGuard, AdminGuard],
   },
+
   {
     path: '',
     redirectTo: 'home',
