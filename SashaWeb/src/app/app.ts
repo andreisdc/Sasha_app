@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../app/core/services/auth-service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -13,6 +14,7 @@ import { Subject, takeUntil } from 'rxjs';
 export class App implements OnInit, OnDestroy {
   protected title = 'SashaAppWeb';
   private destroy$ = new Subject<void>();
+  protected isLoading = true; // ✅ Stare pentru loading
 
   constructor(private authService: AuthService) {}
 
@@ -27,10 +29,12 @@ export class App implements OnInit, OnDestroy {
           if (authChecked) {
             console.log('✅ App Component - Verificarea autentificării este completă');
             this.handleAuthState();
+            this.isLoading = false; // ✅ Oprim loading-ul
           }
         },
         error: (error) => {
           console.error('❌ App Component - Eroare la verificarea autentificării:', error);
+          this.isLoading = false; // ✅ Oprim loading-ul chiar și la eroare
         }
       });
   }
@@ -46,13 +50,10 @@ export class App implements OnInit, OnDestroy {
 
     if (isLoggedIn && currentUser) {
       console.log('🎉 App Component - Utilizatorul este autentificat:', currentUser.email);
-      
-      // Poți face acțiuni suplimentare aici dacă este necesar
-      // De exemplu: preluare date suplimentare, verificare permisiuni, etc.
-      
+      // Acțiuni suplimentare pentru utilizatorii autentificați
     } else {
       console.log('ℹ️ App Component - Utilizatorul nu este autentificat');
-      // Poți face acțiuni pentru utilizatorii neautentificați dacă este necesar
+      // Acțiuni pentru utilizatorii neautentificați
     }
   }
 
