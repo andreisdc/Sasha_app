@@ -15,6 +15,10 @@ namespace SashaServer.Controllers
         private readonly IGoogleCloudService _googleCloudService;
         private readonly CnpHelper _cnpHelper;
 
+        // Bucket names
+        private const string DOCUMENTS_BUCKET = "sasha-stays-documents"; // Bucket pentru documente private
+        private const string ASSETS_BUCKET = "sasha-assets"; // Bucket pentru assets publice
+
         public PendingApproveController(
             DataMap data,
             ILogger<PendingApproveController> logger,
@@ -77,7 +81,8 @@ namespace SashaServer.Controllers
                 var filePath = ExtractGcsFilePath(pendingApprove.Photo);
                 Console.WriteLine($"🔍 Extracted GCS file path: {filePath}");
 
-                var fileExists = await _googleCloudService.FileExistsAsync(filePath);
+                // ✅ CORECTAT: Adăugat parametrul bucketName
+                var fileExists = await _googleCloudService.FileExistsAsync(filePath, DOCUMENTS_BUCKET);
                 Console.WriteLine($"🔍 File exists in GCS: {fileExists}");
                 
                 if (!fileExists)
@@ -85,7 +90,8 @@ namespace SashaServer.Controllers
                     return NotFound(new { message = $"Photo file not found in storage. Path: {filePath}" });
                 }
 
-                var fileStream = await _googleCloudService.DownloadFileAsync(filePath);
+                // ✅ CORECTAT: Adăugat parametrul bucketName
+                var fileStream = await _googleCloudService.DownloadFileAsync(filePath, DOCUMENTS_BUCKET);
                 
                 if (fileStream == null)
                     return NotFound(new { message = "Error downloading photo from storage" });
@@ -110,7 +116,7 @@ namespace SashaServer.Controllers
             }
         }
 
-        private string ExtractGcsFilePath(string photoUrl)
+        private string? ExtractGcsFilePath(string photoUrl)
         {
             if (string.IsNullOrEmpty(photoUrl))
                 return null;
@@ -134,7 +140,7 @@ namespace SashaServer.Controllers
         {
             try
             {
-                string TryDecrypt(string encryptedCnp)
+                string? TryDecrypt(string? encryptedCnp)
                 {
                     if (string.IsNullOrEmpty(encryptedCnp)) return null;
                     try
@@ -269,7 +275,13 @@ namespace SashaServer.Controllers
                 ms.Position = 0;
 
                 var fileName = $"verification_{Guid.NewGuid()}.png";
-                var uploadResult = await _googleCloudService.UploadFileAsync(ms, fileName, "image/png");
+                
+                // ✅ CORECTAT: Adăugat parametrul bucketName
+                var uploadResult = await _googleCloudService.UploadFileAsync(
+                    ms, 
+                    fileName, 
+                    "image/png", 
+                    DOCUMENTS_BUCKET);
 
                 if (!uploadResult.Success)
                     return StatusCode(500, new { message = "Failed to upload photo", error = uploadResult.ErrorMessage });
@@ -335,7 +347,9 @@ namespace SashaServer.Controllers
                 {
                     _logger.LogInformation("🗑️ Șterg fișierul foto pentru cererea ID: {Id}", id);
                     var filePath = ExtractGcsFilePath(pendingApprove.Photo);
-                    await _googleCloudService.DeleteFileAsync(filePath);
+                    
+                    // ✅ CORECTAT: Adăugat parametrul bucketName
+                    await _googleCloudService.DeleteFileAsync(filePath, DOCUMENTS_BUCKET);
                     _logger.LogInformation("✅ Fișierul foto a fost șters cu succes");
                 }
 
@@ -395,7 +409,9 @@ namespace SashaServer.Controllers
                 {
                     _logger.LogInformation("🗑️ Șterg fișierul foto pentru cererea ID: {Id}", id);
                     var filePath = ExtractGcsFilePath(pendingApprove.Photo);
-                    await _googleCloudService.DeleteFileAsync(filePath);
+                    
+                    // ✅ CORECTAT: Adăugat parametrul bucketName
+                    await _googleCloudService.DeleteFileAsync(filePath, DOCUMENTS_BUCKET);
                     _logger.LogInformation("✅ Fișierul foto a fost șters cu succes");
                 }
 

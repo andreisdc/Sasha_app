@@ -21,6 +21,7 @@ namespace SashaServer.Controllers
         private const string STATUS_AVAILABLE = "available";
         private const string STATUS_UNAVAILABLE = "unavailable";
         private const int MAX_UNVERIFIED_PROPERTIES = 3;
+        private const string ASSETS_BUCKET = "sasha-assets"; // Bucket pentru imagini
 
         public PropertiesController(DataMap dataMap, ILogger<PropertiesController> logger, IGoogleCloudService googleCloudService)
         {
@@ -30,7 +31,7 @@ namespace SashaServer.Controllers
         }
 
         // ================================
-        // 🏠 CREATE PROPERTY (SIMPLU)
+        // 🏠 CREATE PROPERTY
         // ================================
         [HttpPost]
         public ActionResult<ApiResponse<PropertyResponse>> CreateProperty([FromBody] CreatePropertyRequest request)
@@ -50,8 +51,7 @@ namespace SashaServer.Controllers
                 }
 
                 // ✅ VERIFICARE: Maxim 3 proprietăți neverificate per user
-                var allProperties = _dataMap.GetProperties();
-                var userProperties = allProperties.Where(p => p.OwnerId == request.OwnerId).ToList();
+                var userProperties = _dataMap.GetProperties().Where(p => p.OwnerId == request.OwnerId).ToList();
                 var unverifiedCount = userProperties.Count(p => !p.IsVerified);
 
                 if (unverifiedCount >= MAX_UNVERIFIED_PROPERTIES)
@@ -99,7 +99,7 @@ namespace SashaServer.Controllers
                     NeighborhoodDescription = request.NeighborhoodDescription?.Trim(),
                     Tags = request.Tags ?? Array.Empty<string>(),
                     InstantBook = request.InstantBook,
-                    IsVerified = false, // ✅ Noua proprietate este neverificată
+                    IsVerified = false,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -129,129 +129,42 @@ namespace SashaServer.Controllers
         }
 
         // ================================
-        // 📋 GET ALL UNVERIFIED PROPERTIES (SIMPLU)
-        // ================================
-        [HttpGet("unverified")]
-        public ActionResult<ApiResponse<List<PropertyResponse>>> GetUnverifiedProperties()
-        {
-            try
-            {
-                _logger.LogInformation("📋 Getting unverified properties");
-
-                // ✅ Simplu: iau toate proprietățile și filtrez cele neverificate
-                var allProperties = _dataMap.GetProperties();
-                var unverifiedProperties = allProperties.Where(p => !p.IsVerified).ToList();
-
-                var propertyResponses = unverifiedProperties.Select(MapToPropertyResponse).ToList();
-
-                _logger.LogInformation("✅ Retrieved {Count} unverified properties", propertyResponses.Count);
-
-                return Ok(new ApiResponse<List<PropertyResponse>>
-                {
-                    Success = true,
-                    Message = $"Retrieved {propertyResponses.Count} unverified properties",
-                    Data = propertyResponses
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error getting unverified properties");
-                return StatusCode(500, new ApiResponse<string>
-                {
-                    Success = false,
-                    Message = "Internal server error",
-                    Data = null
-                });
-            }
-        }
-
-        // ================================
-        // 📋 GET ALL VERIFIED PROPERTIES (SIMPLU)
-        // ================================
-        [HttpGet("verified")]
-        public ActionResult<ApiResponse<List<PropertyResponse>>> GetVerifiedProperties()
-        {
-            try
-            {
-                _logger.LogInformation("📋 Getting verified properties");
-
-                // ✅ Simplu: iau toate proprietățile și filtrez cele verificate
-                var allProperties = _dataMap.GetProperties();
-                var verifiedProperties = allProperties.Where(p => p.IsVerified).ToList();
-
-                var propertyResponses = verifiedProperties.Select(MapToPropertyResponse).ToList();
-
-                _logger.LogInformation("✅ Retrieved {Count} verified properties", propertyResponses.Count);
-
-                return Ok(new ApiResponse<List<PropertyResponse>>
-                {
-                    Success = true,
-                    Message = $"Retrieved {propertyResponses.Count} verified properties",
-                    Data = propertyResponses
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error getting verified properties");
-                return StatusCode(500, new ApiResponse<string>
-                {
-                    Success = false,
-                    Message = "Internal server error",
-                    Data = null
-                });
-            }
-        }
-
-        // ================================
-        // 🔍 GET PROPERTY BY ID
-        // ================================
-        [HttpGet("{id}")]
-        public ActionResult<ApiResponse<PropertyResponse>> GetPropertyById(Guid id)
-        {
-            try
-            {
-                var property = _dataMap.GetPropertyById(id);
-                if (property == null)
-                {
-                    return NotFound(new ApiResponse<string>
-                    {
-                        Success = false,
-                        Message = "Property not found",
-                        Data = null
-                    });
-                }
-
-                return Ok(new ApiResponse<PropertyResponse>
-                {
-                    Success = true,
-                    Message = "Property retrieved successfully",
-                    Data = MapToPropertyResponse(property)
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error getting property: {PropertyId}", id);
-                return StatusCode(500, new ApiResponse<string>
-                {
-                    Success = false,
-                    Message = "Internal server error",
-                    Data = null
-                });
-            }
-        }
-
-        // ================================
-        // 📋 GET ALL PROPERTIES
+        // 📋 GET ALL PROPERTIES (LIGHTWEIGHT - pentru liste)
         // ================================
         [HttpGet]
-        public ActionResult<ApiResponse<List<PropertyResponse>>> GetAllProperties()
+        public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetAllProperties()
         {
             try
             {
-                var properties = _dataMap.GetProperties();
-                var propertyResponses = properties.Select(MapToPropertyResponse).ToList();
+                _logger.LogInformation("📋 Getting all properties (lightweight)");
 
-                return Ok(new ApiResponse<List<PropertyResponse>>
+                // Folosim metoda optimizată care include cover photos
+                var propertiesWithCovers = _dataMap.GetPropertiesWithCoverPhotos();
+                
+                var propertyResponses = propertiesWithCovers.Select(property => 
+                {
+                    return new PropertySummaryResponse
+                    {
+                        Id = property.Id,
+                        OwnerId = property.OwnerId,
+                        Title = property.Title,
+                        City = property.City,
+                        Country = property.Country,
+                        PricePerNight = property.PricePerNight,
+                        Bathrooms = property.Bathrooms,
+                        MaxGuests = property.MaxGuests,
+                        AverageRating = property.AverageRating,
+                        ReviewCount = property.ReviewCount,
+                        IsVerified = property.IsVerified,
+                        Status = property.Status,
+                        CoverImageUrl = property.CoverImageUrl,
+                        CreatedAt = property.CreatedAt
+                    };
+                }).ToList();
+
+                _logger.LogInformation("✅ Retrieved {Count} properties", propertyResponses.Count);
+
+                return Ok(new ApiResponse<List<PropertySummaryResponse>>
                 {
                     Success = true,
                     Message = $"Retrieved {propertyResponses.Count} properties",
@@ -271,7 +184,259 @@ namespace SashaServer.Controllers
         }
 
         // ================================
-        // 🖼️ UPLOAD PHOTOS (SIMPLU)
+        // 🔍 GET PROPERTY BY ID (FULL DETAILS)
+        // ================================
+        [HttpGet("{id}")]
+        public ActionResult<ApiResponse<PropertyDetailsResponse>> GetPropertyById(Guid id)
+        {
+            try
+            {
+                _logger.LogInformation("🔍 Getting full property details: {PropertyId}", id);
+
+                var property = _dataMap.GetPropertyById(id);
+                if (property == null)
+                {
+                    return NotFound(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Property not found",
+                        Data = null
+                    });
+                }
+
+                // Folosim metoda optimizată pentru a obține toate pozele
+                var propertyPhotos = _dataMap.GetPropertyPhotosWithDetails(id);
+
+                var response = new PropertyDetailsResponse
+                {
+                    Id = property.Id,
+                    OwnerId = property.OwnerId,
+                    Title = property.Title,
+                    Description = property.Description,
+                    LocationType = property.LocationType,
+                    Address = property.Address,
+                    City = property.City,
+                    County = property.County,
+                    Country = property.Country,
+                    PostalCode = property.PostalCode,
+                    Status = property.Status,
+                    PricePerNight = property.PricePerNight,
+                    MinNights = property.MinNights,
+                    MaxNights = property.MaxNights,
+                    CheckInTime = property.CheckInTime,
+                    CheckOutTime = property.CheckOutTime,
+                    MaxGuests = property.MaxGuests,
+                    Bathrooms = property.Bathrooms,
+                    Kitchen = property.Kitchen,
+                    LivingSpace = property.LivingSpace,
+                    PetFriendly = property.PetFriendly,
+                    SmokeDetector = property.SmokeDetector,
+                    FireExtinguisher = property.FireExtinguisher,
+                    CarbonMonoxideDetector = property.CarbonMonoxideDetector,
+                    LockType = property.LockType,
+                    AverageRating = property.AverageRating,
+                    ReviewCount = property.ReviewCount,
+                    NeighborhoodDescription = property.NeighborhoodDescription,
+                    Tags = property.Tags,
+                    InstantBook = property.InstantBook,
+                    IsVerified = property.IsVerified,
+                    CreatedAt = property.CreatedAt,
+                    UpdatedAt = property.UpdatedAt,
+                    Images = propertyPhotos.Select(pp => new PropertyImage
+                    {
+                        Id = pp.Id,
+                        Url = pp.FilePath,
+                        IsCover = pp.IsCover,
+                        CreatedAt = pp.CreatedAt
+                    }).ToList()
+                };
+
+                return Ok(new ApiResponse<PropertyDetailsResponse>
+                {
+                    Success = true,
+                    Message = "Property retrieved successfully",
+                    Data = response
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting property: {PropertyId}", id);
+                return StatusCode(500, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Internal server error",
+                    Data = null
+                });
+            }
+        }
+
+        // ================================
+        // 👤 GET USER PROPERTIES (LIGHTWEIGHT)
+        // ================================
+        [HttpGet("user/{userId}")]
+        public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetUserProperties(Guid userId)
+        {
+            try
+            {
+                _logger.LogInformation("👤 Getting properties for user: {UserId}", userId);
+
+                // Folosim metoda optimizată pentru proprietățile utilizatorului
+                var userProperties = _dataMap.GetUserPropertiesWithCoverPhotos(userId);
+
+                var propertyResponses = userProperties.Select(property => 
+                {
+                    return new PropertySummaryResponse
+                    {
+                        Id = property.Id,
+                        OwnerId = property.OwnerId,
+                        Title = property.Title,
+                        City = property.City,
+                        Country = property.Country,
+                        PricePerNight = property.PricePerNight,
+                        Bathrooms = property.Bathrooms,
+                        MaxGuests = property.MaxGuests,
+                        AverageRating = property.AverageRating,
+                        ReviewCount = property.ReviewCount,
+                        IsVerified = property.IsVerified,
+                        Status = property.Status,
+                        CoverImageUrl = property.CoverImageUrl,
+                        CreatedAt = property.CreatedAt
+                    };
+                }).ToList();
+
+                _logger.LogInformation("✅ Retrieved {Count} properties for user {UserId}", propertyResponses.Count, userId);
+
+                return Ok(new ApiResponse<List<PropertySummaryResponse>>
+                {
+                    Success = true,
+                    Message = $"Retrieved {propertyResponses.Count} properties",
+                    Data = propertyResponses
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting user properties: {UserId}", userId);
+                return StatusCode(500, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Internal server error",
+                    Data = null
+                });
+            }
+        }
+
+        // ================================
+        // 👤 GET USER VERIFIED PROPERTIES
+        // ================================
+        [HttpGet("user/{userId}/verified")]
+        public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetUserVerifiedProperties(Guid userId)
+        {
+            try
+            {
+                _logger.LogInformation("👤 Getting verified properties for user: {UserId}", userId);
+
+                var userProperties = _dataMap.GetUserPropertiesWithCoverPhotos(userId);
+                var verifiedProperties = userProperties.Where(p => p.IsVerified).ToList();
+
+                var propertyResponses = verifiedProperties.Select(property => 
+                {
+                    return new PropertySummaryResponse
+                    {
+                        Id = property.Id,
+                        OwnerId = property.OwnerId,
+                        Title = property.Title,
+                        City = property.City,
+                        Country = property.Country,
+                        PricePerNight = property.PricePerNight,
+                        Bathrooms = property.Bathrooms,
+                        MaxGuests = property.MaxGuests,
+                        AverageRating = property.AverageRating,
+                        ReviewCount = property.ReviewCount,
+                        IsVerified = property.IsVerified,
+                        Status = property.Status,
+                        CoverImageUrl = property.CoverImageUrl,
+                        CreatedAt = property.CreatedAt
+                    };
+                }).ToList();
+
+                _logger.LogInformation("✅ Retrieved {Count} verified properties for user {UserId}", propertyResponses.Count, userId);
+
+                return Ok(new ApiResponse<List<PropertySummaryResponse>>
+                {
+                    Success = true,
+                    Message = $"Retrieved {propertyResponses.Count} verified properties",
+                    Data = propertyResponses
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting user verified properties: {UserId}", userId);
+                return StatusCode(500, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Internal server error",
+                    Data = null
+                });
+            }
+        }
+
+        // ================================
+        // 👤 GET USER UNVERIFIED PROPERTIES
+        // ================================
+        [HttpGet("user/{userId}/unverified")]
+        public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetUserUnverifiedProperties(Guid userId)
+        {
+            try
+            {
+                _logger.LogInformation("👤 Getting unverified properties for user: {UserId}", userId);
+
+                var userProperties = _dataMap.GetUserPropertiesWithCoverPhotos(userId);
+                var unverifiedProperties = userProperties.Where(p => !p.IsVerified).ToList();
+
+                var propertyResponses = unverifiedProperties.Select(property => 
+                {
+                    return new PropertySummaryResponse
+                    {
+                        Id = property.Id,
+                        OwnerId = property.OwnerId,
+                        Title = property.Title,
+                        City = property.City,
+                        Country = property.Country,
+                        PricePerNight = property.PricePerNight,
+                        Bathrooms = property.Bathrooms,
+                        MaxGuests = property.MaxGuests,
+                        AverageRating = property.AverageRating,
+                        ReviewCount = property.ReviewCount,
+                        IsVerified = property.IsVerified,
+                        Status = property.Status,
+                        CoverImageUrl = property.CoverImageUrl,
+                        CreatedAt = property.CreatedAt
+                    };
+                }).ToList();
+
+                _logger.LogInformation("✅ Retrieved {Count} unverified properties for user {UserId}", propertyResponses.Count, userId);
+
+                return Ok(new ApiResponse<List<PropertySummaryResponse>>
+                {
+                    Success = true,
+                    Message = $"Retrieved {propertyResponses.Count} unverified properties",
+                    Data = propertyResponses
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting user unverified properties: {UserId}", userId);
+                return StatusCode(500, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Internal server error",
+                    Data = null
+                });
+            }
+        }
+
+        // ================================
+        // 🖼️ UPLOAD PHOTOS
         // ================================
         [HttpPost("{propertyId}/photos")]
         public async Task<ActionResult<ApiResponse<List<string>>>> UploadPhotos(Guid propertyId, [FromForm] List<IFormFile> photos)
@@ -288,7 +453,22 @@ namespace SashaServer.Controllers
                     });
                 }
 
+                var property = _dataMap.GetPropertyById(propertyId);
+                if (property == null)
+                {
+                    return NotFound(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Property not found",
+                        Data = null
+                    });
+                }
+
                 var uploadedUrls = new List<string>();
+                
+                // Folosim metoda optimizată pentru a verifica dacă proprietatea are deja poze
+                var hasExistingPhotos = _dataMap.PropertyHasPhotos(propertyId);
+                var isFirstPhoto = !hasExistingPhotos;
 
                 foreach (var photo in photos)
                 {
@@ -298,29 +478,30 @@ namespace SashaServer.Controllers
                     await photo.CopyToAsync(memoryStream);
                     memoryStream.Position = 0;
 
-                    // ✅ Organizează în foldere
                     var fileName = $"{propertyId}/{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
 
+                    // ✅ CORECTAT: Adăugat parametrul bucketName
                     var uploadResult = await _googleCloudService.UploadFileAsync(
                         memoryStream,
                         fileName,
-                        photo.ContentType);
+                        photo.ContentType,
+                        ASSETS_BUCKET);
 
                     if (uploadResult.Success)
                     {
                         uploadedUrls.Add(uploadResult.FileUrl);
 
-                        // Salvează în baza de date
                         var propertyPhoto = new PropertyPhoto
                         {
                             Id = Guid.NewGuid(),
                             PropertyId = propertyId,
                             FilePath = uploadResult.FileUrl,
-                            IsCover = uploadedUrls.Count == 1, // Prima poză = cover
+                            IsCover = isFirstPhoto, // Prima poză devine cover
                             CreatedAt = DateTime.UtcNow
                         };
 
                         _dataMap.AddPropertyPhoto(propertyPhoto);
+                        isFirstPhoto = false;
                     }
                 }
 
@@ -344,7 +525,7 @@ namespace SashaServer.Controllers
         }
 
         // ================================
-        // 🔄 VERIFY PROPERTY (SIMPLU)
+        // 🔄 VERIFY PROPERTY
         // ================================
         [HttpPatch("{id}/verify")]
         public ActionResult<ApiResponse<PropertyResponse>> VerifyProperty(Guid id)
@@ -386,6 +567,119 @@ namespace SashaServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error verifying property: {PropertyId}", id);
+                return StatusCode(500, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Internal server error",
+                    Data = null
+                });
+            }
+        }
+
+        // ================================
+        // 🗑️ DELETE PROPERTY
+        // ================================
+        [HttpDelete("{id}")]
+        public ActionResult<ApiResponse<string>> DeleteProperty(Guid id)
+        {
+            try
+            {
+                var property = _dataMap.GetPropertyById(id);
+                if (property == null)
+                {
+                    return NotFound(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Property not found",
+                        Data = null
+                    });
+                }
+
+                // Ștergem mai întâi toate pozele asociate
+                _dataMap.DeleteAllPropertyPhotos(id);
+
+                // Apoi ștergem proprietatea
+                var deleted = _dataMap.DeletePropertyById(id);
+                if (!deleted)
+                {
+                    return StatusCode(500, new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Failed to delete property",
+                        Data = null
+                    });
+                }
+
+                return Ok(new ApiResponse<string>
+                {
+                    Success = true,
+                    Message = "Property deleted successfully",
+                    Data = null
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error deleting property: {PropertyId}", id);
+                return StatusCode(500, new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Internal server error",
+                    Data = null
+                });
+            }
+        }
+
+        // ================================
+        // 📸 SET COVER PHOTO
+        // ================================
+        [HttpPatch("{propertyId}/photos/{photoId}/cover")]
+        public ActionResult<ApiResponse<string>> SetCoverPhoto(Guid propertyId, Guid photoId)
+        {
+            try
+            {
+                var property = _dataMap.GetPropertyById(propertyId);
+                if (property == null)
+                {
+                    return NotFound(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Property not found",
+                        Data = null
+                    });
+                }
+
+                var photo = _dataMap.GetPropertyPhotoById(photoId);
+                if (photo == null || photo.PropertyId != propertyId)
+                {
+                    return NotFound(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Photo not found",
+                        Data = null
+                    });
+                }
+
+                var updated = _dataMap.UpdatePropertyCoverPhoto(propertyId, photoId);
+                if (!updated)
+                {
+                    return StatusCode(500, new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Failed to set cover photo",
+                        Data = null
+                    });
+                }
+
+                return Ok(new ApiResponse<string>
+                {
+                    Success = true,
+                    Message = "Cover photo updated successfully",
+                    Data = null
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error setting cover photo: PropertyId={PropertyId}, PhotoId={PhotoId}", propertyId, photoId);
                 return StatusCode(500, new ApiResponse<string>
                 {
                     Success = false,
@@ -438,128 +732,23 @@ namespace SashaServer.Controllers
                 UpdatedAt = property.UpdatedAt
             };
         }
-        
-        [HttpGet("user/{userId}")]
-public ActionResult<ApiResponse<List<PropertyResponse>>> GetUserProperties(Guid userId)
-{
-    try
-    {
-        _logger.LogInformation("👤 Getting properties for user: {UserId}", userId);
-
-        var allProperties = _dataMap.GetProperties();
-        var userProperties = allProperties.Where(p => p.OwnerId == userId).ToList();
-
-        var propertyResponses = userProperties.Select(MapToPropertyResponse).ToList();
-
-        _logger.LogInformation("✅ Retrieved {Count} properties for user {UserId}", propertyResponses.Count, userId);
-
-        return Ok(new ApiResponse<List<PropertyResponse>>
-        {
-            Success = true,
-            Message = $"Retrieved {propertyResponses.Count} properties",
-            Data = propertyResponses
-        });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "❌ Error getting user properties: {UserId}", userId);
-        return StatusCode(500, new ApiResponse<string>
-        {
-            Success = false,
-            Message = "Internal server error",
-            Data = null
-        });
-    }
-}
-
-// ================================
-// 👤 GET USER VERIFIED PROPERTIES
-// ================================
-[HttpGet("user/{userId}/verified")]
-public ActionResult<ApiResponse<List<PropertyResponse>>> GetUserVerifiedProperties(Guid userId)
-{
-    try
-    {
-        _logger.LogInformation("👤 Getting verified properties for user: {UserId}", userId);
-
-        var allProperties = _dataMap.GetProperties();
-        var verifiedProperties = allProperties.Where(p => p.OwnerId == userId && p.IsVerified).ToList();
-
-        var propertyResponses = verifiedProperties.Select(MapToPropertyResponse).ToList();
-
-        _logger.LogInformation("✅ Retrieved {Count} verified properties for user {UserId}", propertyResponses.Count, userId);
-
-        return Ok(new ApiResponse<List<PropertyResponse>>
-        {
-            Success = true,
-            Message = $"Retrieved {propertyResponses.Count} verified properties",
-            Data = propertyResponses
-        });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "❌ Error getting user verified properties: {UserId}", userId);
-        return StatusCode(500, new ApiResponse<string>
-        {
-            Success = false,
-            Message = "Internal server error",
-            Data = null
-        });
-    }
-}
-
-// ================================
-// 👤 GET USER UNVERIFIED PROPERTIES
-// ================================
-[HttpGet("user/{userId}/unverified")]
-public ActionResult<ApiResponse<List<PropertyResponse>>> GetUserUnverifiedProperties(Guid userId)
-{
-    try
-    {
-        _logger.LogInformation("👤 Getting unverified properties for user: {UserId}", userId);
-
-        var allProperties = _dataMap.GetProperties();
-        var unverifiedProperties = allProperties.Where(p => p.OwnerId == userId && !p.IsVerified).ToList();
-
-        var propertyResponses = unverifiedProperties.Select(MapToPropertyResponse).ToList();
-
-        _logger.LogInformation("✅ Retrieved {Count} unverified properties for user {UserId}", propertyResponses.Count, userId);
-
-        return Ok(new ApiResponse<List<PropertyResponse>>
-        {
-            Success = true,
-            Message = $"Retrieved {propertyResponses.Count} unverified properties",
-            Data = propertyResponses
-        });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "❌ Error getting user unverified properties: {UserId}", userId);
-        return StatusCode(500, new ApiResponse<string>
-        {
-            Success = false,
-            Message = "Internal server error",
-            Data = null
-        });
-    }
-}
     }
 
     // ================================
-    // MODELE (rămân la fel)
+    // MODELE OPTIMIZATE
     // ================================
 
     public class CreatePropertyRequest
     {
         public Guid OwnerId { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string LocationType { get; set; }
-        public string Address { get; set; }
-        public string City { get; set; }
-        public string County { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
+        public required string LocationType { get; set; }
+        public string? Address { get; set; }
+        public required string City { get; set; }
+        public string? County { get; set; }
         public string Country { get; set; } = "Romania";
-        public string PostalCode { get; set; }
+        public string? PostalCode { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public decimal PricePerNight { get; set; }
@@ -575,27 +764,47 @@ public ActionResult<ApiResponse<List<PropertyResponse>>> GetUserUnverifiedProper
         public bool SmokeDetector { get; set; }
         public bool FireExtinguisher { get; set; }
         public bool CarbonMonoxideDetector { get; set; }
-        public string LockType { get; set; }
-        public string NeighborhoodDescription { get; set; }
-        public string[] Tags { get; set; }
+        public string? LockType { get; set; }
+        public string? NeighborhoodDescription { get; set; }
+        public string[] Tags { get; set; } = Array.Empty<string>();
         public bool InstantBook { get; set; } = false;
     }
 
-    public class PropertyResponse
+    // ✅ Response lightweight pentru liste
+    public class PropertySummaryResponse
     {
         public Guid Id { get; set; }
         public Guid OwnerId { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string LocationType { get; set; }
-        public string Address { get; set; }
-        public string City { get; set; }
-        public string County { get; set; }
-        public string Country { get; set; }
-        public string PostalCode { get; set; }
+        public required string Title { get; set; }
+        public required string City { get; set; }
+        public required string Country { get; set; }
+        public decimal PricePerNight { get; set; }
+        public int Bathrooms { get; set; }
+        public int MaxGuests { get; set; }
+        public decimal AverageRating { get; set; }
+        public int ReviewCount { get; set; }
+        public bool IsVerified { get; set; }
+        public required string Status { get; set; }
+        public string? CoverImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    // ✅ Response complet pentru detalii
+    public class PropertyDetailsResponse
+    {
+        public Guid Id { get; set; }
+        public Guid OwnerId { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
+        public required string LocationType { get; set; }
+        public string? Address { get; set; }
+        public required string City { get; set; }
+        public string? County { get; set; }
+        public required string Country { get; set; }
+        public string? PostalCode { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-        public string Status { get; set; }
+        public required string Status { get; set; }
         public decimal PricePerNight { get; set; }
         public int MinNights { get; set; }
         public int MaxNights { get; set; }
@@ -609,11 +818,60 @@ public ActionResult<ApiResponse<List<PropertyResponse>>> GetUserUnverifiedProper
         public bool SmokeDetector { get; set; }
         public bool FireExtinguisher { get; set; }
         public bool CarbonMonoxideDetector { get; set; }
-        public string LockType { get; set; }
+        public string? LockType { get; set; }
         public decimal AverageRating { get; set; }
         public int ReviewCount { get; set; }
-        public string NeighborhoodDescription { get; set; }
-        public string[] Tags { get; set; }
+        public string? NeighborhoodDescription { get; set; }
+        public string[] Tags { get; set; } = Array.Empty<string>();
+        public bool InstantBook { get; set; }
+        public bool IsVerified { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public List<PropertyImage> Images { get; set; } = new List<PropertyImage>();
+    }
+
+    public class PropertyImage
+    {
+        public Guid Id { get; set; }
+        public required string Url { get; set; }
+        public bool IsCover { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    // ⚠️ Păstrăm și vechiul model pentru compatibilitate
+    public class PropertyResponse
+    {
+        public Guid Id { get; set; }
+        public Guid OwnerId { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
+        public required string LocationType { get; set; }
+        public string? Address { get; set; }
+        public required string City { get; set; }
+        public string? County { get; set; }
+        public required string Country { get; set; }
+        public string? PostalCode { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public required string Status { get; set; }
+        public decimal PricePerNight { get; set; }
+        public int MinNights { get; set; }
+        public int MaxNights { get; set; }
+        public TimeSpan CheckInTime { get; set; }
+        public TimeSpan CheckOutTime { get; set; }
+        public int MaxGuests { get; set; }
+        public int Bathrooms { get; set; }
+        public bool Kitchen { get; set; }
+        public decimal LivingSpace { get; set; }
+        public bool PetFriendly { get; set; }
+        public bool SmokeDetector { get; set; }
+        public bool FireExtinguisher { get; set; }
+        public bool CarbonMonoxideDetector { get; set; }
+        public string? LockType { get; set; }
+        public decimal AverageRating { get; set; }
+        public int ReviewCount { get; set; }
+        public string? NeighborhoodDescription { get; set; }
+        public string[] Tags { get; set; } = Array.Empty<string>();
         public bool InstantBook { get; set; }
         public bool IsVerified { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -623,7 +881,7 @@ public ActionResult<ApiResponse<List<PropertyResponse>>> GetUserUnverifiedProper
     public class ApiResponse<T>
     {
         public bool Success { get; set; }
-        public string Message { get; set; }
-        public T Data { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public T? Data { get; set; }
     }
 }

@@ -55,11 +55,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var cnpKey = builder.Configuration["CnpKey"];
 var jwtKey = builder.Configuration["Jwt-Key"];
 var gcsKeyPath = builder.Configuration["gcs-key"];
+var assetsBucket = builder.Configuration["sasha-stays-assets-bucket"]; // ✅ Noul secret pentru bucket
 
 // Debug: verifică ce valori sunt încărcate
 Console.WriteLine($"CnpKey is null or empty: {string.IsNullOrEmpty(cnpKey)}");
 Console.WriteLine($"Jwt-Key is null or empty: {string.IsNullOrEmpty(jwtKey)}");
 Console.WriteLine($"gcs-key is null or empty: {string.IsNullOrEmpty(gcsKeyPath)}");
+Console.WriteLine($"sasha-stays-assets-bucket is null or empty: {string.IsNullOrEmpty(assetsBucket)}");
 Console.WriteLine($"DefaultConnection is null or empty: {string.IsNullOrEmpty(connectionString)}");
 
 // Dacă secret-ele nu sunt încărcate, folosește appsettings.json ca fallback
@@ -73,6 +75,7 @@ if (string.IsNullOrEmpty(cnpKey) || string.IsNullOrEmpty(jwtKey))
     cnpKey = builder.Configuration["CnpKey"];
     jwtKey = builder.Configuration["Jwt-Key"];
     gcsKeyPath = builder.Configuration["gcs-key"];
+    assetsBucket = builder.Configuration["sasha-stays-assets-bucket"]; // ✅
 }
 
 // Verificări finale
@@ -88,10 +91,23 @@ if (string.IsNullOrEmpty(gcsKeyPath))
 if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException("Database connection string not configured.");
 
+// ✅ Bucket-ul assets este opțional - folosim fallback
+if (string.IsNullOrEmpty(assetsBucket))
+{
+    assetsBucket = "sasha-stays-documents"; // Fallback la bucket-ul vechi
+    Console.WriteLine("Using fallback bucket: sasha-stays-documents");
+}
+
+Console.WriteLine($"Assets bucket configured: {assetsBucket}");
 Console.WriteLine("All secrets loaded successfully!");
 
 // --- Configure CloudConfig ---
-builder.Services.Configure<CloudConfig>(builder.Configuration.GetSection("Gcp"));
+builder.Services.Configure<CloudConfig>(options =>
+{
+    options.AssetsBucket = assetsBucket; // ✅ Configurează noul bucket
+    // Alte configurații existente...
+});
+
 builder.Services.AddSingleton(new CnpHelper(cnpKey));
 
 // --- Services ---
@@ -158,6 +174,7 @@ app.MapControllers();
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     logger.LogInformation("[{Time}] SashaServer started successfully!", DateTime.Now);
+    logger.LogInformation("[{Time}] Assets bucket: {Bucket}", DateTime.Now, assetsBucket);
 });
 
 app.Lifetime.ApplicationStopping.Register(() =>
@@ -181,8 +198,11 @@ Dictionary<string, string> LoadSecretsFromGoogleSecretManager(string projectId)
         var client = SecretManagerServiceClient.Create();
         Console.WriteLine("Secret Manager client created successfully");
         
-        // Lista de secret-e pe care vrem să le încărcăm
-        var secretNames = new[] { "CnpKey", "Jwt-Key", "gcs-key", "DefaultConnection", "EncryptionKeyName" };
+        // ✅ Adaugă noul secret în listă
+        var secretNames = new[] { 
+            "CnpKey", "Jwt-Key", "gcs-key", "DefaultConnection", 
+            "EncryptionKeyName", "sasha-stays-assets-bucket" // ✅ Noul secret
+        };
         
         foreach (var secretName in secretNames)
         {

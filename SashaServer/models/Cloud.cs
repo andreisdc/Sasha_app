@@ -1,11 +1,13 @@
 namespace SashaServer.Models
 {
-   public class CloudConfig
-{
-    public string ProjectId { get; set; } = string.Empty;
-    public string BucketName { get; set; } = string.Empty;
-    public string CredentialsPath { get; set; } = string.Empty;
-    public string BaseUrl { get; set; } = string.Empty;
+    public class CloudConfig
+    {
+        public string ProjectId { get; set; } = string.Empty;
+        public string BucketName { get; set; } = string.Empty;
+        public string CredentialsPath { get; set; } = string.Empty;
+        public string BaseUrl { get; set; } = string.Empty;
+        public string AssetsBucket { get; set; } = "sasha-stays-documents"; // ✅ Adaugă această linie
+
 }
 
 
