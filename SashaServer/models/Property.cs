@@ -36,5 +36,6 @@ namespace SashaServer.Models
         public bool InstantBook { get; set; } = false;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public bool IsVerified { get; set; }
     }
 }

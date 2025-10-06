@@ -41,7 +41,7 @@ export const routes: Routes = [
   {
     path: 'add-property',
     loadComponent: () =>
-      import('./pages/add-property/add-property').then((m) => m.AddProperty),
+      import('./pages/add-property/add-property').then((m) => m.AddPropertyComponent),
     canActivate: [AuthGuard],
   },
 

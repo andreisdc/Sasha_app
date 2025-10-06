@@ -1,9 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { 
+  Component, 
+  OnInit, 
+  inject, 
+  ChangeDetectorRef, 
+  NgZone,
+  ChangeDetectionStrategy 
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { PropertyService } from '../../core/services/property-service';
+import { AuthService } from '../../core/services/auth-service';
+import { firstValueFrom } from 'rxjs';
+import { CreatePropertyRequest } from '../../core/interfaces/propertyResponse';
 
+// Interfaces
 interface PropertyData {
   title: string;
   description: string;
@@ -24,7 +36,7 @@ interface PropertyData {
   minNights: number;
   maxNights: number;
   amenities: string[];
-  activities: Activity[]; // ✅ Activitate nouă
+  activities: Activity[];
 }
 
 interface Activity {
@@ -44,9 +56,11 @@ interface Amenity {
 
 @Component({
   selector: 'app-add-property',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-property.html',
-  styleUrl: './add-property.less',
+  styleUrls: ['./add-property.less'],
+  changeDetection: ChangeDetectionStrategy.Default,
   animations: [
     trigger('fadeAnimation', [
       transition(':increment', [
@@ -60,10 +74,17 @@ interface Amenity {
     ])
   ]
 })
-export class AddProperty implements OnInit {
+export class AddPropertyComponent implements OnInit {
   currentStep = 1;
-  totalSteps = 5; // ✅ Actualizat la 5 etape
+  totalSteps = 5;
+  
   isLoading = false;
+  uploadProgress = 0;
+  currentOperation = '';
+  createdPropertyId: string = '';
+  uploadStatus = '';
+  errorMessage = '';
+  
   activitySearch = '';
   selectedCategory: string = 'all';
   
@@ -72,7 +93,7 @@ export class AddProperty implements OnInit {
     description: '',
     propertyType: '',
     pricePerNight: 0,
-    country: '',
+    country: 'Romania',
     city: '',
     address: '',
     postalCode: '',
@@ -87,18 +108,19 @@ export class AddProperty implements OnInit {
     minNights: 1,
     maxNights: 30,
     amenities: [],
-    activities: [] // ✅ Activitate nouă
+    activities: []
   };
+
+  selectedFiles: File[] = [];
 
   steps = [
     { label: 'Basic Info' },
     { label: 'Location' },
     { label: 'Details' },
     { label: 'Photos' },
-    { label: 'Activities' } // ✅ Etapă nouă
+    { label: 'Activities' }
   ];
 
-  // ✅ Date mock pentru activități (în loc de API call)
   allActivities: Activity[] = [
     { id: '3177dd13-4b3c-432e-9204-d2e14b82c5b1', code: 'hiking', name: 'Hiking / Drumeții', category: 'Outdoor', createdAt: new Date() },
     { id: '5f2f37c0-8dee-4a98-b538-5b3ebab9ba6a', code: 'biking', name: 'Biking / Ciclism', category: 'Outdoor', createdAt: new Date() },
@@ -124,42 +146,67 @@ export class AddProperty implements OnInit {
   activityCategories = ['all', 'Outdoor', 'Culture', 'Food', 'Adventure', 'Relax', 'Family'];
 
   amenities: Amenity[] = [
-    // ... existing amenities
+    { name: 'wifi', label: 'WiFi', icon: 'fas fa-wifi', selected: false },
+    { name: 'kitchen', label: 'Kitchen', icon: 'fas fa-utensils', selected: false },
+    { name: 'parking', label: 'Parking', icon: 'fas fa-parking', selected: false },
+    { name: 'tv', label: 'TV', icon: 'fas fa-tv', selected: false },
+    { name: 'ac', label: 'Air Conditioning', icon: 'fas fa-snowflake', selected: false },
+    { name: 'heating', label: 'Heating', icon: 'fas fa-thermometer-half', selected: false },
+    { name: 'washer', label: 'Washer', icon: 'fas fa-soap', selected: false },
+    { name: 'pool', label: 'Pool', icon: 'fas fa-swimming-pool', selected: false },
+    { name: 'gym', label: 'Gym', icon: 'fas fa-dumbbell', selected: false },
+    { name: 'petFriendly', label: 'Pet Friendly', icon: 'fas fa-paw', selected: false }
   ];
 
-  constructor(private router: Router) {}
+  private router = inject(Router);
+  private propertyService = inject(PropertyService);
+  private authService = inject(AuthService);
+  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
     this.filteredActivities = [...this.allActivities];
+    this.cdr.markForCheck();
   }
 
-  // ✅ Metode noi pentru activități
   filterActivities() {
-    this.filteredActivities = this.allActivities.filter(activity => {
-      const matchesSearch = activity.name.toLowerCase().includes(this.activitySearch.toLowerCase()) ||
-                           activity.code.toLowerCase().includes(this.activitySearch.toLowerCase());
-      const matchesCategory = this.selectedCategory === 'all' || activity.category === this.selectedCategory;
-      return matchesSearch && matchesCategory;
+    this.ngZone.run(() => {
+      this.filteredActivities = this.allActivities.filter(activity => {
+        const matchesSearch = activity.name.toLowerCase().includes(this.activitySearch.toLowerCase()) ||
+                             activity.code.toLowerCase().includes(this.activitySearch.toLowerCase());
+        const matchesCategory = this.selectedCategory === 'all' || activity.category === this.selectedCategory;
+        return matchesSearch && matchesCategory;
+      });
+      this.cdr.markForCheck();
     });
   }
 
   selectCategory(category: string) {
-    this.selectedCategory = category;
-    this.filterActivities();
+    this.ngZone.run(() => {
+      this.selectedCategory = category;
+      this.filterActivities();
+      this.cdr.markForCheck();
+    });
   }
 
   toggleActivity(activity: Activity) {
-    const index = this.selectedActivities.findIndex(a => a.id === activity.id);
-    
-    if (index > -1) {
-      this.selectedActivities.splice(index, 1);
-    } else {
-      this.selectedActivities.push(activity);
-    }
+    this.ngZone.run(() => {
+      const index = this.selectedActivities.findIndex(a => a.id === activity.id);
+      
+      if (index > -1) {
+        this.selectedActivities.splice(index, 1);
+      } else {
+        this.selectedActivities.push(activity);
+      }
+      this.cdr.markForCheck();
+    });
   }
 
   removeActivity(activity: Activity) {
-    this.selectedActivities = this.selectedActivities.filter(a => a.id !== activity.id);
+    this.ngZone.run(() => {
+      this.selectedActivities = this.selectedActivities.filter(a => a.id !== activity.id);
+      this.cdr.markForCheck();
+    });
   }
 
   isActivitySelected(activityId: string): boolean {
@@ -203,20 +250,24 @@ export class AddProperty implements OnInit {
     return labels[category] || category;
   }
 
-  // Navigation methods (actualizate)
   nextStep() {
-    if (this.currentStep < this.totalSteps) {
-      this.currentStep++;
-    }
+    this.ngZone.run(() => {
+      if (this.currentStep < this.totalSteps) {
+        this.currentStep++;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   previousStep() {
-    if (this.currentStep > 1) {
-      this.currentStep--;
-    }
+    this.ngZone.run(() => {
+      if (this.currentStep > 1) {
+        this.currentStep--;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
-  // Validation methods (actualizate)
   isStep1Valid(): boolean {
     return !!this.propertyData.title && 
            !!this.propertyData.description && 
@@ -240,65 +291,265 @@ export class AddProperty implements OnInit {
     return this.propertyData.images.length > 0;
   }
 
-  // Step 5 nu are validare obligatorie - activitățile sunt opționale
-
-  // File handling
   onFileSelected(event: any) {
-    const files = event.target.files;
-    if (files) {
-      for (let file of files) {
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.propertyData.images.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
+    const files: FileList = event.target.files;
+    if (files && files.length > 0) {
+      this.ngZone.run(() => {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          
+          if (file.size > 5 * 1024 * 1024) {
+            this.showErrorInModal(`File ${file.name} is too large. Maximum size is 5MB.`);
+            continue;
+          }
+          
+          if (!file.type.startsWith('image/')) {
+            this.showErrorInModal(`File ${file.name} is not an image.`);
+            continue;
+          }
+          
+          this.selectedFiles.push(file);
+          
+          const reader = new FileReader();
+          reader.onload = (e: any) => {
+            this.ngZone.run(() => {
+              this.propertyData.images.push(e.target.result);
+              this.cdr.markForCheck();
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+        this.cdr.markForCheck();
+      });
     }
   }
 
   removePhoto(index: number) {
-    this.propertyData.images.splice(index, 1);
+    this.ngZone.run(() => {
+      this.propertyData.images.splice(index, 1);
+      this.selectedFiles.splice(index, 1);
+      this.cdr.markForCheck();
+    });
   }
 
-  // Get selected amenities
   getSelectedAmenities(): string[] {
     return this.amenities
       .filter(amenity => amenity.selected)
       .map(amenity => amenity.name);
   }
 
-  // Submit property (actualizat)
+  private convertToCreateRequest(): CreatePropertyRequest {
+    const currentUser = this.authService.getCurrentUser();
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    return {
+      ownerId: currentUser.id,
+      title: this.propertyData.title,
+      description: this.propertyData.description,
+      locationType: this.propertyData.propertyType,
+      address: this.propertyData.address,
+      city: this.propertyData.city,
+      county: this.propertyData.county,
+      country: this.propertyData.country,
+      postalCode: this.propertyData.postalCode,
+      latitude: 44.4268,
+      longitude: 26.1025,
+      pricePerNight: this.propertyData.pricePerNight,
+      minNights: this.propertyData.minNights || 1,
+      maxNights: this.propertyData.maxNights || 30,
+      checkInTime: this.propertyData.checkInTime ? this.propertyData.checkInTime + ':00' : '15:00:00',
+      checkOutTime: this.propertyData.checkOutTime ? this.propertyData.checkOutTime + ':00' : '11:00:00',
+      maxGuests: this.propertyData.maxGuests,
+      bathrooms: this.propertyData.bathrooms,
+      kitchen: this.getSelectedAmenities().includes('kitchen'),
+      livingSpace: this.propertyData.livingSpace || 0,
+      petFriendly: this.getSelectedAmenities().includes('petFriendly'),
+      smokeDetector: true,
+      fireExtinguisher: true,
+      carbonMonoxideDetector: true,
+      lockType: 'standard',
+      neighborhoodDescription: 'Great neighborhood with many amenities',
+      tags: this.getSelectedAmenities(),
+      instantBook: false
+    };
+  }
+
   async submitProperty() {
-    this.isLoading = true;
+    if (this.selectedFiles.length === 0) {
+      this.showErrorInModal('Please add at least one photo');
+      return;
+    }
+
+    this.startLoading('Creating property...', 'Starting the process...', 10);
 
     try {
-      // Add selected amenities to property data
-      this.propertyData.amenities = this.getSelectedAmenities();
-      
-      // Add selected activities to property data
-      this.propertyData.activities = this.selectedActivities;
+      const currentUser = this.authService.getCurrentUser();
+      if (!currentUser) {
+        this.showErrorInModal('You need to be logged in to add a property!');
+        this.router.navigate(['/login']);
+        return;
+      }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      this.updateLoadingState('Creating property details...', 'Setting up your property information...', 30);
+
+      const createRequest = this.convertToCreateRequest();
+      const createdProperty = await firstValueFrom(this.propertyService.createProperty(createRequest));
       
-      console.log('Property data to submit:', this.propertyData);
-      console.log('Selected activities:', this.selectedActivities);
+      if (!createdProperty) {
+        throw new Error('Failed to create property - no response from server');
+      }
+
+      const propertyId = createdProperty.id || 
+                        (createdProperty as any)._id || 
+                        (createdProperty as any).propertyId;
       
-      // Here you would call your actual API service
-      // await this.propertyService.addProperty(this.propertyData);
+      if (!propertyId) {
+        throw new Error('Failed to create property - no ID returned in response');
+      }
+
+      this.ngZone.run(() => {
+        this.createdPropertyId = propertyId;
+        this.cdr.markForCheck();
+      });
+
+      this.updateLoadingState('Uploading photos...', `Uploading ${this.selectedFiles.length} photos...`, 50);
+
+      await this.uploadPhotos(this.createdPropertyId);
+
+      this.updateLoadingState('Finalizing...', 'Completing your property setup...', 90);
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      this.updateLoadingState('Complete!', 'Property created successfully!', 100);
       
-      alert('Property added successfully!');
-      this.router.navigate(['/properties']);
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-    } catch (error) {
-      console.error('Error adding property:', error);
-      alert('Error adding property. Please try again.');
-    } finally {
-      this.isLoading = false;
+      this.completeProcess();
+      
+    } catch (error: any) {
+      this.handleProcessError(error);
     }
   }
 
+  private startLoading(operation: string, status: string, progress: number) {
+    this.ngZone.run(() => {
+      this.isLoading = true;
+      this.errorMessage = '';
+      this.currentOperation = operation;
+      this.uploadStatus = status;
+      this.uploadProgress = progress;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private updateLoadingState(operation: string, status: string, progress: number) {
+    this.ngZone.run(() => {
+      this.currentOperation = operation;
+      this.uploadStatus = status;
+      this.uploadProgress = progress;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private showErrorInModal(message: string) {
+    this.ngZone.run(() => {
+      this.errorMessage = message;
+      this.isLoading = true;
+      this.currentOperation = 'Error';
+      this.uploadStatus = message;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private completeProcess() {
+    this.ngZone.run(() => {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+      this.router.navigate(['/properties']);
+    });
+  }
+
+  private async uploadPhotos(propertyId: string): Promise<void> {
+    if (this.selectedFiles.length === 0) {
+      return;
+    }
+
+    try {
+      this.updateLoadingState('Uploading photos...', `Uploading 1/${this.selectedFiles.length} photos...`, 50);
+      
+      const uploadResult = await firstValueFrom(
+        this.propertyService.uploadPropertyPhotos(propertyId, this.selectedFiles)
+      );
+
+      if (uploadResult && uploadResult.success) {
+        const photoCount = uploadResult.data?.length || 0;
+        this.updateLoadingState('Processing photos...', `Successfully uploaded ${photoCount} photos!`, 70);
+      } else {
+        throw new Error('Photo upload failed - server returned unsuccessful response');
+      }
+    } catch (error: any) {
+      this.updateLoadingState('Error', 'Failed to upload photos. Please try again.', 50);
+      throw error;
+    }
+  }
+
+  private handleProcessError(error: any) {
+    let errorMessage = 'Error creating property. Please try again.';
+    
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    if (error.status === 400) {
+      errorMessage = `Validation error: ${errorMessage}`;
+    } else if (error.status === 401) {
+      errorMessage = 'You are not authorized to create properties. Please log in.';
+    } else if (error.status === 413) {
+      errorMessage = 'Photos are too large. Please reduce file sizes (max 5MB per photo).';
+    } else if (error.status === 404) {
+      errorMessage = 'Server endpoint not found. Please check the API URL.';
+    } else if (error.status === 500) {
+      errorMessage = `Server error: ${errorMessage}`;
+    } else if (error.name === 'HttpErrorResponse') {
+      errorMessage = 'Network error. Please check your connection and try again.';
+    }
+
+    this.ngZone.run(() => {
+      this.isLoading = true;
+      this.errorMessage = errorMessage;
+      this.currentOperation = 'Error';
+      this.uploadStatus = errorMessage;
+      this.cdr.markForCheck();
+    });
+  }
+
   goBack() {
-    this.router.navigate(['/properties']);
+    if (this.currentStep === 1) {
+      this.router.navigate(['/properties']);
+    } else {
+      this.previousStep();
+    }
+  }
+
+  retryProcess() {
+    this.ngZone.run(() => {
+      this.isLoading = false;
+      this.errorMessage = '';
+      this.cdr.markForCheck();
+    });
+  }
+
+  cancelProcess() {
+    this.ngZone.run(() => {
+      this.isLoading = false;
+      this.errorMessage = '';
+      this.cdr.markForCheck();
+      this.router.navigate(['/properties']);
+    });
   }
 }

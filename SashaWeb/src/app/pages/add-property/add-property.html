@@ -15,8 +15,9 @@
     </div>
   </div>
 
-  <!-- Form Container -->
-  <div class="form-container" [@fadeAnimation]="currentStep">
+  <!-- Main Form Container -->
+  <div class="form-container" [@fadeAnimation]="currentStep" [class.loading]="isLoading">
+    
     <!-- Step 1: Basic Information -->
     <div *ngIf="currentStep === 1" class="step-content">
       <div class="step-header">
@@ -189,24 +190,34 @@
         <p>Add photos and set availability</p>
       </div>
       
-      <!-- ✅ SCHIMBARE AICI: nextStep() în loc de submitProperty() -->
       <form class="property-form" (ngSubmit)="nextStep()">
         <div class="photos-section">
           <h3>Property Photos</h3>
+          <div class="photos-info">
+            <p><i class="fas fa-info-circle"></i> Upload 5-10 high-quality photos. First photo will be the cover image.</p>
+          </div>
           <div class="photos-upload">
             <div class="upload-area" (click)="fileInput.click()">
               <i class="fas fa-cloud-upload-alt"></i>
               <p>Click to upload photos</p>
-              <span>Recommended: 5-10 high-quality photos</span>
+              <span>Supported: JPG, PNG, WEBP • Max 5MB per photo</span>
               <input #fileInput type="file" multiple accept="image/*" (change)="onFileSelected($event)" hidden>
             </div>
             
             <div class="uploaded-photos" *ngIf="propertyData.images.length > 0">
-              <div *ngFor="let image of propertyData.images; let i = index" class="photo-preview">
-                <img [src]="image" alt="Property photo">
-                <button type="button" class="remove-photo" (click)="removePhoto(i)">
-                  <i class="fas fa-times"></i>
-                </button>
+              <div class="photos-count">
+                {{ propertyData.images.length }} photo(s) selected
+              </div>
+              <div class="photos-grid">
+                <div *ngFor="let image of propertyData.images; let i = index" class="photo-preview">
+                  <img [src]="image" alt="Property photo">
+                  <div class="photo-overlay">
+                    <span class="photo-number">{{ i + 1 }}</span>
+                    <button type="button" class="remove-photo" (click)="removePhoto(i)">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -242,7 +253,6 @@
           <button type="button" class="btn-secondary" (click)="previousStep()">
             <i class="fas fa-arrow-left"></i> Back
           </button>
-          <!-- ✅ SCHIMBARE AICI: Next în loc de Add Property -->
           <button type="submit" class="btn-primary" [disabled]="!isStep4Valid()">
             Next <i class="fas fa-arrow-right"></i>
           </button>
@@ -257,7 +267,6 @@
         <p>What activities are available near your property?</p>
       </div>
       
-      <!-- ✅ AICI rămâne submitProperty() pentru etapa finală -->
       <form class="property-form" (ngSubmit)="submitProperty()">
         <div class="activities-section">
           <div class="search-activities">
@@ -319,18 +328,87 @@
           <button type="button" class="btn-secondary" (click)="previousStep()">
             <i class="fas fa-arrow-left"></i> Back
           </button>
-          <!-- ✅ AICI rămâne Add Property pentru etapa finală -->
-          <button type="submit" class="btn-primary">
+          <button type="submit" class="btn-primary" [disabled]="isLoading">
             <i class="fas fa-plus"></i> Add Property
           </button>
         </div>
       </form>
     </div>
 
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="loading-overlay">
+    <!-- Enhanced Loading Overlay -->
+   <!-- Enhanced Loading Overlay -->
+<div *ngIf="isLoading" class="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner-large" *ngIf="!errorMessage">
       <div class="spinner"></div>
-      <p>Adding your property...</p>
     </div>
+    
+    <div class="error-icon" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <div class="loading-details">
+      <h3>{{ currentOperation }}</h3>
+      <p class="upload-status">{{ uploadStatus }}</p>
+      
+      <!-- Progress Bar for Upload -->
+      <div class="upload-progress" *ngIf="!errorMessage">
+        <div class="progress-text">
+          <span>Progress: {{ uploadProgress }}%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-inner">
+            <div class="progress-fill-inner" [style.width.%]="uploadProgress"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Actions -->
+      <div class="error-actions" *ngIf="errorMessage">
+        <button type="button" class="btn-secondary" (click)="cancelProcess()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-primary" (click)="retryProcess()">
+          <i class="fas fa-redo"></i> Try Again
+        </button>
+      </div>
+
+      <!-- Step Indicators -->
+      <div class="loading-steps" *ngIf="!errorMessage">
+        <div class="loading-step" [class.completed]="uploadProgress >= 30">
+          <div class="step-icon">
+            <i class="fas fa-check" *ngIf="uploadProgress >= 30"></i>
+            <i class="fas fa-home" *ngIf="uploadProgress < 30"></i>
+          </div>
+          <span>Creating Property</span>
+        </div>
+        
+        <div class="loading-step" [class.completed]="uploadProgress >= 50" [class.active]="uploadProgress >= 30 && uploadProgress < 50">
+          <div class="step-icon">
+            <i class="fas fa-check" *ngIf="uploadProgress >= 50"></i>
+            <i class="fas fa-images" *ngIf="uploadProgress < 50"></i>
+          </div>
+          <span>Uploading Photos</span>
+        </div>
+        
+        <div class="loading-step" [class.completed]="uploadProgress >= 90" [class.active]="uploadProgress >= 50 && uploadProgress < 90">
+          <div class="step-icon">
+            <i class="fas fa-check" *ngIf="uploadProgress >= 90"></i>
+            <i class="fas fa-cog" *ngIf="uploadProgress < 90"></i>
+          </div>
+          <span>Finalizing</span>
+        </div>
+        
+        <div class="loading-step" [class.completed]="uploadProgress === 100">
+          <div class="step-icon">
+            <i class="fas fa-check" *ngIf="uploadProgress === 100"></i>
+            <i class="fas fa-flag" *ngIf="uploadProgress < 100"></i>
+          </div>
+          <span>Complete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 </div>
