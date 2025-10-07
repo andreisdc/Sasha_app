@@ -745,62 +745,139 @@ public bool UpdateProperty(Property property)
             return cmd.ExecuteNonQuery() > 0;
         }
 
-        public Property? GetPropertyById(Guid propertyId)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
-                            postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
-                            check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
-                            smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
-                            average_rating, review_count, neighborhood_description, tags, instant_book,
-                            created_at, updated_at
-                    FROM t_properties WHERE id = @id", conn);
-            cmd.Parameters.AddWithValue("id", propertyId);
+       public Property? GetPropertyById(Guid propertyId)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+    var cmd = new NpgsqlCommand(
+        @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
+                    postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
+                    check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
+                    smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
+                    average_rating, review_count, neighborhood_description, tags, instant_book,
+                    created_at, updated_at, is_verified,
+                    -- Outdoor Activities
+                    hiking, biking, swimming, fishing, skiing, snowboarding, horse_riding, climbing, camping, beach,
+                    -- Cultural Activities
+                    museum, historical_site, art_gallery, theatre, local_market, winery_tour,
+                    -- Food & Drink
+                    restaurant, bar, cafe, local_food, wine_tasting,
+                    -- Adventure Activities
+                    kayaking, rafting, paragliding, zipline,
+                    -- Relaxation
+                    spa, yoga, meditation, hot_springs,
+                    -- Family Activities
+                    playground, zoo, aquarium, amusement_park,
+                    -- Property Amenities
+                    wifi, air_conditioning, heating, pool, parking, fireplace, balcony, garden, tv,
+                    hot_tub, wheelchair_accessible, bbq, breakfast_included, washer, dryer
+            FROM t_properties WHERE id = @id", conn);
+    cmd.Parameters.AddWithValue("id", propertyId);
 
-            using var reader = cmd.ExecuteReader();
-            if (!reader.Read()) return null;
+    using var reader = cmd.ExecuteReader();
+    if (!reader.Read()) return null;
 
-            return new Property
-            {
-                Id = reader.GetGuid(0),
-                OwnerId = reader.GetGuid(1),
-                Title = reader.GetString(2),
-                Description = reader.GetString(3),
-                LocationType = reader.GetString(4),
-                Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                City = reader.IsDBNull(6) ? "" : reader.GetString(6),
-                County = reader.IsDBNull(7) ? "" : reader.GetString(7),
-                Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
-                PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
-                Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
-                Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
-                Status = reader.GetString(12),
-                PricePerNight = reader.GetDecimal(13),
-                MinNights = reader.GetInt32(14),
-                MaxNights = reader.GetInt32(15),
-                CheckInTime = reader.GetTimeSpan(16),
-                CheckOutTime = reader.GetTimeSpan(17),
-                MaxGuests = reader.GetInt32(18),
-                Bathrooms = reader.GetInt32(19),
-                Kitchen = reader.GetBoolean(20),
-                LivingSpace = reader.GetDecimal(21),
-                PetFriendly = reader.GetBoolean(22),
-                SmokeDetector = reader.GetBoolean(23),
-                FireExtinguisher = reader.GetBoolean(24),
-                CarbonMonoxideDetector = reader.GetBoolean(25),
-                LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
-                AverageRating = reader.GetDecimal(27),
-                ReviewCount = reader.GetInt32(28),
-                NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
-                Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30),
-                InstantBook = reader.GetBoolean(31),
-                CreatedAt = reader.GetDateTime(32),
-                UpdatedAt = reader.GetDateTime(33)
-            };
-        }
-
+    return new Property
+    {
+        Id = reader.GetGuid(0),
+        OwnerId = reader.GetGuid(1),
+        Title = reader.GetString(2),
+        Description = reader.GetString(3),
+        LocationType = reader.GetString(4),
+        Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
+        City = reader.IsDBNull(6) ? "" : reader.GetString(6),
+        County = reader.IsDBNull(7) ? "" : reader.GetString(7),
+        Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
+        PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
+        Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
+        Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
+        Status = reader.GetString(12),
+        PricePerNight = reader.GetDecimal(13),
+        MinNights = reader.GetInt32(14),
+        MaxNights = reader.GetInt32(15),
+        CheckInTime = reader.GetTimeSpan(16),
+        CheckOutTime = reader.GetTimeSpan(17),
+        MaxGuests = reader.GetInt32(18),
+        Bathrooms = reader.GetInt32(19),
+        Kitchen = reader.GetBoolean(20),
+        LivingSpace = reader.GetDecimal(21),
+        PetFriendly = reader.GetBoolean(22),
+        SmokeDetector = reader.GetBoolean(23),
+        FireExtinguisher = reader.GetBoolean(24),
+        CarbonMonoxideDetector = reader.GetBoolean(25),
+        LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
+        AverageRating = reader.GetDecimal(27),
+        ReviewCount = reader.GetInt32(28),
+        NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
+        Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30),
+        InstantBook = reader.GetBoolean(31),
+        CreatedAt = reader.GetDateTime(32),
+        UpdatedAt = reader.GetDateTime(33),
+        IsVerified = reader.GetBoolean(34),
+        
+        // Outdoor Activities
+        Hiking = reader.GetBoolean(35),
+        Biking = reader.GetBoolean(36),
+        Swimming = reader.GetBoolean(37),
+        Fishing = reader.GetBoolean(38),
+        Skiing = reader.GetBoolean(39),
+        Snowboarding = reader.GetBoolean(40),
+        HorseRiding = reader.GetBoolean(41),
+        Climbing = reader.GetBoolean(42),
+        Camping = reader.GetBoolean(43),
+        Beach = reader.GetBoolean(44),
+        
+        // Cultural Activities
+        Museum = reader.GetBoolean(45),
+        HistoricalSite = reader.GetBoolean(46),
+        ArtGallery = reader.GetBoolean(47),
+        Theatre = reader.GetBoolean(48),
+        LocalMarket = reader.GetBoolean(49),
+        WineryTour = reader.GetBoolean(50),
+        
+        // Food & Drink
+        Restaurant = reader.GetBoolean(51),
+        Bar = reader.GetBoolean(52),
+        Cafe = reader.GetBoolean(53),
+        LocalFood = reader.GetBoolean(54),
+        WineTasting = reader.GetBoolean(55),
+        
+        // Adventure Activities
+        Kayaking = reader.GetBoolean(56),
+        Rafting = reader.GetBoolean(57),
+        Paragliding = reader.GetBoolean(58),
+        Zipline = reader.GetBoolean(59),
+        
+        // Relaxation
+        Spa = reader.GetBoolean(60),
+        Yoga = reader.GetBoolean(61),
+        Meditation = reader.GetBoolean(62),
+        HotSprings = reader.GetBoolean(63),
+        
+        // Family Activities
+        Playground = reader.GetBoolean(64),
+        Zoo = reader.GetBoolean(65),
+        Aquarium = reader.GetBoolean(66),
+        AmusementPark = reader.GetBoolean(67),
+        
+        // Property Amenities
+        Wifi = reader.GetBoolean(68),
+        AirConditioning = reader.GetBoolean(69),
+        Heating = reader.GetBoolean(70),
+        Pool = reader.GetBoolean(71),
+        Parking = reader.GetBoolean(72),
+        Fireplace = reader.GetBoolean(73),
+        Balcony = reader.GetBoolean(74),
+        Garden = reader.GetBoolean(75),
+        Tv = reader.GetBoolean(76),
+        HotTub = reader.GetBoolean(77),
+        WheelchairAccessible = reader.GetBoolean(78),
+        Bbq = reader.GetBoolean(79),
+        BreakfastIncluded = reader.GetBoolean(80),
+        Washer = reader.GetBoolean(81),
+        Dryer = reader.GetBoolean(82)
+    };
+}
         public List<Property> GetProperties()
         {
             var properties = new List<Property>();

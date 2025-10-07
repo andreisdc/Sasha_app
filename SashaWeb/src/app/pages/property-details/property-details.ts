@@ -63,7 +63,6 @@ export class PropertyDetails implements OnInit {
       this.cdr.detectChanges();
     });
 
-
     try {
       const propertyData = await firstValueFrom(
         this.propertyService.getPropertyById(propertyId)
@@ -122,31 +121,31 @@ export class PropertyDetails implements OnInit {
     });
   }
 
-  // METODE CORECTATE PENTRU DOTĂRI - verifică array-ul de tags
+  // METODE CORECTATE PENTRU DOTĂRI - verifică atât tags cât și proprietățile booleene
   getAmenitiesList(): any[] {
-    if (!this.property || !this.property.tags) return [];
+    if (!this.property) return [];
     
     const amenities = [];
-    const tags = this.property.tags;
+    const tags = this.property.tags || [];
     
-    // Property Amenities - verifică existența în array-ul de tags
-    if (tags.includes('wifi')) amenities.push({ name: 'WiFi', icon: 'fas fa-wifi', category: 'Essentials' });
-    if (tags.includes('airConditioning')) amenities.push({ name: 'Air Conditioning', icon: 'fas fa-snowflake', category: 'Comfort' });
-    if (tags.includes('heating')) amenities.push({ name: 'Heating', icon: 'fas fa-thermometer-half', category: 'Comfort' });
-    if (tags.includes('kitchen')) amenities.push({ name: 'Kitchen', icon: 'fas fa-utensils', category: 'Facilities' });
-    if (tags.includes('tv')) amenities.push({ name: 'TV', icon: 'fas fa-tv', category: 'Entertainment' });
-    if (tags.includes('washer')) amenities.push({ name: 'Washer', icon: 'fas fa-soap', category: 'Facilities' });
-    if (tags.includes('dryer')) amenities.push({ name: 'Dryer', icon: 'fas fa-wind', category: 'Facilities' });
-    if (tags.includes('pool')) amenities.push({ name: 'Pool', icon: 'fas fa-swimming-pool', category: 'Outdoor' });
-    if (tags.includes('parking')) amenities.push({ name: 'Parking', icon: 'fas fa-parking', category: 'Location' });
-    if (tags.includes('petFriendly')) amenities.push({ name: 'Pet Friendly', icon: 'fas fa-paw', category: 'Policies' });
-    if (tags.includes('fireplace')) amenities.push({ name: 'Fireplace', icon: 'fas fa-fire', category: 'Comfort' });
-    if (tags.includes('balcony')) amenities.push({ name: 'Balcony', icon: 'fas fa-building', category: 'Outdoor' });
-    if (tags.includes('garden')) amenities.push({ name: 'Garden', icon: 'fas fa-seedling', category: 'Outdoor' });
-    if (tags.includes('hotTub')) amenities.push({ name: 'Hot Tub', icon: 'fas fa-hot-tub', category: 'Luxury' });
-    if (tags.includes('wheelchairAccessible')) amenities.push({ name: 'Wheelchair Accessible', icon: 'fas fa-wheelchair', category: 'Accessibility' });
-    if (tags.includes('bbq')) amenities.push({ name: 'BBQ Grill', icon: 'fas fa-fire', category: 'Outdoor' });
-    if (tags.includes('breakfastIncluded')) amenities.push({ name: 'Breakfast Included', icon: 'fas fa-coffee', category: 'Services' });
+    // Property Amenities - verifică atât tags cât și proprietățile booleene
+    if (tags.includes('wifi') || this.property.wifi === true) amenities.push({ name: 'WiFi', icon: 'fas fa-wifi', category: 'Essentials' });
+    if (tags.includes('airConditioning') || this.property.airConditioning === true) amenities.push({ name: 'Air Conditioning', icon: 'fas fa-snowflake', category: 'Comfort' });
+    if (tags.includes('heating') || this.property.heating === true) amenities.push({ name: 'Heating', icon: 'fas fa-thermometer-half', category: 'Comfort' });
+    if (tags.includes('kitchen') || this.property.kitchen === true) amenities.push({ name: 'Kitchen', icon: 'fas fa-utensils', category: 'Facilities' });
+    if (tags.includes('tv') || this.property.tv === true) amenities.push({ name: 'TV', icon: 'fas fa-tv', category: 'Entertainment' });
+    if (tags.includes('washer') || this.property.washer === true) amenities.push({ name: 'Washer', icon: 'fas fa-soap', category: 'Facilities' });
+    if (tags.includes('dryer') || this.property.dryer === true) amenities.push({ name: 'Dryer', icon: 'fas fa-wind', category: 'Facilities' });
+    if (tags.includes('pool') || this.property.pool === true) amenities.push({ name: 'Pool', icon: 'fas fa-swimming-pool', category: 'Outdoor' });
+    if (tags.includes('parking') || this.property.parking === true) amenities.push({ name: 'Parking', icon: 'fas fa-parking', category: 'Location' });
+    if (tags.includes('petFriendly') || this.property.petFriendly === true) amenities.push({ name: 'Pet Friendly', icon: 'fas fa-paw', category: 'Policies' });
+    if (tags.includes('fireplace') || this.property.fireplace === true) amenities.push({ name: 'Fireplace', icon: 'fas fa-fire', category: 'Comfort' });
+    if (tags.includes('balcony') || this.property.balcony === true) amenities.push({ name: 'Balcony', icon: 'fas fa-building', category: 'Outdoor' });
+    if (tags.includes('garden') || this.property.garden === true) amenities.push({ name: 'Garden', icon: 'fas fa-seedling', category: 'Outdoor' });
+    if (tags.includes('hotTub') || this.property.hotTub === true) amenities.push({ name: 'Hot Tub', icon: 'fas fa-hot-tub', category: 'Luxury' });
+    if (tags.includes('wheelchairAccessible') || this.property.wheelchairAccessible === true) amenities.push({ name: 'Wheelchair Accessible', icon: 'fas fa-wheelchair', category: 'Accessibility' });
+    if (tags.includes('bbq') || this.property.bbq === true) amenities.push({ name: 'BBQ Grill', icon: 'fas fa-fire', category: 'Outdoor' });
+    if (tags.includes('breakfastIncluded') || this.property.breakfastIncluded === true) amenities.push({ name: 'Breakfast Included', icon: 'fas fa-coffee', category: 'Services' });
     
     return amenities;
   }
@@ -165,57 +164,57 @@ export class PropertyDetails implements OnInit {
     return categories;
   }
 
-  // METODE CORECTATE PENTRU ACTIVITĂȚI - verifică array-ul de tags
+  // METODE CORECTATE PENTRU ACTIVITĂȚI - verifică atât tags cât și proprietățile booleene
   getActivitiesList(): any[] {
-    if (!this.property || !this.property.tags) return [];
+    if (!this.property) return [];
     
     const activities = [];
-    const tags = this.property.tags;
+    const tags = this.property.tags || [];
     
     // Outdoor Activities
-    if (tags.includes('hiking')) activities.push({ name: 'Hiking', icon: 'fas fa-hiking', category: 'Outdoor' });
-    if (tags.includes('biking')) activities.push({ name: 'Biking', icon: 'fas fa-bicycle', category: 'Outdoor' });
-    if (tags.includes('swimming')) activities.push({ name: 'Swimming', icon: 'fas fa-swimmer', category: 'Outdoor' });
-    if (tags.includes('fishing')) activities.push({ name: 'Fishing', icon: 'fas fa-fish', category: 'Outdoor' });
-    if (tags.includes('skiing')) activities.push({ name: 'Skiing', icon: 'fas fa-skiing', category: 'Outdoor' });
-    if (tags.includes('snowboarding')) activities.push({ name: 'Snowboarding', icon: 'fas fa-snowboarding', category: 'Outdoor' });
-    if (tags.includes('horseRiding')) activities.push({ name: 'Horse Riding', icon: 'fas fa-horse', category: 'Outdoor' });
-    if (tags.includes('climbing')) activities.push({ name: 'Climbing', icon: 'fas fa-mountain', category: 'Outdoor' });
-    if (tags.includes('camping')) activities.push({ name: 'Camping', icon: 'fas fa-campground', category: 'Outdoor' });
-    if (tags.includes('beach')) activities.push({ name: 'Beach Access', icon: 'fas fa-umbrella-beach', category: 'Outdoor' });
+    if (tags.includes('hiking') || this.property.hiking === true) activities.push({ name: 'Hiking', icon: 'fas fa-hiking', category: 'Outdoor' });
+    if (tags.includes('biking') || this.property.biking === true) activities.push({ name: 'Biking', icon: 'fas fa-bicycle', category: 'Outdoor' });
+    if (tags.includes('swimming') || this.property.swimming === true) activities.push({ name: 'Swimming', icon: 'fas fa-swimmer', category: 'Outdoor' });
+    if (tags.includes('fishing') || this.property.fishing === true) activities.push({ name: 'Fishing', icon: 'fas fa-fish', category: 'Outdoor' });
+    if (tags.includes('skiing') || this.property.skiing === true) activities.push({ name: 'Skiing', icon: 'fas fa-skiing', category: 'Outdoor' });
+    if (tags.includes('snowboarding') || this.property.snowboarding === true) activities.push({ name: 'Snowboarding', icon: 'fas fa-snowboarding', category: 'Outdoor' });
+    if (tags.includes('horseRiding') || this.property.horseRiding === true) activities.push({ name: 'Horse Riding', icon: 'fas fa-horse', category: 'Outdoor' });
+    if (tags.includes('climbing') || this.property.climbing === true) activities.push({ name: 'Climbing', icon: 'fas fa-mountain', category: 'Outdoor' });
+    if (tags.includes('camping') || this.property.camping === true) activities.push({ name: 'Camping', icon: 'fas fa-campground', category: 'Outdoor' });
+    if (tags.includes('beach') || this.property.beach === true) activities.push({ name: 'Beach Access', icon: 'fas fa-umbrella-beach', category: 'Outdoor' });
     
     // Cultural Activities
-    if (tags.includes('museum')) activities.push({ name: 'Museums', icon: 'fas fa-landmark', category: 'Culture' });
-    if (tags.includes('historicalSite')) activities.push({ name: 'Historical Sites', icon: 'fas fa-monument', category: 'Culture' });
-    if (tags.includes('artGallery')) activities.push({ name: 'Art Galleries', icon: 'fas fa-palette', category: 'Culture' });
-    if (tags.includes('theatre')) activities.push({ name: 'Theatre', icon: 'fas fa-theater-masks', category: 'Culture' });
-    if (tags.includes('localMarket')) activities.push({ name: 'Local Markets', icon: 'fas fa-shopping-basket', category: 'Culture' });
-    if (tags.includes('wineryTour')) activities.push({ name: 'Winery Tours', icon: 'fas fa-wine-bottle', category: 'Culture' });
+    if (tags.includes('museum') || this.property.museum === true) activities.push({ name: 'Museums', icon: 'fas fa-landmark', category: 'Culture' });
+    if (tags.includes('historicalSite') || this.property.historicalSite === true) activities.push({ name: 'Historical Sites', icon: 'fas fa-monument', category: 'Culture' });
+    if (tags.includes('artGallery') || this.property.artGallery === true) activities.push({ name: 'Art Galleries', icon: 'fas fa-palette', category: 'Culture' });
+    if (tags.includes('theatre') || this.property.theatre === true) activities.push({ name: 'Theatre', icon: 'fas fa-theater-masks', category: 'Culture' });
+    if (tags.includes('localMarket') || this.property.localMarket === true) activities.push({ name: 'Local Markets', icon: 'fas fa-shopping-basket', category: 'Culture' });
+    if (tags.includes('wineryTour') || this.property.wineryTour === true) activities.push({ name: 'Winery Tours', icon: 'fas fa-wine-bottle', category: 'Culture' });
     
     // Food & Drink
-    if (tags.includes('restaurant')) activities.push({ name: 'Restaurants', icon: 'fas fa-utensils', category: 'Food & Drink' });
-    if (tags.includes('bar')) activities.push({ name: 'Bars & Pubs', icon: 'fas fa-glass-cheers', category: 'Food & Drink' });
-    if (tags.includes('cafe')) activities.push({ name: 'Cafes', icon: 'fas fa-coffee', category: 'Food & Drink' });
-    if (tags.includes('localFood')) activities.push({ name: 'Local Cuisine', icon: 'fas fa-apple-alt', category: 'Food & Drink' });
-    if (tags.includes('wineTasting')) activities.push({ name: 'Wine Tasting', icon: 'fas fa-wine-glass-alt', category: 'Food & Drink' });
+    if (tags.includes('restaurant') || this.property.restaurant === true) activities.push({ name: 'Restaurants', icon: 'fas fa-utensils', category: 'Food & Drink' });
+    if (tags.includes('bar') || this.property.bar === true) activities.push({ name: 'Bars & Pubs', icon: 'fas fa-glass-cheers', category: 'Food & Drink' });
+    if (tags.includes('cafe') || this.property.cafe === true) activities.push({ name: 'Cafes', icon: 'fas fa-coffee', category: 'Food & Drink' });
+    if (tags.includes('localFood') || this.property.localFood === true) activities.push({ name: 'Local Cuisine', icon: 'fas fa-apple-alt', category: 'Food & Drink' });
+    if (tags.includes('wineTasting') || this.property.wineTasting === true) activities.push({ name: 'Wine Tasting', icon: 'fas fa-wine-glass-alt', category: 'Food & Drink' });
     
     // Adventure Activities
-    if (tags.includes('kayaking')) activities.push({ name: 'Kayaking', icon: 'fas fa-ship', category: 'Adventure' });
-    if (tags.includes('rafting')) activities.push({ name: 'Rafting', icon: 'fas fa-water', category: 'Adventure' });
-    if (tags.includes('paragliding')) activities.push({ name: 'Paragliding', icon: 'fas fa-parachute-box', category: 'Adventure' });
-    if (tags.includes('zipline')) activities.push({ name: 'Zipline', icon: 'fas fa-mountain', category: 'Adventure' });
+    if (tags.includes('kayaking') || this.property.kayaking === true) activities.push({ name: 'Kayaking', icon: 'fas fa-ship', category: 'Adventure' });
+    if (tags.includes('rafting') || this.property.rafting === true) activities.push({ name: 'Rafting', icon: 'fas fa-water', category: 'Adventure' });
+    if (tags.includes('paragliding') || this.property.paragliding === true) activities.push({ name: 'Paragliding', icon: 'fas fa-parachute-box', category: 'Adventure' });
+    if (tags.includes('zipline') || this.property.zipline === true) activities.push({ name: 'Zipline', icon: 'fas fa-mountain', category: 'Adventure' });
     
     // Relaxation
-    if (tags.includes('spa')) activities.push({ name: 'Spa & Wellness', icon: 'fas fa-spa', category: 'Relaxation' });
-    if (tags.includes('yoga')) activities.push({ name: 'Yoga Classes', icon: 'fas fa-spa', category: 'Relaxation' });
-    if (tags.includes('meditation')) activities.push({ name: 'Meditation', icon: 'fas fa-om', category: 'Relaxation' });
-    if (tags.includes('hotSprings')) activities.push({ name: 'Hot Springs', icon: 'fas fa-hot-tub', category: 'Relaxation' });
+    if (tags.includes('spa') || this.property.spa === true) activities.push({ name: 'Spa & Wellness', icon: 'fas fa-spa', category: 'Relaxation' });
+    if (tags.includes('yoga') || this.property.yoga === true) activities.push({ name: 'Yoga Classes', icon: 'fas fa-spa', category: 'Relaxation' });
+    if (tags.includes('meditation') || this.property.meditation === true) activities.push({ name: 'Meditation', icon: 'fas fa-om', category: 'Relaxation' });
+    if (tags.includes('hotSprings') || this.property.hotSprings === true) activities.push({ name: 'Hot Springs', icon: 'fas fa-hot-tub', category: 'Relaxation' });
     
     // Family Activities
-    if (tags.includes('playground')) activities.push({ name: 'Playground', icon: 'fas fa-child', category: 'Family' });
-    if (tags.includes('zoo')) activities.push({ name: 'Zoo', icon: 'fas fa-paw', category: 'Family' });
-    if (tags.includes('aquarium')) activities.push({ name: 'Aquarium', icon: 'fas fa-fish', category: 'Family' });
-    if (tags.includes('amusementPark')) activities.push({ name: 'Amusement Park', icon: 'fas fa-ferris-wheel', category: 'Family' });
+    if (tags.includes('playground') || this.property.playground === true) activities.push({ name: 'Playground', icon: 'fas fa-child', category: 'Family' });
+    if (tags.includes('zoo') || this.property.zoo === true) activities.push({ name: 'Zoo', icon: 'fas fa-paw', category: 'Family' });
+    if (tags.includes('aquarium') || this.property.aquarium === true) activities.push({ name: 'Aquarium', icon: 'fas fa-fish', category: 'Family' });
+    if (tags.includes('amusementPark') || this.property.amusementPark === true) activities.push({ name: 'Amusement Park', icon: 'fas fa-ferris-wheel', category: 'Family' });
     
     return activities;
   }
@@ -234,16 +233,16 @@ export class PropertyDetails implements OnInit {
     return categories;
   }
 
-  // Safety features - verifică array-ul de tags
+  // Safety features - verifică atât tags cât și proprietățile booleene
   getSafetyFeatures(): any[] {
-    if (!this.property || !this.property.tags) return [];
+    if (!this.property) return [];
     
     const safety = [];
-    const tags = this.property.tags;
+    const tags = this.property.tags || [];
     
-    if (tags.includes('smokeDetector')) safety.push({ name: 'Smoke Detector', icon: 'fas fa-smoke' });
-    if (tags.includes('fireExtinguisher')) safety.push({ name: 'Fire Extinguisher', icon: 'fas fa-fire-extinguisher' });
-    if (tags.includes('carbonMonoxideDetector')) safety.push({ name: 'Carbon Monoxide Detector', icon: 'fas fa-gas-pump' });
+    if (tags.includes('smokeDetector') || this.property.smokeDetector === true) safety.push({ name: 'Smoke Detector', icon: 'fas fa-smoke' });
+    if (tags.includes('fireExtinguisher') || this.property.fireExtinguisher === true) safety.push({ name: 'Fire Extinguisher', icon: 'fas fa-fire-extinguisher' });
+    if (tags.includes('carbonMonoxideDetector') || this.property.carbonMonoxideDetector === true) safety.push({ name: 'Carbon Monoxide Detector', icon: 'fas fa-gas-pump' });
     
     return safety;
   }
