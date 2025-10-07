@@ -1,38 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth-service';
-
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  propertyType: string;
-  pricePerNight: number;
-  country: string;
-  city: string;
-  address: string;
-  postalCode: string;
-  county: string;
-  bedrooms: number;
-  bathrooms: number;
-  maxGuests: number;
-  livingSpace: number;
-  images: string[];
-  checkInTime: string;
-  checkOutTime: string;
-  minNights: number;
-  maxNights: number;
-  amenities: string[];
-  activities: any[];
-  averageRating: number;
-  reviewCount: number;
-  ownerId: string;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { PropertyService, Property } from '../../core/services/property-service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-property-details',
@@ -61,23 +33,14 @@ export class PropertyDetails implements OnInit {
   cleaningFee = 25;
   serviceFee = 15;
 
-  // Random demo images
-  demoImages = [
-    'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1505873242700-f289a29e1e0f?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-  ];
+  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private propertyService = inject(PropertyService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private authService: AuthService
-  ) {
+  constructor() {
     this.minDate = new Date().toISOString().split('T')[0];
   }
 
@@ -93,78 +56,196 @@ export class PropertyDetails implements OnInit {
   }
 
   async loadProperty(propertyId: string) {
-    try {
+    console.log('🔄 Loading property details...');
+    
+    this.ngZone.run(() => {
       this.isLoading = true;
-      
-      // Generează imagini random pentru demo
-      const randomImages = this.getRandomImages(20);
+      this.cdr.detectChanges();
+    });
 
-      this.property = {
-        id: propertyId,
-        title: 'Cozy Apartment in City Center',
-        description: 'Beautiful apartment with great view of the city. Recently renovated with modern amenities and comfortable furniture. Perfect for couples or small families.',
-        propertyType: 'apartment',
-        pricePerNight: 85,
-        country: 'Romania',
-        city: 'Bucharest',
-        address: 'Str. Victoriei 123, Sector 1',
-        postalCode: '010123',
-        county: 'Bucharest',
-        bedrooms: 2,
-        bathrooms: 1,
-        maxGuests: 4,
-        livingSpace: 65,
-        images: randomImages,
-        checkInTime: '15:00',
-        checkOutTime: '11:00',
-        minNights: 2,
-        maxNights: 30,
-        amenities: ['wifi', 'kitchen', 'parking', 'tv', 'ac'],
-        activities: [
-          { id: '1', code: 'museum', name: 'Museum / Muzee', category: 'Culture' },
-          { id: '2', code: 'restaurant', name: 'Restaurant', category: 'Food' },
-          { id: '3', code: 'park', name: 'Park', category: 'Outdoor' }
-        ],
-        averageRating: 4.8,
-        reviewCount: 24,
-        ownerId: 'user123',
-        status: 'active',
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-03-20')
-      };
 
-      // Verifică dacă utilizatorul curent este owner-ul
+    try {
+      const propertyData = await firstValueFrom(
+        this.propertyService.getPropertyById(propertyId)
+      );
       const currentUser = this.authService.getCurrentUser();
-      this.isOwner = currentUser?.id === this.property.ownerId;
+      console.log(propertyData);
 
-      this.isLoading = false;
+      this.ngZone.run(() => {
+        this.property = propertyData;
+        this.isOwner = currentUser?.id === this.property.ownerId;
+        this.isLoading = false;
+        
+        console.log('✅ Property loaded:', this.property);
+        console.log('✅ Tags:', this.property.tags);
+        console.log('✅ Amenities count:', this.getAmenitiesList().length);
+        console.log('✅ Activities count:', this.getActivitiesList().length);
+        
+        this.cdr.detectChanges();
+      });
 
     } catch (error) {
-      console.error('Error loading property:', error);
-      this.isLoading = false;
+      console.error('❌ Error loading property:', error);
+      
+      this.ngZone.run(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      });
+      
       this.router.navigate(['/properties']);
     }
   }
 
-  // Metode pentru galeria de imagini
-  setMainImage(index: number) {
-    this.currentMainImageIndex = index;
+  // METODE PENTRU GALERIE DE IMAGINI
+  setMainImage(index: number): void {
+    this.ngZone.run(() => {
+      this.currentMainImageIndex = index;
+      this.cdr.detectChanges();
+    });
   }
 
-  scrollThumbnails(direction: number) {
-    const scrollAmount = 80; // Width of thumbnail + margin
-    const maxOffset = -(this.property.images.length - 4) * scrollAmount;
+  scrollThumbnails(direction: number): void {
+    const thumbnailWidth = 80; // Width of each thumbnail including gap
+    const maxOffset = -(this.property.images.length - 4) * thumbnailWidth;
     
-    this.thumbnailScrollOffset += direction * scrollAmount;
-    
-    // Limitează scroll-ul
-    if (this.thumbnailScrollOffset > 0) this.thumbnailScrollOffset = 0;
-    if (this.thumbnailScrollOffset < maxOffset) this.thumbnailScrollOffset = maxOffset;
+    this.ngZone.run(() => {
+      const newOffset = this.thumbnailScrollOffset + (direction * thumbnailWidth);
+      
+      // Apply constraints
+      if (direction > 0) { // Scrolling right
+        this.thumbnailScrollOffset = Math.max(maxOffset, newOffset);
+      } else { // Scrolling left
+        this.thumbnailScrollOffset = Math.min(0, newOffset);
+      }
+      
+      this.cdr.detectChanges();
+    });
   }
 
-  getRandomImages(count: number): string[] {
-    const shuffled = [...this.demoImages].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
+  // METODE CORECTATE PENTRU DOTĂRI - verifică array-ul de tags
+  getAmenitiesList(): any[] {
+    if (!this.property || !this.property.tags) return [];
+    
+    const amenities = [];
+    const tags = this.property.tags;
+    
+    // Property Amenities - verifică existența în array-ul de tags
+    if (tags.includes('wifi')) amenities.push({ name: 'WiFi', icon: 'fas fa-wifi', category: 'Essentials' });
+    if (tags.includes('airConditioning')) amenities.push({ name: 'Air Conditioning', icon: 'fas fa-snowflake', category: 'Comfort' });
+    if (tags.includes('heating')) amenities.push({ name: 'Heating', icon: 'fas fa-thermometer-half', category: 'Comfort' });
+    if (tags.includes('kitchen')) amenities.push({ name: 'Kitchen', icon: 'fas fa-utensils', category: 'Facilities' });
+    if (tags.includes('tv')) amenities.push({ name: 'TV', icon: 'fas fa-tv', category: 'Entertainment' });
+    if (tags.includes('washer')) amenities.push({ name: 'Washer', icon: 'fas fa-soap', category: 'Facilities' });
+    if (tags.includes('dryer')) amenities.push({ name: 'Dryer', icon: 'fas fa-wind', category: 'Facilities' });
+    if (tags.includes('pool')) amenities.push({ name: 'Pool', icon: 'fas fa-swimming-pool', category: 'Outdoor' });
+    if (tags.includes('parking')) amenities.push({ name: 'Parking', icon: 'fas fa-parking', category: 'Location' });
+    if (tags.includes('petFriendly')) amenities.push({ name: 'Pet Friendly', icon: 'fas fa-paw', category: 'Policies' });
+    if (tags.includes('fireplace')) amenities.push({ name: 'Fireplace', icon: 'fas fa-fire', category: 'Comfort' });
+    if (tags.includes('balcony')) amenities.push({ name: 'Balcony', icon: 'fas fa-building', category: 'Outdoor' });
+    if (tags.includes('garden')) amenities.push({ name: 'Garden', icon: 'fas fa-seedling', category: 'Outdoor' });
+    if (tags.includes('hotTub')) amenities.push({ name: 'Hot Tub', icon: 'fas fa-hot-tub', category: 'Luxury' });
+    if (tags.includes('wheelchairAccessible')) amenities.push({ name: 'Wheelchair Accessible', icon: 'fas fa-wheelchair', category: 'Accessibility' });
+    if (tags.includes('bbq')) amenities.push({ name: 'BBQ Grill', icon: 'fas fa-fire', category: 'Outdoor' });
+    if (tags.includes('breakfastIncluded')) amenities.push({ name: 'Breakfast Included', icon: 'fas fa-coffee', category: 'Services' });
+    
+    return amenities;
+  }
+
+  getAmenitiesByCategory(): { [key: string]: any[] } {
+    const amenities = this.getAmenitiesList();
+    const categories: { [key: string]: any[] } = {};
+    
+    amenities.forEach(amenity => {
+      if (!categories[amenity.category]) {
+        categories[amenity.category] = [];
+      }
+      categories[amenity.category].push(amenity);
+    });
+    
+    return categories;
+  }
+
+  // METODE CORECTATE PENTRU ACTIVITĂȚI - verifică array-ul de tags
+  getActivitiesList(): any[] {
+    if (!this.property || !this.property.tags) return [];
+    
+    const activities = [];
+    const tags = this.property.tags;
+    
+    // Outdoor Activities
+    if (tags.includes('hiking')) activities.push({ name: 'Hiking', icon: 'fas fa-hiking', category: 'Outdoor' });
+    if (tags.includes('biking')) activities.push({ name: 'Biking', icon: 'fas fa-bicycle', category: 'Outdoor' });
+    if (tags.includes('swimming')) activities.push({ name: 'Swimming', icon: 'fas fa-swimmer', category: 'Outdoor' });
+    if (tags.includes('fishing')) activities.push({ name: 'Fishing', icon: 'fas fa-fish', category: 'Outdoor' });
+    if (tags.includes('skiing')) activities.push({ name: 'Skiing', icon: 'fas fa-skiing', category: 'Outdoor' });
+    if (tags.includes('snowboarding')) activities.push({ name: 'Snowboarding', icon: 'fas fa-snowboarding', category: 'Outdoor' });
+    if (tags.includes('horseRiding')) activities.push({ name: 'Horse Riding', icon: 'fas fa-horse', category: 'Outdoor' });
+    if (tags.includes('climbing')) activities.push({ name: 'Climbing', icon: 'fas fa-mountain', category: 'Outdoor' });
+    if (tags.includes('camping')) activities.push({ name: 'Camping', icon: 'fas fa-campground', category: 'Outdoor' });
+    if (tags.includes('beach')) activities.push({ name: 'Beach Access', icon: 'fas fa-umbrella-beach', category: 'Outdoor' });
+    
+    // Cultural Activities
+    if (tags.includes('museum')) activities.push({ name: 'Museums', icon: 'fas fa-landmark', category: 'Culture' });
+    if (tags.includes('historicalSite')) activities.push({ name: 'Historical Sites', icon: 'fas fa-monument', category: 'Culture' });
+    if (tags.includes('artGallery')) activities.push({ name: 'Art Galleries', icon: 'fas fa-palette', category: 'Culture' });
+    if (tags.includes('theatre')) activities.push({ name: 'Theatre', icon: 'fas fa-theater-masks', category: 'Culture' });
+    if (tags.includes('localMarket')) activities.push({ name: 'Local Markets', icon: 'fas fa-shopping-basket', category: 'Culture' });
+    if (tags.includes('wineryTour')) activities.push({ name: 'Winery Tours', icon: 'fas fa-wine-bottle', category: 'Culture' });
+    
+    // Food & Drink
+    if (tags.includes('restaurant')) activities.push({ name: 'Restaurants', icon: 'fas fa-utensils', category: 'Food & Drink' });
+    if (tags.includes('bar')) activities.push({ name: 'Bars & Pubs', icon: 'fas fa-glass-cheers', category: 'Food & Drink' });
+    if (tags.includes('cafe')) activities.push({ name: 'Cafes', icon: 'fas fa-coffee', category: 'Food & Drink' });
+    if (tags.includes('localFood')) activities.push({ name: 'Local Cuisine', icon: 'fas fa-apple-alt', category: 'Food & Drink' });
+    if (tags.includes('wineTasting')) activities.push({ name: 'Wine Tasting', icon: 'fas fa-wine-glass-alt', category: 'Food & Drink' });
+    
+    // Adventure Activities
+    if (tags.includes('kayaking')) activities.push({ name: 'Kayaking', icon: 'fas fa-ship', category: 'Adventure' });
+    if (tags.includes('rafting')) activities.push({ name: 'Rafting', icon: 'fas fa-water', category: 'Adventure' });
+    if (tags.includes('paragliding')) activities.push({ name: 'Paragliding', icon: 'fas fa-parachute-box', category: 'Adventure' });
+    if (tags.includes('zipline')) activities.push({ name: 'Zipline', icon: 'fas fa-mountain', category: 'Adventure' });
+    
+    // Relaxation
+    if (tags.includes('spa')) activities.push({ name: 'Spa & Wellness', icon: 'fas fa-spa', category: 'Relaxation' });
+    if (tags.includes('yoga')) activities.push({ name: 'Yoga Classes', icon: 'fas fa-spa', category: 'Relaxation' });
+    if (tags.includes('meditation')) activities.push({ name: 'Meditation', icon: 'fas fa-om', category: 'Relaxation' });
+    if (tags.includes('hotSprings')) activities.push({ name: 'Hot Springs', icon: 'fas fa-hot-tub', category: 'Relaxation' });
+    
+    // Family Activities
+    if (tags.includes('playground')) activities.push({ name: 'Playground', icon: 'fas fa-child', category: 'Family' });
+    if (tags.includes('zoo')) activities.push({ name: 'Zoo', icon: 'fas fa-paw', category: 'Family' });
+    if (tags.includes('aquarium')) activities.push({ name: 'Aquarium', icon: 'fas fa-fish', category: 'Family' });
+    if (tags.includes('amusementPark')) activities.push({ name: 'Amusement Park', icon: 'fas fa-ferris-wheel', category: 'Family' });
+    
+    return activities;
+  }
+
+  getActivitiesByCategory(): { [key: string]: any[] } {
+    const activities = this.getActivitiesList();
+    const categories: { [key: string]: any[] } = {};
+    
+    activities.forEach(activity => {
+      if (!categories[activity.category]) {
+        categories[activity.category] = [];
+      }
+      categories[activity.category].push(activity);
+    });
+    
+    return categories;
+  }
+
+  // Safety features - verifică array-ul de tags
+  getSafetyFeatures(): any[] {
+    if (!this.property || !this.property.tags) return [];
+    
+    const safety = [];
+    const tags = this.property.tags;
+    
+    if (tags.includes('smokeDetector')) safety.push({ name: 'Smoke Detector', icon: 'fas fa-smoke' });
+    if (tags.includes('fireExtinguisher')) safety.push({ name: 'Fire Extinguisher', icon: 'fas fa-fire-extinguisher' });
+    if (tags.includes('carbonMonoxideDetector')) safety.push({ name: 'Carbon Monoxide Detector', icon: 'fas fa-gas-pump' });
+    
+    return safety;
   }
 
   // Restul metodelor rămân la fel...
@@ -189,60 +270,6 @@ export class PropertyDetails implements OnInit {
     return Array.from({ length: this.property.maxGuests }, (_, i) => i + 1);
   }
 
-  getAmenityIcon(amenity: string): string {
-    const icons: { [key: string]: string } = {
-      'wifi': 'fas fa-wifi',
-      'kitchen': 'fas fa-utensils',
-      'parking': 'fas fa-parking',
-      'tv': 'fas fa-tv',
-      'ac': 'fas fa-snowflake',
-      'heating': 'fas fa-thermometer-half',
-      'washer': 'fas fa-soap',
-      'pool': 'fas fa-swimming-pool',
-      'gym': 'fas fa-dumbbell',
-      'petFriendly': 'fas fa-paw'
-    };
-    return icons[amenity] || 'fas fa-check';
-  }
-
-  getAmenityLabel(amenity: string): string {
-    const labels: { [key: string]: string } = {
-      'wifi': 'WiFi',
-      'kitchen': 'Kitchen',
-      'parking': 'Parking',
-      'tv': 'TV',
-      'ac': 'Air Conditioning',
-      'heating': 'Heating',
-      'washer': 'Washer',
-      'pool': 'Pool',
-      'gym': 'Gym',
-      'petFriendly': 'Pet Friendly'
-    };
-    return labels[amenity] || amenity;
-  }
-
-  getActivityIcon(code: string): string {
-    const iconMap: { [key: string]: string } = {
-      'hiking': 'fas fa-hiking',
-      'biking': 'fas fa-bicycle',
-      'swimming': 'fas fa-swimmer',
-      'fishing': 'fas fa-fish',
-      'skiing': 'fas fa-skiing',
-      'museum': 'fas fa-landmark',
-      'historical_site': 'fas fa-monument',
-      'art_gallery': 'fas fa-palette',
-      'restaurant': 'fas fa-utensils',
-      'bar': 'fas fa-glass-cheers',
-      'kayaking': 'fas fa-ship',
-      'rafting': 'fas fa-water',
-      'spa': 'fas fa-spa',
-      'yoga': 'fas fa-spa',
-      'playground': 'fas fa-child',
-      'zoo': 'fas fa-paw'
-    };
-    return iconMap[code] || 'fas fa-map-marker-alt';
-  }
-
   goBack() {
     this.router.navigate(['/properties']);
   }
@@ -253,40 +280,65 @@ export class PropertyDetails implements OnInit {
 
   deleteProperty() {
     if (confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
-      console.log('Deleting property:', this.property.id);
-      this.router.navigate(['/properties']);
+      this.propertyService.deleteProperty(this.property.id).subscribe({
+        next: () => {
+          this.ngZone.run(() => {
+            this.router.navigate(['/properties']);
+          });
+        },
+        error: (error) => {
+          console.error('Error deleting property:', error);
+          this.ngZone.run(() => {
+            alert('Failed to delete property. Please try again.');
+          });
+        }
+      });
     }
   }
 
   openImageModal(index: number) {
-    this.currentImageIndex = index;
-    this.isImageModalOpen = true;
+    this.ngZone.run(() => {
+      this.currentImageIndex = index;
+      this.isImageModalOpen = true;
+      this.cdr.detectChanges();
+    });
   }
 
   closeImageModal() {
-    this.isImageModalOpen = false;
+    this.ngZone.run(() => {
+      this.isImageModalOpen = false;
+      this.cdr.detectChanges();
+    });
   }
 
   nextImage() {
-    if (this.currentImageIndex < this.property.images.length - 1) {
-      this.currentImageIndex++;
-    }
+    this.ngZone.run(() => {
+      if (this.currentImageIndex < this.property.images.length - 1) {
+        this.currentImageIndex++;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   prevImage() {
-    if (this.currentImageIndex > 0) {
-      this.currentImageIndex--;
-    }
+    this.ngZone.run(() => {
+      if (this.currentImageIndex > 0) {
+        this.currentImageIndex--;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   bookProperty() {
     if (this.isOwner) {
-      this.router.navigate(['/properties']);
+      this.router.navigate(['/my-properties']);
       return;
     }
 
     if (!this.canBook) {
-      alert('Please select valid dates for your stay');
+      this.ngZone.run(() => {
+        alert('Please select valid dates for your stay');
+      });
       return;
     }
 
@@ -307,5 +359,32 @@ export class PropertyDetails implements OnInit {
   showOnMap() {
     const address = encodeURIComponent(`${this.property.address}, ${this.property.city}, ${this.property.country}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
+  }
+
+  getMainImage(): string {
+    return this.property.images[0] || 'assets/default-property.jpg';
+  }
+
+  getOtherImages(): string[] {
+    return this.property.images?.slice(1) || [];
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  }
+
+  onDateChange() {
+    this.ngZone.run(() => {
+      this.cdr.detectChanges();
+    });
+  }
+
+  onGuestsChange() {
+    this.ngZone.run(() => {
+      this.cdr.detectChanges();
+    });
   }
 }

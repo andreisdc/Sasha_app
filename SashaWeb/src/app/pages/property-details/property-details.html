@@ -24,13 +24,13 @@
         <div class="gallery-container">
           <!-- Imaginea principală -->
           <div class="main-image">
-            <img [src]="property.images[currentMainImageIndex]" 
+            <img [src]="property.images[currentMainImageIndex] || 'assets/default-property.jpg'" 
                  [alt]="property.title"
                  (click)="openImageModal(currentMainImageIndex)">
           </div>
           
           <!-- Thumbnails și controale -->
-          <div class="gallery-controls">
+          <div class="gallery-controls" *ngIf="property.images && property.images.length > 1">
             <div class="thumbnails-container">
               <div *ngFor="let image of property.images; let i = index" 
                    class="thumbnail"
@@ -53,7 +53,7 @@
           </div>
           
           <!-- Contor poze -->
-          <div class="image-counter">
+          <div class="image-counter" *ngIf="property.images && property.images.length > 1">
             {{ currentMainImageIndex + 1 }} / {{ property.images.length }}
           </div>
         </div>
@@ -85,7 +85,7 @@
           <div class="highlight-item">
             <i class="fas fa-home"></i>
             <div>
-              <strong>{{ property.propertyType | titlecase }}</strong>
+              <strong>{{ property.propertyType || property.locationType | titlecase }}</strong>
               <span>Property type</span>
             </div>
           </div>
@@ -111,38 +111,66 @@
           <p>{{ property.description }}</p>
         </div>
 
-        <!-- Amenități -->
-        <div class="property-amenities" *ngIf="property.amenities && property.amenities.length > 0">
-          <h2>Amenities</h2>
-          <div class="amenities-grid">
-            <div *ngFor="let amenity of property.amenities" class="amenity-item">
-              <i [class]="getAmenityIcon(amenity)"></i>
-              <span>{{ getAmenityLabel(amenity) }}</span>
+        <!-- Dotări organizate pe categorii -->
+        <div class="property-amenities" *ngIf="getAmenitiesList().length > 0">
+          <h2>Dotări și facilități</h2>
+          <div *ngFor="let category of getAmenitiesByCategory() | keyvalue" class="amenity-category">
+            <h3>{{ category.key }}</h3>
+            <div class="amenities-grid">
+              <div *ngFor="let amenity of category.value" class="amenity-item">
+                <i [class]="amenity.icon"></i>
+                <span>{{ amenity.name }}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Activitați în apropiere -->
-        <div class="property-activities" *ngIf="property.activities && property.activities.length > 0">
-          <h2>Nearby Activities</h2>
-          <div class="activities-list">
-            <div *ngFor="let activity of property.activities" class="activity-item">
-              <div class="activity-icon">
-                <i [class]="getActivityIcon(activity.code)"></i>
-              </div>
-              <div class="activity-info">
-                <h4>{{ activity.name }}</h4>
-                <span class="activity-category">{{ activity.category }}</span>
+        <!-- Mesaj dacă nu sunt dotări -->
+        <div class="no-amenities" *ngIf="getAmenitiesList().length === 0">
+          <h2>Dotări și facilități</h2>
+          <p class="no-data-message">Nu sunt dotări disponibile pentru această proprietate.</p>
+        </div>
+
+        <!-- Caracteristici de siguranță -->
+        <div class="property-safety" *ngIf="getSafetyFeatures().length > 0">
+          <h2>Siguranță</h2>
+          <div class="safety-features">
+            <div *ngFor="let feature of getSafetyFeatures()" class="safety-item">
+              <i [class]="feature.icon"></i>
+              <span>{{ feature.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activitați în apropiere organizate pe categorii -->
+        <div class="property-activities" *ngIf="getActivitiesList().length > 0">
+          <h2>Activități în apropiere</h2>
+          <div *ngFor="let category of getActivitiesByCategory() | keyvalue" class="activity-category">
+            <h3>{{ category.key }}</h3>
+            <div class="activities-list">
+              <div *ngFor="let activity of category.value" class="activity-item">
+                <div class="activity-icon">
+                  <i [class]="activity.icon"></i>
+                </div>
+                <div class="activity-info">
+                  <h4>{{ activity.name }}</h4>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Mesaj dacă nu sunt activități -->
+        <div class="no-activities" *ngIf="getActivitiesList().length === 0">
+          <h2>Activități în apropiere</h2>
+          <p class="no-data-message">Nu sunt activități înregistrate în apropierea acestei proprietăți.</p>
         </div>
 
         <!-- Detalii locație -->
         <div class="property-location-details">
-          <h2>Location</h2>
+          <h2>Detalii locație</h2>
           <div class="location-info">
-            <div class="location-item">
+            <div class="location-item" *ngIf="property.address">
               <i class="fas fa-location-dot"></i>
               <span>{{ property.address }}</span>
             </div>
@@ -158,12 +186,16 @@
               <i class="fas fa-globe"></i>
               <span>{{ property.country }}</span>
             </div>
+            <div class="location-item" *ngIf="property.postalCode">
+              <i class="fas fa-envelope"></i>
+              <span>Cod poștal: {{ property.postalCode }}</span>
+            </div>
           </div>
         </div>
 
         <!-- Reguli proprietate -->
         <div class="property-rules">
-          <h2>House Rules</h2>
+          <h2>Reguli de cazare</h2>
           <div class="rules-grid">
             <div class="rule-item">
               <i class="fas fa-door-open"></i>
@@ -182,15 +214,29 @@
             <div class="rule-item">
               <i class="fas fa-moon"></i>
               <div>
-                <strong>Min. stay</strong>
-                <span>{{ property.minNights || 1 }} nights</span>
+                <strong>Sejur minim</strong>
+                <span>{{ property.minNights || 1 }} nopți</span>
               </div>
             </div>
             <div class="rule-item">
               <i class="fas fa-calendar"></i>
               <div>
-                <strong>Max. stay</strong>
-                <span>{{ property.maxNights || 30 }} nights</span>
+                <strong>Sejur maxim</strong>
+                <span>{{ property.maxNights || 30 }} nopți</span>
+              </div>
+            </div>
+            <div class="rule-item">
+              <i class="fas fa-paw"></i>
+              <div>
+                <strong>Animale de companie</strong>
+                <span>{{ property.petFriendly ? 'Permise' : 'Nu sunt permise' }}</span>
+              </div>
+            </div>
+            <div class="rule-item">
+              <i class="fas fa-bolt"></i>
+              <div>
+                <strong>Rezervare instantă</strong>
+                <span>{{ property.instantBook ? 'Disponibilă' : 'Doar la cerere' }}</span>
               </div>
             </div>
           </div>
@@ -203,46 +249,46 @@
       <div class="booking-card-sticky">
         <div class="booking-card">
           <div class="price-section">
-            <span class="price">${{ property.pricePerNight }}</span>
-            <span class="period">per night</span>
+            <span class="price">{{ formatCurrency(property.pricePerNight) }}</span>
+            <span class="period">pe noapte</span>
           </div>
           
           <div class="booking-dates">
             <div class="date-input">
               <label>Check-in</label>
-              <input type="date" [min]="minDate" [(ngModel)]="checkInDate">
+              <input type="date" [min]="minDate" [(ngModel)]="checkInDate" (change)="onDateChange()">
             </div>
             <div class="date-input">
               <label>Check-out</label>
-              <input type="date" [min]="checkInDate || minDate" [(ngModel)]="checkOutDate">
+              <input type="date" [min]="checkInDate || minDate" [(ngModel)]="checkOutDate" (change)="onDateChange()">
             </div>
           </div>
 
           <div class="guests-selector">
-            <label>Guests</label>
-            <select [(ngModel)]="selectedGuests">
+            <label>Oaspeți</label>
+            <select [(ngModel)]="selectedGuests" (change)="onGuestsChange()">
               <option *ngFor="let guest of guestOptions" [value]="guest">
-                {{ guest }} {{ guest === 1 ? 'guest' : 'guests' }}
+                {{ guest }} {{ guest === 1 ? 'oaspete' : 'oaspeți' }}
               </option>
             </select>
           </div>
 
           <div class="price-breakdown" *ngIf="checkInDate && checkOutDate">
             <div class="price-item">
-              <span>${{ property.pricePerNight }} x {{ nightsCount }} nights</span>
-              <span>${{ property.pricePerNight * nightsCount }}</span>
+              <span>{{ formatCurrency(property.pricePerNight) }} x {{ nightsCount }} nopți</span>
+              <span>{{ formatCurrency(property.pricePerNight * nightsCount) }}</span>
             </div>
             <div class="price-item">
-              <span>Cleaning fee</span>
-              <span>${{ cleaningFee }}</span>
+              <span>Taxă curățenie</span>
+              <span>{{ formatCurrency(cleaningFee) }}</span>
             </div>
             <div class="price-item">
-              <span>Service fee</span>
-              <span>${{ serviceFee }}</span>
+              <span>Taxă serviciu</span>
+              <span>{{ formatCurrency(serviceFee) }}</span>
             </div>
             <div class="price-total">
               <strong>Total</strong>
-              <strong>${{ totalPrice }}</strong>
+              <strong>{{ formatCurrency(totalPrice) }}</strong>
             </div>
           </div>
 
@@ -250,12 +296,12 @@
                   [disabled]="!canBook" 
                   (click)="bookProperty()">
             <i class="fas fa-calendar-check"></i>
-            {{ isOwner ? 'Manage Bookings' : 'Book Now' }}
+            {{ isOwner ? 'Gestionează rezervări' : 'Rezervă acum' }}
           </button>
 
           <div class="booking-note" *ngIf="!isOwner">
             <i class="fas fa-info-circle"></i>
-            <span>You won't be charged yet</span>
+            <span>Nu vei fi taxat imediat</span>
           </div>
         </div>
       </div>
@@ -267,7 +313,7 @@
 <ng-template #loadingTemplate>
   <div class="loading-container">
     <div class="spinner"></div>
-    <p>Loading property details...</p>
+    <p>Se încarcă detaliile proprietății...</p>
   </div>
 </ng-template>
 
@@ -280,7 +326,7 @@
     <button class="modal-nav prev" (click)="prevImage()" *ngIf="currentImageIndex > 0">
       <i class="fas fa-chevron-left"></i>
     </button>
-    <img [src]="property.images[currentImageIndex]" [alt]="property.title">
+    <img [src]="property.images[currentImageIndex] || 'assets/default-property.jpg'" [alt]="property.title">
     <button class="modal-nav next" (click)="nextImage()" *ngIf="currentImageIndex < property.images.length - 1">
       <i class="fas fa-chevron-right"></i>
     </button>
