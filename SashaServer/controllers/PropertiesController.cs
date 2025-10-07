@@ -21,7 +21,7 @@ namespace SashaServer.Controllers
         private const string STATUS_AVAILABLE = "available";
         private const string STATUS_UNAVAILABLE = "unavailable";
         private const int MAX_UNVERIFIED_PROPERTIES = 3;
-        private const string ASSETS_BUCKET = "sasha-assets"; // Bucket pentru imagini
+        private const string ASSETS_BUCKET = "sasha-stays-assets"; // Bucket pentru imagini
 
         public PropertiesController(DataMap dataMap, ILogger<PropertiesController> logger, IGoogleCloudService googleCloudService)
         {
@@ -101,7 +101,69 @@ namespace SashaServer.Controllers
                     InstantBook = request.InstantBook,
                     IsVerified = false,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+
+                    // === OUTDOOR ACTIVITIES ===
+                    Hiking = request.Hiking,
+                    Biking = request.Biking,
+                    Swimming = request.Swimming,
+                    Fishing = request.Fishing,
+                    Skiing = request.Skiing,
+                    Snowboarding = request.Snowboarding,
+                    HorseRiding = request.HorseRiding,
+                    Climbing = request.Climbing,
+                    Camping = request.Camping,
+                    Beach = request.Beach,
+
+                    // === CULTURAL ACTIVITIES ===
+                    Museum = request.Museum,
+                    HistoricalSite = request.HistoricalSite,
+                    ArtGallery = request.ArtGallery,
+                    Theatre = request.Theatre,
+                    LocalMarket = request.LocalMarket,
+                    WineryTour = request.WineryTour,
+
+                    // === FOOD & DRINK ===
+                    Restaurant = request.Restaurant,
+                    Bar = request.Bar,
+                    Cafe = request.Cafe,
+                    LocalFood = request.LocalFood,
+                    WineTasting = request.WineTasting,
+
+                    // === ADVENTURE ACTIVITIES ===
+                    Kayaking = request.Kayaking,
+                    Rafting = request.Rafting,
+                    Paragliding = request.Paragliding,
+                    Zipline = request.Zipline,
+
+                    // === RELAXATION ===
+                    Spa = request.Spa,
+                    Yoga = request.Yoga,
+                    Meditation = request.Meditation,
+                    HotSprings = request.HotSprings,
+
+                    // === FAMILY ACTIVITIES ===
+                    Playground = request.Playground,
+                    Zoo = request.Zoo,
+                    Aquarium = request.Aquarium,
+                    AmusementPark = request.AmusementPark,
+
+                    // === PROPERTY AMENITIES ===
+                    Wifi = request.Wifi,
+                    AirConditioning = request.AirConditioning,
+                    Heating = request.Heating,
+                    Pool = request.Pool,
+                    Parking = request.Parking,
+                    Fireplace = request.Fireplace,
+                    Balcony = request.Balcony,
+                    Garden = request.Garden,
+                    Tv = request.Tv,
+                    HotTub = request.HotTub,
+                    WheelchairAccessible = request.WheelchairAccessible,
+                    Bbq = request.Bbq,
+                    BreakfastIncluded = request.BreakfastIncluded,
+                    Washer = request.Washer,
+                    Dryer = request.Dryer
                 };
 
                 _dataMap.AddProperty(property);
@@ -248,7 +310,69 @@ namespace SashaServer.Controllers
                         Url = pp.FilePath,
                         IsCover = pp.IsCover,
                         CreatedAt = pp.CreatedAt
-                    }).ToList()
+                    }).ToList(),
+
+                    // === OUTDOOR ACTIVITIES ===
+                    Hiking = property.Hiking,
+                    Biking = property.Biking,
+                    Swimming = property.Swimming,
+                    Fishing = property.Fishing,
+                    Skiing = property.Skiing,
+                    Snowboarding = property.Snowboarding,
+                    HorseRiding = property.HorseRiding,
+                    Climbing = property.Climbing,
+                    Camping = property.Camping,
+                    Beach = property.Beach,
+
+                    // === CULTURAL ACTIVITIES ===
+                    Museum = property.Museum,
+                    HistoricalSite = property.HistoricalSite,
+                    ArtGallery = property.ArtGallery,
+                    Theatre = property.Theatre,
+                    LocalMarket = property.LocalMarket,
+                    WineryTour = property.WineryTour,
+
+                    // === FOOD & DRINK ===
+                    Restaurant = property.Restaurant,
+                    Bar = property.Bar,
+                    Cafe = property.Cafe,
+                    LocalFood = property.LocalFood,
+                    WineTasting = property.WineTasting,
+
+                    // === ADVENTURE ACTIVITIES ===
+                    Kayaking = property.Kayaking,
+                    Rafting = property.Rafting,
+                    Paragliding = property.Paragliding,
+                    Zipline = property.Zipline,
+
+                    // === RELAXATION ===
+                    Spa = property.Spa,
+                    Yoga = property.Yoga,
+                    Meditation = property.Meditation,
+                    HotSprings = property.HotSprings,
+
+                    // === FAMILY ACTIVITIES ===
+                    Playground = property.Playground,
+                    Zoo = property.Zoo,
+                    Aquarium = property.Aquarium,
+                    AmusementPark = property.AmusementPark,
+
+                    // === PROPERTY AMENITIES ===
+                    Wifi = property.Wifi,
+                    AirConditioning = property.AirConditioning,
+                    Heating = property.Heating,
+                    Pool = property.Pool,
+                    Parking = property.Parking,
+                    Fireplace = property.Fireplace,
+                    Balcony = property.Balcony,
+                    Garden = property.Garden,
+                    Tv = property.Tv,
+                    HotTub = property.HotTub,
+                    WheelchairAccessible = property.WheelchairAccessible,
+                    Bbq = property.Bbq,
+                    BreakfastIncluded = property.BreakfastIncluded,
+                    Washer = property.Washer,
+                    Dryer = property.Dryer
                 };
 
                 return Ok(new ApiResponse<PropertyDetailsResponse>
@@ -729,7 +853,69 @@ namespace SashaServer.Controllers
                 InstantBook = property.InstantBook,
                 IsVerified = property.IsVerified,
                 CreatedAt = property.CreatedAt,
-                UpdatedAt = property.UpdatedAt
+                UpdatedAt = property.UpdatedAt,
+
+                // === OUTDOOR ACTIVITIES ===
+                Hiking = property.Hiking,
+                Biking = property.Biking,
+                Swimming = property.Swimming,
+                Fishing = property.Fishing,
+                Skiing = property.Skiing,
+                Snowboarding = property.Snowboarding,
+                HorseRiding = property.HorseRiding,
+                Climbing = property.Climbing,
+                Camping = property.Camping,
+                Beach = property.Beach,
+
+                // === CULTURAL ACTIVITIES ===
+                Museum = property.Museum,
+                HistoricalSite = property.HistoricalSite,
+                ArtGallery = property.ArtGallery,
+                Theatre = property.Theatre,
+                LocalMarket = property.LocalMarket,
+                WineryTour = property.WineryTour,
+
+                // === FOOD & DRINK ===
+                Restaurant = property.Restaurant,
+                Bar = property.Bar,
+                Cafe = property.Cafe,
+                LocalFood = property.LocalFood,
+                WineTasting = property.WineTasting,
+
+                // === ADVENTURE ACTIVITIES ===
+                Kayaking = property.Kayaking,
+                Rafting = property.Rafting,
+                Paragliding = property.Paragliding,
+                Zipline = property.Zipline,
+
+                // === RELAXATION ===
+                Spa = property.Spa,
+                Yoga = property.Yoga,
+                Meditation = property.Meditation,
+                HotSprings = property.HotSprings,
+
+                // === FAMILY ACTIVITIES ===
+                Playground = property.Playground,
+                Zoo = property.Zoo,
+                Aquarium = property.Aquarium,
+                AmusementPark = property.AmusementPark,
+
+                // === PROPERTY AMENITIES ===
+                Wifi = property.Wifi,
+                AirConditioning = property.AirConditioning,
+                Heating = property.Heating,
+                Pool = property.Pool,
+                Parking = property.Parking,
+                Fireplace = property.Fireplace,
+                Balcony = property.Balcony,
+                Garden = property.Garden,
+                Tv = property.Tv,
+                HotTub = property.HotTub,
+                WheelchairAccessible = property.WheelchairAccessible,
+                Bbq = property.Bbq,
+                BreakfastIncluded = property.BreakfastIncluded,
+                Washer = property.Washer,
+                Dryer = property.Dryer
             };
         }
     }
@@ -768,6 +954,68 @@ namespace SashaServer.Controllers
         public string? NeighborhoodDescription { get; set; }
         public string[] Tags { get; set; } = Array.Empty<string>();
         public bool InstantBook { get; set; } = false;
+
+        // === OUTDOOR ACTIVITIES ===
+        public bool Hiking { get; set; }
+        public bool Biking { get; set; }
+        public bool Swimming { get; set; }
+        public bool Fishing { get; set; }
+        public bool Skiing { get; set; }
+        public bool Snowboarding { get; set; }
+        public bool HorseRiding { get; set; }
+        public bool Climbing { get; set; }
+        public bool Camping { get; set; }
+        public bool Beach { get; set; }
+
+        // === CULTURAL ACTIVITIES ===
+        public bool Museum { get; set; }
+        public bool HistoricalSite { get; set; }
+        public bool ArtGallery { get; set; }
+        public bool Theatre { get; set; }
+        public bool LocalMarket { get; set; }
+        public bool WineryTour { get; set; }
+
+        // === FOOD & DRINK ===
+        public bool Restaurant { get; set; }
+        public bool Bar { get; set; }
+        public bool Cafe { get; set; }
+        public bool LocalFood { get; set; }
+        public bool WineTasting { get; set; }
+
+        // === ADVENTURE ACTIVITIES ===
+        public bool Kayaking { get; set; }
+        public bool Rafting { get; set; }
+        public bool Paragliding { get; set; }
+        public bool Zipline { get; set; }
+
+        // === RELAXATION ===
+        public bool Spa { get; set; }
+        public bool Yoga { get; set; }
+        public bool Meditation { get; set; }
+        public bool HotSprings { get; set; }
+
+        // === FAMILY ACTIVITIES ===
+        public bool Playground { get; set; }
+        public bool Zoo { get; set; }
+        public bool Aquarium { get; set; }
+        public bool AmusementPark { get; set; }
+
+        // === PROPERTY AMENITIES ===
+        public bool Wifi { get; set; }
+        public bool AirConditioning { get; set; }
+        public bool Heating { get; set; }
+        public bool Pool { get; set; }
+        public bool Parking { get; set; }
+        public bool Fireplace { get; set; }
+        public bool Balcony { get; set; }
+        public bool Garden { get; set; }
+        public bool Tv { get; set; }
+        public bool HotTub { get; set; }
+        public bool WheelchairAccessible { get; set; }
+        public bool Bbq { get; set; }
+        public bool BreakfastIncluded { get; set; }
+        public bool Washer { get; set; }
+        public bool Dryer { get; set; }
     }
 
     // ✅ Response lightweight pentru liste
@@ -828,6 +1076,68 @@ namespace SashaServer.Controllers
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public List<PropertyImage> Images { get; set; } = new List<PropertyImage>();
+
+        // === OUTDOOR ACTIVITIES ===
+        public bool Hiking { get; set; }
+        public bool Biking { get; set; }
+        public bool Swimming { get; set; }
+        public bool Fishing { get; set; }
+        public bool Skiing { get; set; }
+        public bool Snowboarding { get; set; }
+        public bool HorseRiding { get; set; }
+        public bool Climbing { get; set; }
+        public bool Camping { get; set; }
+        public bool Beach { get; set; }
+
+        // === CULTURAL ACTIVITIES ===
+        public bool Museum { get; set; }
+        public bool HistoricalSite { get; set; }
+        public bool ArtGallery { get; set; }
+        public bool Theatre { get; set; }
+        public bool LocalMarket { get; set; }
+        public bool WineryTour { get; set; }
+
+        // === FOOD & DRINK ===
+        public bool Restaurant { get; set; }
+        public bool Bar { get; set; }
+        public bool Cafe { get; set; }
+        public bool LocalFood { get; set; }
+        public bool WineTasting { get; set; }
+
+        // === ADVENTURE ACTIVITIES ===
+        public bool Kayaking { get; set; }
+        public bool Rafting { get; set; }
+        public bool Paragliding { get; set; }
+        public bool Zipline { get; set; }
+
+        // === RELAXATION ===
+        public bool Spa { get; set; }
+        public bool Yoga { get; set; }
+        public bool Meditation { get; set; }
+        public bool HotSprings { get; set; }
+
+        // === FAMILY ACTIVITIES ===
+        public bool Playground { get; set; }
+        public bool Zoo { get; set; }
+        public bool Aquarium { get; set; }
+        public bool AmusementPark { get; set; }
+
+        // === PROPERTY AMENITIES ===
+        public bool Wifi { get; set; }
+        public bool AirConditioning { get; set; }
+        public bool Heating { get; set; }
+        public bool Pool { get; set; }
+        public bool Parking { get; set; }
+        public bool Fireplace { get; set; }
+        public bool Balcony { get; set; }
+        public bool Garden { get; set; }
+        public bool Tv { get; set; }
+        public bool HotTub { get; set; }
+        public bool WheelchairAccessible { get; set; }
+        public bool Bbq { get; set; }
+        public bool BreakfastIncluded { get; set; }
+        public bool Washer { get; set; }
+        public bool Dryer { get; set; }
     }
 
     public class PropertyImage
@@ -876,6 +1186,68 @@ namespace SashaServer.Controllers
         public bool IsVerified { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // === OUTDOOR ACTIVITIES ===
+        public bool Hiking { get; set; }
+        public bool Biking { get; set; }
+        public bool Swimming { get; set; }
+        public bool Fishing { get; set; }
+        public bool Skiing { get; set; }
+        public bool Snowboarding { get; set; }
+        public bool HorseRiding { get; set; }
+        public bool Climbing { get; set; }
+        public bool Camping { get; set; }
+        public bool Beach { get; set; }
+
+        // === CULTURAL ACTIVITIES ===
+        public bool Museum { get; set; }
+        public bool HistoricalSite { get; set; }
+        public bool ArtGallery { get; set; }
+        public bool Theatre { get; set; }
+        public bool LocalMarket { get; set; }
+        public bool WineryTour { get; set; }
+
+        // === FOOD & DRINK ===
+        public bool Restaurant { get; set; }
+        public bool Bar { get; set; }
+        public bool Cafe { get; set; }
+        public bool LocalFood { get; set; }
+        public bool WineTasting { get; set; }
+
+        // === ADVENTURE ACTIVITIES ===
+        public bool Kayaking { get; set; }
+        public bool Rafting { get; set; }
+        public bool Paragliding { get; set; }
+        public bool Zipline { get; set; }
+
+        // === RELAXATION ===
+        public bool Spa { get; set; }
+        public bool Yoga { get; set; }
+        public bool Meditation { get; set; }
+        public bool HotSprings { get; set; }
+
+        // === FAMILY ACTIVITIES ===
+        public bool Playground { get; set; }
+        public bool Zoo { get; set; }
+        public bool Aquarium { get; set; }
+        public bool AmusementPark { get; set; }
+
+        // === PROPERTY AMENITIES ===
+        public bool Wifi { get; set; }
+        public bool AirConditioning { get; set; }
+        public bool Heating { get; set; }
+        public bool Pool { get; set; }
+        public bool Parking { get; set; }
+        public bool Fireplace { get; set; }
+        public bool Balcony { get; set; }
+        public bool Garden { get; set; }
+        public bool Tv { get; set; }
+        public bool HotTub { get; set; }
+        public bool WheelchairAccessible { get; set; }
+        public bool Bbq { get; set; }
+        public bool BreakfastIncluded { get; set; }
+        public bool Washer { get; set; }
+        public bool Dryer { get; set; }
     }
 
     public class ApiResponse<T>

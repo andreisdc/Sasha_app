@@ -36,36 +36,56 @@ namespace SashaServer.Services
         private const string ASSETS_BUCKET = "sasha-assets"; // Bucket public pentru imagini
         private const string DOCUMENTS_BUCKET = "sasha-documents"; // Bucket privat pentru documente
 
-        public GoogleCloudService(IOptions<CloudConfig> cloudConfig, ILogger<GoogleCloudService> logger)
+       public GoogleCloudService(IOptions<CloudConfig> cloudConfig, ILogger<GoogleCloudService> logger)
+{
+    _cloudConfig = cloudConfig.Value;
+    _logger = logger;
+
+    try
+    {
+        GoogleCredential credential;
+        
+        // Verifică dacă CredentialsPath conține JSON direct sau o cale către fișier
+        if (string.IsNullOrEmpty(_cloudConfig.CredentialsPath))
         {
-            _cloudConfig = cloudConfig.Value;
-            _logger = logger;
-
-            try
-            {
-                if (string.IsNullOrEmpty(_cloudConfig.CredentialsPath))
-                    throw new InvalidOperationException("GCP credentials path is not configured");
-
-                if (!File.Exists(_cloudConfig.CredentialsPath))
-                    throw new FileNotFoundException($"GCP credentials file not found at: {_cloudConfig.CredentialsPath}");
-
-                var credential = GoogleCredential.FromFile(_cloudConfig.CredentialsPath);
-                _storageClient = StorageClient.Create(credential);
-                _urlSigner = UrlSigner.FromCredential(credential);
-
-                _logger.LogInformation(
-                    "✅ Google Cloud Storage initialized for project: {ProjectId}\n" +
-                    "   - Assets Bucket: {AssetsBucket}\n" +
-                    "   - Documents Bucket: {DocumentsBucket}",
-                    _cloudConfig.ProjectId, ASSETS_BUCKET, DOCUMENTS_BUCKET
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Failed to initialize Google Cloud Storage");
-                throw;
-            }
+            throw new InvalidOperationException("GCP credentials path is not configured");
         }
+
+        // Dacă CredentialsPath începe cu '{', este probabil JSON direct
+        if (_cloudConfig.CredentialsPath.Trim().StartsWith('{'))
+        {
+            _logger.LogInformation("✅ Using GCP credentials from JSON string");
+            credential = GoogleCredential.FromJson(_cloudConfig.CredentialsPath);
+        }
+        // Altfel, verifică dacă este o cale către fișier
+        else if (File.Exists(_cloudConfig.CredentialsPath))
+        {
+            _logger.LogInformation("✅ Using GCP credentials from file: {CredentialsPath}", _cloudConfig.CredentialsPath);
+            credential = GoogleCredential.FromFile(_cloudConfig.CredentialsPath);
+        }
+        else
+        {
+            // Încearcă să folosească Application Default Credentials
+            _logger.LogInformation("✅ Using GCP application default credentials");
+            credential = GoogleCredential.GetApplicationDefault();
+        }
+
+        _storageClient = StorageClient.Create(credential);
+        _urlSigner = UrlSigner.FromCredential(credential);
+
+        _logger.LogInformation(
+            "✅ Google Cloud Storage initialized for project: {ProjectId}\n" +
+            "   - Assets Bucket: {AssetsBucket}\n" +
+            "   - Documents Bucket: {DocumentsBucket}",
+            _cloudConfig.ProjectId, _cloudConfig.AssetsBucket, _cloudConfig.BucketName
+        );
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "❌ Failed to initialize Google Cloud Storage");
+        throw;
+    }
+}
 
         // ✅ METODE SPECIALIZATE PENTRU ASSETS BUCKET (PUBLIC)
 

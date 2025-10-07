@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-// ✅ Noile interfețe optimizate
+// ✅ Noile interfețe optimizate pentru backend
 export interface PropertySummary {
   id: string;
   ownerId: string;
@@ -58,6 +58,68 @@ export interface PropertyDetails {
   createdAt: string;
   updatedAt: string;
   images: PropertyImage[];
+  
+  // === OUTDOOR ACTIVITIES ===
+  hiking: boolean;
+  biking: boolean;
+  swimming: boolean;
+  fishing: boolean;
+  skiing: boolean;
+  snowboarding: boolean;
+  horseRiding: boolean;
+  climbing: boolean;
+  camping: boolean;
+  beach: boolean;
+
+  // === CULTURAL ACTIVITIES ===
+  museum: boolean;
+  historicalSite: boolean;
+  artGallery: boolean;
+  theatre: boolean;
+  localMarket: boolean;
+  wineryTour: boolean;
+
+  // === FOOD & DRINK ===
+  restaurant: boolean;
+  bar: boolean;
+  cafe: boolean;
+  localFood: boolean;
+  wineTasting: boolean;
+
+  // === ADVENTURE ACTIVITIES ===
+  kayaking: boolean;
+  rafting: boolean;
+  paragliding: boolean;
+  zipline: boolean;
+
+  // === RELAXATION ===
+  spa: boolean;
+  yoga: boolean;
+  meditation: boolean;
+  hotSprings: boolean;
+
+  // === FAMILY ACTIVITIES ===
+  playground: boolean;
+  zoo: boolean;
+  aquarium: boolean;
+  amusementPark: boolean;
+
+  // === PROPERTY AMENITIES ===
+  wifi: boolean;
+  airConditioning: boolean;
+  heating: boolean;
+  pool: boolean;
+  parking: boolean;
+  fireplace: boolean;
+  balcony: boolean;
+  garden: boolean;
+  tv: boolean;
+  hotTub: boolean;
+  wheelchairAccessible: boolean;
+  bbq: boolean;
+  breakfastIncluded: boolean;
+  washer: boolean;
+  dryer: boolean;
 }
 
 export interface PropertyImage {
@@ -67,7 +129,7 @@ export interface PropertyImage {
   createdAt: string;
 }
 
-// ⚠️ Păstrăm și interfețele vechi pentru compatibilitate
+// ⚠️ Interfața veche pentru compatibilitate - ACTUALIZATĂ cu toate câmpurile
 export interface Property {
   id: string;
   ownerId: string;
@@ -109,6 +171,68 @@ export interface Property {
   activities: any[];
   createdAt: string;
   updatedAt: string;
+  
+  // === OUTDOOR ACTIVITIES ===
+  hiking: boolean;
+  biking: boolean;
+  swimming: boolean;
+  fishing: boolean;
+  skiing: boolean;
+  snowboarding: boolean;
+  horseRiding: boolean;
+  climbing: boolean;
+  camping: boolean;
+  beach: boolean;
+
+  // === CULTURAL ACTIVITIES ===
+  museum: boolean;
+  historicalSite: boolean;
+  artGallery: boolean;
+  theatre: boolean;
+  localMarket: boolean;
+  wineryTour: boolean;
+
+  // === FOOD & DRINK ===
+  restaurant: boolean;
+  bar: boolean;
+  cafe: boolean;
+  localFood: boolean;
+  wineTasting: boolean;
+
+  // === ADVENTURE ACTIVITIES ===
+  kayaking: boolean;
+  rafting: boolean;
+  paragliding: boolean;
+  zipline: boolean;
+
+  // === RELAXATION ===
+  spa: boolean;
+  yoga: boolean;
+  meditation: boolean;
+  hotSprings: boolean;
+
+  // === FAMILY ACTIVITIES ===
+  playground: boolean;
+  zoo: boolean;
+  aquarium: boolean;
+  amusementPark: boolean;
+
+  // === PROPERTY AMENITIES ===
+  wifi: boolean;
+  airConditioning: boolean;
+  heating: boolean;
+  pool: boolean;
+  parking: boolean;
+  fireplace: boolean;
+  balcony: boolean;
+  garden: boolean;
+  tv: boolean;
+  hotTub: boolean;
+  wheelchairAccessible: boolean;
+  bbq: boolean;
+  breakfastIncluded: boolean;
+  washer: boolean;
+  dryer: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -146,6 +270,68 @@ export interface CreatePropertyRequest {
   neighborhoodDescription: string;
   tags: string[];
   instantBook: boolean;
+
+  // === OUTDOOR ACTIVITIES ===
+  hiking: boolean;
+  biking: boolean;
+  swimming: boolean;
+  fishing: boolean;
+  skiing: boolean;
+  snowboarding: boolean;
+  horseRiding: boolean;
+  climbing: boolean;
+  camping: boolean;
+  beach: boolean;
+
+  // === CULTURAL ACTIVITIES ===
+  museum: boolean;
+  historicalSite: boolean;
+  artGallery: boolean;
+  theatre: boolean;
+  localMarket: boolean;
+  wineryTour: boolean;
+
+  // === FOOD & DRINK ===
+  restaurant: boolean;
+  bar: boolean;
+  cafe: boolean;
+  localFood: boolean;
+  wineTasting: boolean;
+
+  // === ADVENTURE ACTIVITIES ===
+  kayaking: boolean;
+  rafting: boolean;
+  paragliding: boolean;
+  zipline: boolean;
+
+  // === RELAXATION ===
+  spa: boolean;
+  yoga: boolean;
+  meditation: boolean;
+  hotSprings: boolean;
+
+  // === FAMILY ACTIVITIES ===
+  playground: boolean;
+  zoo: boolean;
+  aquarium: boolean;
+  amusementPark: boolean;
+
+  // === PROPERTY AMENITIES ===
+  wifi: boolean;
+  airConditioning: boolean;
+  heating: boolean;
+  pool: boolean;
+  parking: boolean;
+  fireplace: boolean;
+  balcony: boolean;
+  garden: boolean;
+  tv: boolean;
+  hotTub: boolean;
+  wheelchairAccessible: boolean;
+  bbq: boolean;
+  breakfastIncluded: boolean;
+  washer: boolean;
+  dryer: boolean;
 }
 
 export interface UploadPhotosResponse {
@@ -161,15 +347,111 @@ export class PropertyService {
   private apiUrl = 'http://localhost:5043/properties';
   private http = inject(HttpClient);
 
-  // Helper method to convert PropertyResponse to Property (pentru compatibilitate)
-  private convertToProperty(response: any): Property {
+  // Helper method to convert PropertyDetails to Property (pentru compatibilitate)
+  private convertToProperty(details: PropertyDetails): Property {
     return {
-      ...response,
-      propertyType: response.locationType,
-      bedrooms: 0,
-      images: response.images?.map((img: any) => img.url) || [],
-      amenities: response.tags || [],
-      activities: []
+      id: details.id,
+      ownerId: details.ownerId,
+      title: details.title,
+      description: details.description,
+      propertyType: details.locationType,
+      locationType: details.locationType,
+      address: details.address,
+      city: details.city,
+      county: details.county,
+      country: details.country,
+      postalCode: details.postalCode,
+      latitude: details.latitude,
+      longitude: details.longitude,
+      pricePerNight: details.pricePerNight,
+      minNights: details.minNights,
+      maxNights: details.maxNights,
+      checkInTime: details.checkInTime,
+      checkOutTime: details.checkOutTime,
+      maxGuests: details.maxGuests,
+      bathrooms: details.bathrooms,
+      bedrooms: this.calculateBedrooms(details),
+      kitchen: details.kitchen,
+      livingSpace: details.livingSpace,
+      petFriendly: details.petFriendly,
+      smokeDetector: details.smokeDetector,
+      fireExtinguisher: details.fireExtinguisher,
+      carbonMonoxideDetector: details.carbonMonoxideDetector,
+      lockType: details.lockType,
+      averageRating: details.averageRating,
+      reviewCount: details.reviewCount,
+      neighborhoodDescription: details.neighborhoodDescription,
+      tags: details.tags,
+      instantBook: details.instantBook,
+      isVerified: details.isVerified,
+      status: details.status,
+      images: details.images?.map(img => img.url) || [],
+      amenities: this.getAmenitiesFromDetails(details),
+      activities: this.getActivitiesFromDetails(details),
+      createdAt: details.createdAt,
+      updatedAt: details.updatedAt,
+      
+      // === OUTDOOR ACTIVITIES ===
+      hiking: details.hiking,
+      biking: details.biking,
+      swimming: details.swimming,
+      fishing: details.fishing,
+      skiing: details.skiing,
+      snowboarding: details.snowboarding,
+      horseRiding: details.horseRiding,
+      climbing: details.climbing,
+      camping: details.camping,
+      beach: details.beach,
+
+      // === CULTURAL ACTIVITIES ===
+      museum: details.museum,
+      historicalSite: details.historicalSite,
+      artGallery: details.artGallery,
+      theatre: details.theatre,
+      localMarket: details.localMarket,
+      wineryTour: details.wineryTour,
+
+      // === FOOD & DRINK ===
+      restaurant: details.restaurant,
+      bar: details.bar,
+      cafe: details.cafe,
+      localFood: details.localFood,
+      wineTasting: details.wineTasting,
+
+      // === ADVENTURE ACTIVITIES ===
+      kayaking: details.kayaking,
+      rafting: details.rafting,
+      paragliding: details.paragliding,
+      zipline: details.zipline,
+
+      // === RELAXATION ===
+      spa: details.spa,
+      yoga: details.yoga,
+      meditation: details.meditation,
+      hotSprings: details.hotSprings,
+
+      // === FAMILY ACTIVITIES ===
+      playground: details.playground,
+      zoo: details.zoo,
+      aquarium: details.aquarium,
+      amusementPark: details.amusementPark,
+
+      // === PROPERTY AMENITIES ===
+      wifi: details.wifi,
+      airConditioning: details.airConditioning,
+      heating: details.heating,
+      pool: details.pool,
+      parking: details.parking,
+      fireplace: details.fireplace,
+      balcony: details.balcony,
+      garden: details.garden,
+      tv: details.tv,
+      hotTub: details.hotTub,
+      wheelchairAccessible: details.wheelchairAccessible,
+      bbq: details.bbq,
+      breakfastIncluded: details.breakfastIncluded,
+      washer: details.washer,
+      dryer: details.dryer
     };
   }
 
@@ -215,8 +497,112 @@ export class PropertyService {
       amenities: [],
       activities: [],
       createdAt: summary.createdAt,
-      updatedAt: summary.createdAt
+      updatedAt: summary.createdAt,
+      
+      // === OUTDOOR ACTIVITIES ===
+      hiking: false,
+      biking: false,
+      swimming: false,
+      fishing: false,
+      skiing: false,
+      snowboarding: false,
+      horseRiding: false,
+      climbing: false,
+      camping: false,
+      beach: false,
+
+      // === CULTURAL ACTIVITIES ===
+      museum: false,
+      historicalSite: false,
+      artGallery: false,
+      theatre: false,
+      localMarket: false,
+      wineryTour: false,
+
+      // === FOOD & DRINK ===
+      restaurant: false,
+      bar: false,
+      cafe: false,
+      localFood: false,
+      wineTasting: false,
+
+      // === ADVENTURE ACTIVITIES ===
+      kayaking: false,
+      rafting: false,
+      paragliding: false,
+      zipline: false,
+
+      // === RELAXATION ===
+      spa: false,
+      yoga: false,
+      meditation: false,
+      hotSprings: false,
+
+      // === FAMILY ACTIVITIES ===
+      playground: false,
+      zoo: false,
+      aquarium: false,
+      amusementPark: false,
+
+      // === PROPERTY AMENITIES ===
+      wifi: false,
+      airConditioning: false,
+      heating: false,
+      pool: false,
+      parking: false,
+      fireplace: false,
+      balcony: false,
+      garden: false,
+      tv: false,
+      hotTub: false,
+      wheelchairAccessible: false,
+      bbq: false,
+      breakfastIncluded: false,
+      washer: false,
+      dryer: false
     };
+  }
+
+  private calculateBedrooms(details: PropertyDetails): number {
+    if (details.livingSpace > 0) {
+      return Math.max(1, Math.floor(details.livingSpace / 20));
+    }
+    return 1;
+  }
+
+  private getAmenitiesFromDetails(details: PropertyDetails): string[] {
+    const amenities: string[] = [];
+    if (details.wifi) amenities.push('wifi');
+    if (details.airConditioning) amenities.push('airConditioning');
+    if (details.heating) amenities.push('heating');
+    if (details.pool) amenities.push('pool');
+    if (details.parking) amenities.push('parking');
+    if (details.kitchen) amenities.push('kitchen');
+    if (details.tv) amenities.push('tv');
+    if (details.washer) amenities.push('washer');
+    if (details.dryer) amenities.push('dryer');
+    if (details.petFriendly) amenities.push('petFriendly');
+    if (details.fireplace) amenities.push('fireplace');
+    if (details.balcony) amenities.push('balcony');
+    if (details.garden) amenities.push('garden');
+    if (details.hotTub) amenities.push('hotTub');
+    if (details.wheelchairAccessible) amenities.push('wheelchairAccessible');
+    if (details.bbq) amenities.push('bbq');
+    if (details.breakfastIncluded) amenities.push('breakfastIncluded');
+    return amenities;
+  }
+
+  private getActivitiesFromDetails(details: PropertyDetails): any[] {
+    const activities: any[] = [];
+    if (details.hiking) activities.push({ id: '1', name: 'Hiking', category: 'Outdoor' });
+    if (details.biking) activities.push({ id: '2', name: 'Biking', category: 'Outdoor' });
+    if (details.swimming) activities.push({ id: '3', name: 'Swimming', category: 'Outdoor' });
+    if (details.restaurant) activities.push({ id: '4', name: 'Restaurant', category: 'Food' });
+    if (details.bar) activities.push({ id: '5', name: 'Bar', category: 'Food' });
+    if (details.spa) activities.push({ id: '6', name: 'Spa', category: 'Relax' });
+    if (details.yoga) activities.push({ id: '7', name: 'Yoga', category: 'Relax' });
+    // Adaugă și alte activități după necesitate
+    return activities;
   }
 
   // CREATE PROPERTY
@@ -227,7 +613,7 @@ export class PropertyService {
       'Content-Type': 'application/json'
     });
 
-    return this.http.post<ApiResponse<any>>(this.apiUrl, propertyData, { headers })
+    return this.http.post<ApiResponse<PropertyDetails>>(this.apiUrl, propertyData, { headers })
       .pipe(
         map(response => {
           if (response.success && response.data) {
@@ -256,7 +642,7 @@ export class PropertyService {
     );
   }
 
-  // GET PROPERTY BY ID (FULL DETAILS)
+  // GET PROPERTY BY ID (FULL DETAILS) - returnează Property cu toate câmpurile
   getPropertyById(id: string): Observable<Property> {
     return this.http.get<ApiResponse<PropertyDetails>>(`${this.apiUrl}/${id}`)
       .pipe(
@@ -330,52 +716,6 @@ export class PropertyService {
       );
   }
 
-  // SEARCH PROPERTIES
-  searchProperties(filters: {
-    city?: string;
-    country?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    minGuests?: number;
-    minBedrooms?: number;
-    propertyType?: string;
-  }): Observable<Property[]> {
-    let params = new HttpParams();
-    
-    if (filters.city) params = params.set('city', filters.city);
-    if (filters.country) params = params.set('country', filters.country);
-    if (filters.minPrice) params = params.set('minPrice', filters.minPrice.toString());
-    if (filters.maxPrice) params = params.set('maxPrice', filters.maxPrice.toString());
-    if (filters.minGuests) params = params.set('minGuests', filters.minGuests.toString());
-    if (filters.minBedrooms) params = params.set('minBedrooms', filters.minBedrooms.toString());
-    if (filters.propertyType) params = params.set('propertyType', filters.propertyType);
-
-    return this.http.get<ApiResponse<PropertySummary[]>>(`${this.apiUrl}/search`, { params })
-      .pipe(
-        map(response => {
-          if (response.success && response.data) {
-            return response.data.map(summary => this.convertSummaryToProperty(summary));
-          } else {
-            throw new Error(response.message || 'Failed to search properties');
-          }
-        })
-      );
-  }
-
-  // GET FEATURED PROPERTIES
-  getFeaturedProperties(): Observable<Property[]> {
-    return this.http.get<ApiResponse<PropertySummary[]>>(`${this.apiUrl}/featured`)
-      .pipe(
-        map(response => {
-          if (response.success && response.data) {
-            return response.data.map(summary => this.convertSummaryToProperty(summary));
-          } else {
-            throw new Error(response.message || 'Failed to fetch featured properties');
-          }
-        })
-      );
-  }
-
   // UPDATE PROPERTY
   updateProperty(id: string, propertyData: Partial<Property>): Observable<Property> {
     const backendData = {
@@ -383,7 +723,7 @@ export class PropertyService {
       locationType: propertyData.propertyType
     };
     
-    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/${id}`, backendData)
+    return this.http.put<ApiResponse<PropertyDetails>>(`${this.apiUrl}/${id}`, backendData)
       .pipe(
         map(response => {
           if (response.success && response.data) {

@@ -420,140 +420,322 @@ namespace SashaServer.Data
         // 3️⃣ PROPERTIES
         // ================================
 
-        public void AddProperty(Property property)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
+        // ================================
+        // 3️⃣ PROPERTIES - ACTUALIZAT CU TOATE AMENITĂȚILE
+        // ================================
 
-            var cmd = new NpgsqlCommand(
-                @"INSERT INTO t_properties
-                    (id, owner_id, title, description, location_type, address, city, county, country,
-                    postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
-                    check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
-                    smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
-                    average_rating, review_count, neighborhood_description, tags, instant_book,
-                    created_at, updated_at)
-                    VALUES
-                    (@id, @owner_id, @title, @description, @location_type, @address, @city, @county, @country,
-                    @postal_code, @latitude, @longitude, @status, @price_per_night, @min_nights, @max_nights,
-                    @check_in_time, @check_out_time, @max_guests, @bathrooms, @kitchen, @living_space, @pet_friendly,
-                    @smoke_detector, @fire_extinguisher, @carbon_monoxide_detector, @lock_type,
-                    @average_rating, @review_count, @neighborhood_description, @tags, @instant_book,
-                    @created_at, @updated_at)", conn);
+public void AddProperty(Property property)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
 
-            cmd.Parameters.AddWithValue("id", property.Id);
-            cmd.Parameters.AddWithValue("owner_id", property.OwnerId);
-            cmd.Parameters.AddWithValue("title", property.Title);
-            cmd.Parameters.AddWithValue("description", property.Description);
-            cmd.Parameters.AddWithValue("location_type", property.LocationType);
-            cmd.Parameters.AddWithValue("address", property.Address ?? "");
-            cmd.Parameters.AddWithValue("city", property.City ?? "");
-            cmd.Parameters.AddWithValue("county", property.County ?? "");
-            cmd.Parameters.AddWithValue("country", property.Country ?? "Romania");
-            cmd.Parameters.AddWithValue("postal_code", property.PostalCode ?? "");
-            cmd.Parameters.AddWithValue("latitude", property.Latitude);
-            cmd.Parameters.AddWithValue("longitude", property.Longitude);
-            cmd.Parameters.AddWithValue("status", property.Status);
-            cmd.Parameters.AddWithValue("price_per_night", property.PricePerNight);
-            cmd.Parameters.AddWithValue("min_nights", property.MinNights);
-            cmd.Parameters.AddWithValue("max_nights", property.MaxNights);
-            cmd.Parameters.AddWithValue("check_in_time", property.CheckInTime);
-            cmd.Parameters.AddWithValue("check_out_time", property.CheckOutTime);
-            cmd.Parameters.AddWithValue("max_guests", property.MaxGuests);
-            cmd.Parameters.AddWithValue("bathrooms", property.Bathrooms);
-            cmd.Parameters.AddWithValue("kitchen", property.Kitchen);
-            cmd.Parameters.AddWithValue("living_space", property.LivingSpace);
-            cmd.Parameters.AddWithValue("pet_friendly", property.PetFriendly);
-            cmd.Parameters.AddWithValue("smoke_detector", property.SmokeDetector);
-            cmd.Parameters.AddWithValue("fire_extinguisher", property.FireExtinguisher);
-            cmd.Parameters.AddWithValue("carbon_monoxide_detector", property.CarbonMonoxideDetector);
-            cmd.Parameters.AddWithValue("lock_type", property.LockType ?? "");
-            cmd.Parameters.AddWithValue("average_rating", property.AverageRating);
-            cmd.Parameters.AddWithValue("review_count", property.ReviewCount);
-            cmd.Parameters.AddWithValue("neighborhood_description", property.NeighborhoodDescription ?? "");
-            cmd.Parameters.AddWithValue("tags", property.Tags ?? Array.Empty<string>());
-            cmd.Parameters.AddWithValue("instant_book", property.InstantBook);
-            cmd.Parameters.AddWithValue("created_at", property.CreatedAt);
-            cmd.Parameters.AddWithValue("updated_at", property.UpdatedAt);
+    var cmd = new NpgsqlCommand(
+        @"INSERT INTO t_properties
+            (id, owner_id, title, description, location_type, address, city, county, country,
+            postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
+            check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
+            smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
+            average_rating, review_count, neighborhood_description, tags, instant_book,
+            created_at, updated_at, is_verified,
+            -- Outdoor Activities
+            hiking, biking, swimming, fishing, skiing, snowboarding, horse_riding, climbing, camping, beach,
+            -- Cultural Activities
+            museum, historical_site, art_gallery, theatre, local_market, winery_tour,
+            -- Food & Drink
+            restaurant, bar, cafe, local_food, wine_tasting,
+            -- Adventure Activities
+            kayaking, rafting, paragliding, zipline,
+            -- Relaxation
+            spa, yoga, meditation, hot_springs,
+            -- Family Activities
+            playground, zoo, aquarium, amusement_park,
+            -- Property Amenities
+            wifi, air_conditioning, heating, pool, parking, fireplace, balcony, garden, tv,
+            hot_tub, wheelchair_accessible, bbq, breakfast_included, washer, dryer)
+            VALUES
+            (@id, @owner_id, @title, @description, @location_type, @address, @city, @county, @country,
+            @postal_code, @latitude, @longitude, @status, @price_per_night, @min_nights, @max_nights,
+            @check_in_time, @check_out_time, @max_guests, @bathrooms, @kitchen, @living_space, @pet_friendly,
+            @smoke_detector, @fire_extinguisher, @carbon_monoxide_detector, @lock_type,
+            @average_rating, @review_count, @neighborhood_description, @tags, @instant_book,
+            @created_at, @updated_at, @is_verified,
+            -- Outdoor Activities
+            @hiking, @biking, @swimming, @fishing, @skiing, @snowboarding, @horse_riding, @climbing, @camping, @beach,
+            -- Cultural Activities
+            @museum, @historical_site, @art_gallery, @theatre, @local_market, @winery_tour,
+            -- Food & Drink
+            @restaurant, @bar, @cafe, @local_food, @wine_tasting,
+            -- Adventure Activities
+            @kayaking, @rafting, @paragliding, @zipline,
+            -- Relaxation
+            @spa, @yoga, @meditation, @hot_springs,
+            -- Family Activities
+            @playground, @zoo, @aquarium, @amusement_park,
+            -- Property Amenities
+            @wifi, @air_conditioning, @heating, @pool, @parking, @fireplace, @balcony, @garden, @tv,
+            @hot_tub, @wheelchair_accessible, @bbq, @breakfast_included, @washer, @dryer)", conn);
 
-            cmd.ExecuteNonQuery();
-        }
+    // Parametri de bază
+    cmd.Parameters.AddWithValue("id", property.Id);
+    cmd.Parameters.AddWithValue("owner_id", property.OwnerId);
+    cmd.Parameters.AddWithValue("title", property.Title);
+    cmd.Parameters.AddWithValue("description", property.Description);
+    cmd.Parameters.AddWithValue("location_type", property.LocationType);
+    cmd.Parameters.AddWithValue("address", property.Address ?? "");
+    cmd.Parameters.AddWithValue("city", property.City ?? "");
+    cmd.Parameters.AddWithValue("county", property.County ?? "");
+    cmd.Parameters.AddWithValue("country", property.Country ?? "Romania");
+    cmd.Parameters.AddWithValue("postal_code", property.PostalCode ?? "");
+    cmd.Parameters.AddWithValue("latitude", property.Latitude);
+    cmd.Parameters.AddWithValue("longitude", property.Longitude);
+    cmd.Parameters.AddWithValue("status", property.Status);
+    cmd.Parameters.AddWithValue("price_per_night", property.PricePerNight);
+    cmd.Parameters.AddWithValue("min_nights", property.MinNights);
+    cmd.Parameters.AddWithValue("max_nights", property.MaxNights);
+    cmd.Parameters.AddWithValue("check_in_time", property.CheckInTime);
+    cmd.Parameters.AddWithValue("check_out_time", property.CheckOutTime);
+    cmd.Parameters.AddWithValue("max_guests", property.MaxGuests);
+    cmd.Parameters.AddWithValue("bathrooms", property.Bathrooms);
+    cmd.Parameters.AddWithValue("kitchen", property.Kitchen);
+    cmd.Parameters.AddWithValue("living_space", property.LivingSpace);
+    cmd.Parameters.AddWithValue("pet_friendly", property.PetFriendly);
+    cmd.Parameters.AddWithValue("smoke_detector", property.SmokeDetector);
+    cmd.Parameters.AddWithValue("fire_extinguisher", property.FireExtinguisher);
+    cmd.Parameters.AddWithValue("carbon_monoxide_detector", property.CarbonMonoxideDetector);
+    cmd.Parameters.AddWithValue("lock_type", property.LockType ?? "");
+    cmd.Parameters.AddWithValue("average_rating", property.AverageRating);
+    cmd.Parameters.AddWithValue("review_count", property.ReviewCount);
+    cmd.Parameters.AddWithValue("neighborhood_description", property.NeighborhoodDescription ?? "");
+    cmd.Parameters.AddWithValue("tags", property.Tags ?? Array.Empty<string>());
+    cmd.Parameters.AddWithValue("instant_book", property.InstantBook);
+    cmd.Parameters.AddWithValue("created_at", property.CreatedAt);
+    cmd.Parameters.AddWithValue("updated_at", property.UpdatedAt);
+    cmd.Parameters.AddWithValue("is_verified", property.IsVerified);
 
-        public bool UpdateProperty(Property property)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            var cmd = new NpgsqlCommand(
-                @"UPDATE t_properties SET
-                title=@title,
-                description=@description,
-                location_type=@location_type,
-                address=@address,
-                city=@city,
-                county=@county,
-                country=@country,
-                postal_code=@postal_code,
-                latitude=@latitude,
-                longitude=@longitude,
-                status=@status,
-                price_per_night=@price_per_night,
-                min_nights=@min_nights,
-                max_nights=@max_nights,
-                check_in_time=@check_in_time,
-                check_out_time=@check_out_time,
-                max_guests=@max_guests,
-                bathrooms=@bathrooms,
-                kitchen=@kitchen,
-                living_space=@living_space,
-                pet_friendly=@pet_friendly,
-                smoke_detector=@smoke_detector,
-                fire_extinguisher=@fire_extinguisher,
-                carbon_monoxide_detector=@carbon_monoxide_detector,
-                lock_type=@lock_type,
-                average_rating=@average_rating,
-                review_count=@review_count,
-                neighborhood_description=@neighborhood_description,
-                tags=@tags,
-                instant_book=@instant_book,
-                updated_at=@updated_at
-            WHERE id=@id", conn);
+    // Outdoor Activities
+    cmd.Parameters.AddWithValue("hiking", property.Hiking);
+    cmd.Parameters.AddWithValue("biking", property.Biking);
+    cmd.Parameters.AddWithValue("swimming", property.Swimming);
+    cmd.Parameters.AddWithValue("fishing", property.Fishing);
+    cmd.Parameters.AddWithValue("skiing", property.Skiing);
+    cmd.Parameters.AddWithValue("snowboarding", property.Snowboarding);
+    cmd.Parameters.AddWithValue("horse_riding", property.HorseRiding);
+    cmd.Parameters.AddWithValue("climbing", property.Climbing);
+    cmd.Parameters.AddWithValue("camping", property.Camping);
+    cmd.Parameters.AddWithValue("beach", property.Beach);
 
-            cmd.Parameters.AddWithValue("id", property.Id);
-            cmd.Parameters.AddWithValue("title", property.Title);
-            cmd.Parameters.AddWithValue("description", (object?)property.Description ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("location_type", property.LocationType);
-            cmd.Parameters.AddWithValue("address", (object?)property.Address ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("city", (object?)property.City ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("county", (object?)property.County ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("country", property.Country);
-            cmd.Parameters.AddWithValue("postal_code", (object?)property.PostalCode ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("latitude", (object?)property.Latitude ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("longitude", (object?)property.Longitude ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("status", property.Status);
-            cmd.Parameters.AddWithValue("price_per_night", property.PricePerNight);
-            cmd.Parameters.AddWithValue("min_nights", property.MinNights);
-            cmd.Parameters.AddWithValue("max_nights", property.MaxNights);
-            cmd.Parameters.AddWithValue("check_in_time", property.CheckInTime);
-            cmd.Parameters.AddWithValue("check_out_time", property.CheckOutTime);
-            cmd.Parameters.AddWithValue("max_guests", property.MaxGuests);
-            cmd.Parameters.AddWithValue("bathrooms", property.Bathrooms);
-            cmd.Parameters.AddWithValue("kitchen", property.Kitchen);
-            cmd.Parameters.AddWithValue("living_space", property.LivingSpace);
-            cmd.Parameters.AddWithValue("pet_friendly", property.PetFriendly);
-            cmd.Parameters.AddWithValue("smoke_detector", property.SmokeDetector);
-            cmd.Parameters.AddWithValue("fire_extinguisher", property.FireExtinguisher);
-            cmd.Parameters.AddWithValue("carbon_monoxide_detector", property.CarbonMonoxideDetector);
-            cmd.Parameters.AddWithValue("lock_type", (object?)property.LockType ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("average_rating", property.AverageRating);
-            cmd.Parameters.AddWithValue("review_count", property.ReviewCount);
-            cmd.Parameters.AddWithValue("neighborhood_description", (object?)property.NeighborhoodDescription ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("tags", (object?)property.Tags?.ToArray() ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("instant_book", property.InstantBook);
-            cmd.Parameters.AddWithValue("updated_at", property.UpdatedAt);
+    // Cultural Activities
+    cmd.Parameters.AddWithValue("museum", property.Museum);
+    cmd.Parameters.AddWithValue("historical_site", property.HistoricalSite);
+    cmd.Parameters.AddWithValue("art_gallery", property.ArtGallery);
+    cmd.Parameters.AddWithValue("theatre", property.Theatre);
+    cmd.Parameters.AddWithValue("local_market", property.LocalMarket);
+    cmd.Parameters.AddWithValue("winery_tour", property.WineryTour);
 
-            return cmd.ExecuteNonQuery() > 0;
-        }
+    // Food & Drink
+    cmd.Parameters.AddWithValue("restaurant", property.Restaurant);
+    cmd.Parameters.AddWithValue("bar", property.Bar);
+    cmd.Parameters.AddWithValue("cafe", property.Cafe);
+    cmd.Parameters.AddWithValue("local_food", property.LocalFood);
+    cmd.Parameters.AddWithValue("wine_tasting", property.WineTasting);
 
+    // Adventure Activities
+    cmd.Parameters.AddWithValue("kayaking", property.Kayaking);
+    cmd.Parameters.AddWithValue("rafting", property.Rafting);
+    cmd.Parameters.AddWithValue("paragliding", property.Paragliding);
+    cmd.Parameters.AddWithValue("zipline", property.Zipline);
+
+    // Relaxation
+    cmd.Parameters.AddWithValue("spa", property.Spa);
+    cmd.Parameters.AddWithValue("yoga", property.Yoga);
+    cmd.Parameters.AddWithValue("meditation", property.Meditation);
+    cmd.Parameters.AddWithValue("hot_springs", property.HotSprings);
+
+    // Family Activities
+    cmd.Parameters.AddWithValue("playground", property.Playground);
+    cmd.Parameters.AddWithValue("zoo", property.Zoo);
+    cmd.Parameters.AddWithValue("aquarium", property.Aquarium);
+    cmd.Parameters.AddWithValue("amusement_park", property.AmusementPark);
+
+    // Property Amenities
+    cmd.Parameters.AddWithValue("wifi", property.Wifi);
+    cmd.Parameters.AddWithValue("air_conditioning", property.AirConditioning);
+    cmd.Parameters.AddWithValue("heating", property.Heating);
+    cmd.Parameters.AddWithValue("pool", property.Pool);
+    cmd.Parameters.AddWithValue("parking", property.Parking);
+    cmd.Parameters.AddWithValue("fireplace", property.Fireplace);
+    cmd.Parameters.AddWithValue("balcony", property.Balcony);
+    cmd.Parameters.AddWithValue("garden", property.Garden);
+    cmd.Parameters.AddWithValue("tv", property.Tv);
+    cmd.Parameters.AddWithValue("hot_tub", property.HotTub);
+    cmd.Parameters.AddWithValue("wheelchair_accessible", property.WheelchairAccessible);
+    cmd.Parameters.AddWithValue("bbq", property.Bbq);
+    cmd.Parameters.AddWithValue("breakfast_included", property.BreakfastIncluded);
+    cmd.Parameters.AddWithValue("washer", property.Washer);
+    cmd.Parameters.AddWithValue("dryer", property.Dryer);
+
+    cmd.ExecuteNonQuery();
+}
+
+public bool UpdateProperty(Property property)
+{
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+    var cmd = new NpgsqlCommand(
+        @"UPDATE t_properties SET
+            title=@title,
+            description=@description,
+            location_type=@location_type,
+            address=@address,
+            city=@city,
+            county=@county,
+            country=@country,
+            postal_code=@postal_code,
+            latitude=@latitude,
+            longitude=@longitude,
+            status=@status,
+            price_per_night=@price_per_night,
+            min_nights=@min_nights,
+            max_nights=@max_nights,
+            check_in_time=@check_in_time,
+            check_out_time=@check_out_time,
+            max_guests=@max_guests,
+            bathrooms=@bathrooms,
+            kitchen=@kitchen,
+            living_space=@living_space,
+            pet_friendly=@pet_friendly,
+            smoke_detector=@smoke_detector,
+            fire_extinguisher=@fire_extinguisher,
+            carbon_monoxide_detector=@carbon_monoxide_detector,
+            lock_type=@lock_type,
+            average_rating=@average_rating,
+            review_count=@review_count,
+            neighborhood_description=@neighborhood_description,
+            tags=@tags,
+            instant_book=@instant_book,
+            updated_at=@updated_at,
+            is_verified=@is_verified,
+            -- Outdoor Activities
+            hiking=@hiking, biking=@biking, swimming=@swimming, fishing=@fishing, 
+            skiing=@skiing, snowboarding=@snowboarding, horse_riding=@horse_riding, 
+            climbing=@climbing, camping=@camping, beach=@beach,
+            -- Cultural Activities
+            museum=@museum, historical_site=@historical_site, art_gallery=@art_gallery, 
+            theatre=@theatre, local_market=@local_market, winery_tour=@winery_tour,
+            -- Food & Drink
+            restaurant=@restaurant, bar=@bar, cafe=@cafe, local_food=@local_food, wine_tasting=@wine_tasting,
+            -- Adventure Activities
+            kayaking=@kayaking, rafting=@rafting, paragliding=@paragliding, zipline=@zipline,
+            -- Relaxation
+            spa=@spa, yoga=@yoga, meditation=@meditation, hot_springs=@hot_springs,
+            -- Family Activities
+            playground=@playground, zoo=@zoo, aquarium=@aquarium, amusement_park=@amusement_park,
+            -- Property Amenities
+            wifi=@wifi, air_conditioning=@air_conditioning, heating=@heating, pool=@pool, 
+            parking=@parking, fireplace=@fireplace, balcony=@balcony, garden=@garden, tv=@tv,
+            hot_tub=@hot_tub, wheelchair_accessible=@wheelchair_accessible, bbq=@bbq, 
+            breakfast_included=@breakfast_included, washer=@washer, dryer=@dryer
+        WHERE id=@id", conn);
+
+    // Parametri de bază
+    cmd.Parameters.AddWithValue("id", property.Id);
+    cmd.Parameters.AddWithValue("title", property.Title);
+    cmd.Parameters.AddWithValue("description", (object?)property.Description ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("location_type", property.LocationType);
+    cmd.Parameters.AddWithValue("address", (object?)property.Address ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("city", (object?)property.City ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("county", (object?)property.County ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("country", property.Country);
+    cmd.Parameters.AddWithValue("postal_code", (object?)property.PostalCode ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("latitude", (object?)property.Latitude ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("longitude", (object?)property.Longitude ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("status", property.Status);
+    cmd.Parameters.AddWithValue("price_per_night", property.PricePerNight);
+    cmd.Parameters.AddWithValue("min_nights", property.MinNights);
+    cmd.Parameters.AddWithValue("max_nights", property.MaxNights);
+    cmd.Parameters.AddWithValue("check_in_time", property.CheckInTime);
+    cmd.Parameters.AddWithValue("check_out_time", property.CheckOutTime);
+    cmd.Parameters.AddWithValue("max_guests", property.MaxGuests);
+    cmd.Parameters.AddWithValue("bathrooms", property.Bathrooms);
+    cmd.Parameters.AddWithValue("kitchen", property.Kitchen);
+    cmd.Parameters.AddWithValue("living_space", property.LivingSpace);
+    cmd.Parameters.AddWithValue("pet_friendly", property.PetFriendly);
+    cmd.Parameters.AddWithValue("smoke_detector", property.SmokeDetector);
+    cmd.Parameters.AddWithValue("fire_extinguisher", property.FireExtinguisher);
+    cmd.Parameters.AddWithValue("carbon_monoxide_detector", property.CarbonMonoxideDetector);
+    cmd.Parameters.AddWithValue("lock_type", (object?)property.LockType ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("average_rating", property.AverageRating);
+    cmd.Parameters.AddWithValue("review_count", property.ReviewCount);
+    cmd.Parameters.AddWithValue("neighborhood_description", (object?)property.NeighborhoodDescription ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("tags", (object?)property.Tags?.ToArray() ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("instant_book", property.InstantBook);
+    cmd.Parameters.AddWithValue("updated_at", property.UpdatedAt);
+    cmd.Parameters.AddWithValue("is_verified", property.IsVerified);
+
+    // Outdoor Activities
+    cmd.Parameters.AddWithValue("hiking", property.Hiking);
+    cmd.Parameters.AddWithValue("biking", property.Biking);
+    cmd.Parameters.AddWithValue("swimming", property.Swimming);
+    cmd.Parameters.AddWithValue("fishing", property.Fishing);
+    cmd.Parameters.AddWithValue("skiing", property.Skiing);
+    cmd.Parameters.AddWithValue("snowboarding", property.Snowboarding);
+    cmd.Parameters.AddWithValue("horse_riding", property.HorseRiding);
+    cmd.Parameters.AddWithValue("climbing", property.Climbing);
+    cmd.Parameters.AddWithValue("camping", property.Camping);
+    cmd.Parameters.AddWithValue("beach", property.Beach);
+
+    // Cultural Activities
+    cmd.Parameters.AddWithValue("museum", property.Museum);
+    cmd.Parameters.AddWithValue("historical_site", property.HistoricalSite);
+    cmd.Parameters.AddWithValue("art_gallery", property.ArtGallery);
+    cmd.Parameters.AddWithValue("theatre", property.Theatre);
+    cmd.Parameters.AddWithValue("local_market", property.LocalMarket);
+    cmd.Parameters.AddWithValue("winery_tour", property.WineryTour);
+
+    // Food & Drink
+    cmd.Parameters.AddWithValue("restaurant", property.Restaurant);
+    cmd.Parameters.AddWithValue("bar", property.Bar);
+    cmd.Parameters.AddWithValue("cafe", property.Cafe);
+    cmd.Parameters.AddWithValue("local_food", property.LocalFood);
+    cmd.Parameters.AddWithValue("wine_tasting", property.WineTasting);
+
+    // Adventure Activities
+    cmd.Parameters.AddWithValue("kayaking", property.Kayaking);
+    cmd.Parameters.AddWithValue("rafting", property.Rafting);
+    cmd.Parameters.AddWithValue("paragliding", property.Paragliding);
+    cmd.Parameters.AddWithValue("zipline", property.Zipline);
+
+    // Relaxation
+    cmd.Parameters.AddWithValue("spa", property.Spa);
+    cmd.Parameters.AddWithValue("yoga", property.Yoga);
+    cmd.Parameters.AddWithValue("meditation", property.Meditation);
+    cmd.Parameters.AddWithValue("hot_springs", property.HotSprings);
+
+    // Family Activities
+    cmd.Parameters.AddWithValue("playground", property.Playground);
+    cmd.Parameters.AddWithValue("zoo", property.Zoo);
+    cmd.Parameters.AddWithValue("aquarium", property.Aquarium);
+    cmd.Parameters.AddWithValue("amusement_park", property.AmusementPark);
+
+    // Property Amenities
+    cmd.Parameters.AddWithValue("wifi", property.Wifi);
+    cmd.Parameters.AddWithValue("air_conditioning", property.AirConditioning);
+    cmd.Parameters.AddWithValue("heating", property.Heating);
+    cmd.Parameters.AddWithValue("pool", property.Pool);
+    cmd.Parameters.AddWithValue("parking", property.Parking);
+    cmd.Parameters.AddWithValue("fireplace", property.Fireplace);
+    cmd.Parameters.AddWithValue("balcony", property.Balcony);
+    cmd.Parameters.AddWithValue("garden", property.Garden);
+    cmd.Parameters.AddWithValue("tv", property.Tv);
+    cmd.Parameters.AddWithValue("hot_tub", property.HotTub);
+    cmd.Parameters.AddWithValue("wheelchair_accessible", property.WheelchairAccessible);
+    cmd.Parameters.AddWithValue("bbq", property.Bbq);
+    cmd.Parameters.AddWithValue("breakfast_included", property.BreakfastIncluded);
+    cmd.Parameters.AddWithValue("washer", property.Washer);
+    cmd.Parameters.AddWithValue("dryer", property.Dryer);
+
+    return cmd.ExecuteNonQuery() > 0;
+}
         public bool DeletePropertyById(Guid propertyId)
         {
             using var conn = new NpgsqlConnection(_connectionString);

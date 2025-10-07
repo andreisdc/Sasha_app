@@ -13,7 +13,6 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { PropertyService } from '../../core/services/property-service';
 import { AuthService } from '../../core/services/auth-service';
 import { firstValueFrom } from 'rxjs';
-import { CreatePropertyRequest } from '../../core/interfaces/propertyResponse';
 
 // Interfaces
 interface PropertyData {
@@ -52,6 +51,101 @@ interface Amenity {
   label: string;
   icon: string;
   selected: boolean;
+  backendField: string; // Numele câmpului în backend
+}
+
+// Interface pentru CreatePropertyRequest care se potrivește cu backend-ul
+interface CreatePropertyRequest {
+  ownerId: string | undefined;
+  title: string;
+  description: string;
+  locationType: string;
+  address: string;
+  city: string;
+  county: string;
+  country: string;
+  postalCode: string;
+  latitude: number;
+  longitude: number;
+  pricePerNight: number;
+  minNights: number;
+  maxNights: number;
+  checkInTime: string;
+  checkOutTime: string;
+  maxGuests: number;
+  bathrooms: number;
+  kitchen: boolean;
+  livingSpace: number;
+  petFriendly: boolean;
+  smokeDetector: boolean;
+  fireExtinguisher: boolean;
+  carbonMonoxideDetector: boolean;
+  lockType: string;
+  neighborhoodDescription: string;
+  tags: string[];
+  instantBook: boolean;
+
+  // === OUTDOOR ACTIVITIES ===
+  hiking: boolean;
+  biking: boolean;
+  swimming: boolean;
+  fishing: boolean;
+  skiing: boolean;
+  snowboarding: boolean;
+  horseRiding: boolean;
+  climbing: boolean;
+  camping: boolean;
+  beach: boolean;
+
+  // === CULTURAL ACTIVITIES ===
+  museum: boolean;
+  historicalSite: boolean;
+  artGallery: boolean;
+  theatre: boolean;
+  localMarket: boolean;
+  wineryTour: boolean;
+
+  // === FOOD & DRINK ===
+  restaurant: boolean;
+  bar: boolean;
+  cafe: boolean;
+  localFood: boolean;
+  wineTasting: boolean;
+
+  // === ADVENTURE ACTIVITIES ===
+  kayaking: boolean;
+  rafting: boolean;
+  paragliding: boolean;
+  zipline: boolean;
+
+  // === RELAXATION ===
+  spa: boolean;
+  yoga: boolean;
+  meditation: boolean;
+  hotSprings: boolean;
+
+  // === FAMILY ACTIVITIES ===
+  playground: boolean;
+  zoo: boolean;
+  aquarium: boolean;
+  amusementPark: boolean;
+
+  // === PROPERTY AMENITIES ===
+  wifi: boolean;
+  airConditioning: boolean;
+  heating: boolean;
+  pool: boolean;
+  parking: boolean;
+  fireplace: boolean;
+  balcony: boolean;
+  garden: boolean;
+  tv: boolean;
+  hotTub: boolean;
+  wheelchairAccessible: boolean;
+  bbq: boolean;
+  breakfastIncluded: boolean;
+  washer: boolean;
+  dryer: boolean;
 }
 
 @Component({
@@ -122,22 +216,50 @@ export class AddPropertyComponent implements OnInit {
   ];
 
   allActivities: Activity[] = [
-    { id: '3177dd13-4b3c-432e-9204-d2e14b82c5b1', code: 'hiking', name: 'Hiking / Drumeții', category: 'Outdoor', createdAt: new Date() },
-    { id: '5f2f37c0-8dee-4a98-b538-5b3ebab9ba6a', code: 'biking', name: 'Biking / Ciclism', category: 'Outdoor', createdAt: new Date() },
-    { id: 'b6112487-0488-43d7-b701-b2385d73b912', code: 'swimming', name: 'Swimming / Înot', category: 'Outdoor', createdAt: new Date() },
-    { id: '9061a41a-97a8-4224-a1b4-7219ae99ffea', code: 'fishing', name: 'Fishing / Pescuit', category: 'Outdoor', createdAt: new Date() },
-    { id: '728f5e5f-9b2b-4567-a647-ab7991d00236', code: 'skiing', name: 'Skiing / Schi', category: 'Outdoor', createdAt: new Date() },
-    { id: '43504581-eea5-4ded-8f21-e141d10d2aa5', code: 'museum', name: 'Museum / Muzee', category: 'Culture', createdAt: new Date() },
-    { id: 'd17fc3e1-db7b-4266-a87a-d33daa240946', code: 'historical_site', name: 'Historical Site', category: 'Culture', createdAt: new Date() },
-    { id: 'a2fa6004-1e35-49b4-88f2-b44b0ee614a0', code: 'art_gallery', name: 'Art Gallery', category: 'Culture', createdAt: new Date() },
-    { id: '1c8ba001-a562-4bcf-b539-11436ef43ad6', code: 'restaurant', name: 'Restaurant', category: 'Food', createdAt: new Date() },
-    { id: '1c09057a-c327-488c-ab20-8c1d6f139371', code: 'bar', name: 'Bar / Pub', category: 'Food', createdAt: new Date() },
-    { id: 'c64d8bc4-ed86-443c-9afe-c4d72561dea2', code: 'kayaking', name: 'Kayaking / Caiac', category: 'Adventure', createdAt: new Date() },
-    { id: '4480260d-9660-4c4b-8dce-e04345c8d87b', code: 'rafting', name: 'Rafting', category: 'Adventure', createdAt: new Date() },
-    { id: 'b677764c-bf1d-43d0-8c20-1425af49cf8a', code: 'spa', name: 'Spa / Wellness', category: 'Relax', createdAt: new Date() },
-    { id: 'c24878df-0fa0-458d-855b-9d442ecc36ca', code: 'yoga', name: 'Yoga Classes', category: 'Relax', createdAt: new Date() },
-    { id: 'd8623e4a-c32c-440c-acb3-d75e7467ce4d', code: 'playground', name: 'Playground / Loc de joacă', category: 'Family', createdAt: new Date() },
-    { id: 'efac8cfc-efba-4077-beaa-4985a16502d2', code: 'zoo', name: 'Zoo / Grădină zoologică', category: 'Family', createdAt: new Date() }
+    // Outdoor Activities
+    { id: '1', code: 'hiking', name: 'Hiking / Drumeții', category: 'Outdoor', createdAt: new Date() },
+    { id: '2', code: 'biking', name: 'Biking / Ciclism', category: 'Outdoor', createdAt: new Date() },
+    { id: '3', code: 'swimming', name: 'Swimming / Înot', category: 'Outdoor', createdAt: new Date() },
+    { id: '4', code: 'fishing', name: 'Fishing / Pescuit', category: 'Outdoor', createdAt: new Date() },
+    { id: '5', code: 'skiing', name: 'Skiing / Schi', category: 'Outdoor', createdAt: new Date() },
+    { id: '6', code: 'snowboarding', name: 'Snowboarding', category: 'Outdoor', createdAt: new Date() },
+    { id: '7', code: 'horseRiding', name: 'Horse Riding / Echitație', category: 'Outdoor', createdAt: new Date() },
+    { id: '8', code: 'climbing', name: 'Climbing / Alpinism', category: 'Outdoor', createdAt: new Date() },
+    { id: '9', code: 'camping', name: 'Camping', category: 'Outdoor', createdAt: new Date() },
+    { id: '10', code: 'beach', name: 'Beach / Plajă', category: 'Outdoor', createdAt: new Date() },
+
+    // Cultural Activities
+    { id: '11', code: 'museum', name: 'Museum / Muzee', category: 'Culture', createdAt: new Date() },
+    { id: '12', code: 'historicalSite', name: 'Historical Site / Sit istoric', category: 'Culture', createdAt: new Date() },
+    { id: '13', code: 'artGallery', name: 'Art Gallery / Galerie de artă', category: 'Culture', createdAt: new Date() },
+    { id: '14', code: 'theatre', name: 'Theatre / Teatru', category: 'Culture', createdAt: new Date() },
+    { id: '15', code: 'localMarket', name: 'Local Market / Piață locală', category: 'Culture', createdAt: new Date() },
+    { id: '16', code: 'wineryTour', name: 'Winery Tour / Tur de vinărie', category: 'Culture', createdAt: new Date() },
+
+    // Food & Drink
+    { id: '17', code: 'restaurant', name: 'Restaurant', category: 'Food', createdAt: new Date() },
+    { id: '18', code: 'bar', name: 'Bar / Pub', category: 'Food', createdAt: new Date() },
+    { id: '19', code: 'cafe', name: 'Cafe / Cafenea', category: 'Food', createdAt: new Date() },
+    { id: '20', code: 'localFood', name: 'Local Food / Mâncare locală', category: 'Food', createdAt: new Date() },
+    { id: '21', code: 'wineTasting', name: 'Wine Tasting / Degustare de vin', category: 'Food', createdAt: new Date() },
+
+    // Adventure Activities
+    { id: '22', code: 'kayaking', name: 'Kayaking / Caiac', category: 'Adventure', createdAt: new Date() },
+    { id: '23', code: 'rafting', name: 'Rafting', category: 'Adventure', createdAt: new Date() },
+    { id: '24', code: 'paragliding', name: 'Paragliding / Parapantă', category: 'Adventure', createdAt: new Date() },
+    { id: '25', code: 'zipline', name: 'Zipline / Tiroliană', category: 'Adventure', createdAt: new Date() },
+
+    // Relaxation
+    { id: '26', code: 'spa', name: 'Spa / Wellness', category: 'Relax', createdAt: new Date() },
+    { id: '27', code: 'yoga', name: 'Yoga Classes', category: 'Relax', createdAt: new Date() },
+    { id: '28', code: 'meditation', name: 'Meditation / Meditație', category: 'Relax', createdAt: new Date() },
+    { id: '29', code: 'hotSprings', name: 'Hot Springs / Izvoare termale', category: 'Relax', createdAt: new Date() },
+
+    // Family Activities
+    { id: '30', code: 'playground', name: 'Playground / Loc de joacă', category: 'Family', createdAt: new Date() },
+    { id: '31', code: 'zoo', name: 'Zoo / Grădină zoologică', category: 'Family', createdAt: new Date() },
+    { id: '32', code: 'aquarium', name: 'Aquarium / Acvariu', category: 'Family', createdAt: new Date() },
+    { id: '33', code: 'amusementPark', name: 'Amusement Park / Parc de distracții', category: 'Family', createdAt: new Date() }
   ];
 
   filteredActivities: Activity[] = [];
@@ -146,16 +268,24 @@ export class AddPropertyComponent implements OnInit {
   activityCategories = ['all', 'Outdoor', 'Culture', 'Food', 'Adventure', 'Relax', 'Family'];
 
   amenities: Amenity[] = [
-    { name: 'wifi', label: 'WiFi', icon: 'fas fa-wifi', selected: false },
-    { name: 'kitchen', label: 'Kitchen', icon: 'fas fa-utensils', selected: false },
-    { name: 'parking', label: 'Parking', icon: 'fas fa-parking', selected: false },
-    { name: 'tv', label: 'TV', icon: 'fas fa-tv', selected: false },
-    { name: 'ac', label: 'Air Conditioning', icon: 'fas fa-snowflake', selected: false },
-    { name: 'heating', label: 'Heating', icon: 'fas fa-thermometer-half', selected: false },
-    { name: 'washer', label: 'Washer', icon: 'fas fa-soap', selected: false },
-    { name: 'pool', label: 'Pool', icon: 'fas fa-swimming-pool', selected: false },
-    { name: 'gym', label: 'Gym', icon: 'fas fa-dumbbell', selected: false },
-    { name: 'petFriendly', label: 'Pet Friendly', icon: 'fas fa-paw', selected: false }
+    // Property Amenities
+    { name: 'wifi', label: 'WiFi', icon: 'fas fa-wifi', selected: false, backendField: 'wifi' },
+    { name: 'airConditioning', label: 'Air Conditioning', icon: 'fas fa-snowflake', selected: false, backendField: 'airConditioning' },
+    { name: 'heating', label: 'Heating', icon: 'fas fa-thermometer-half', selected: false, backendField: 'heating' },
+    { name: 'pool', label: 'Pool', icon: 'fas fa-swimming-pool', selected: false, backendField: 'pool' },
+    { name: 'parking', label: 'Parking', icon: 'fas fa-parking', selected: false, backendField: 'parking' },
+    { name: 'fireplace', label: 'Fireplace', icon: 'fas fa-fire', selected: false, backendField: 'fireplace' },
+    { name: 'balcony', label: 'Balcony', icon: 'fas fa-building', selected: false, backendField: 'balcony' },
+    { name: 'garden', label: 'Garden', icon: 'fas fa-seedling', selected: false, backendField: 'garden' },
+    { name: 'tv', label: 'TV', icon: 'fas fa-tv', selected: false, backendField: 'tv' },
+    { name: 'hotTub', label: 'Hot Tub', icon: 'fas fa-hot-tub', selected: false, backendField: 'hotTub' },
+    { name: 'wheelchairAccessible', label: 'Wheelchair Accessible', icon: 'fas fa-wheelchair', selected: false, backendField: 'wheelchairAccessible' },
+    { name: 'bbq', label: 'BBQ', icon: 'fas fa-utensils', selected: false, backendField: 'bbq' },
+    { name: 'breakfastIncluded', label: 'Breakfast Included', icon: 'fas fa-coffee', selected: false, backendField: 'breakfastIncluded' },
+    { name: 'washer', label: 'Washer', icon: 'fas fa-soap', selected: false, backendField: 'washer' },
+    { name: 'dryer', label: 'Dryer', icon: 'fas fa-wind', selected: false, backendField: 'dryer' },
+    { name: 'kitchen', label: 'Kitchen', icon: 'fas fa-utensils', selected: false, backendField: 'kitchen' },
+    { name: 'petFriendly', label: 'Pet Friendly', icon: 'fas fa-paw', selected: false, backendField: 'petFriendly' }
   ];
 
   private router = inject(Router);
@@ -215,22 +345,50 @@ export class AddPropertyComponent implements OnInit {
 
   getActivityIcon(code: string): string {
     const iconMap: { [key: string]: string } = {
+      // Outdoor
       'hiking': 'fas fa-hiking',
       'biking': 'fas fa-bicycle',
       'swimming': 'fas fa-swimmer',
       'fishing': 'fas fa-fish',
       'skiing': 'fas fa-skiing',
+      'snowboarding': 'fas fa-snowboarding',
+      'horseRiding': 'fas fa-horse',
+      'climbing': 'fas fa-mountain',
+      'camping': 'fas fa-campground',
+      'beach': 'fas fa-umbrella-beach',
+      
+      // Cultural
       'museum': 'fas fa-landmark',
-      'historical_site': 'fas fa-monument',
-      'art_gallery': 'fas fa-palette',
+      'historicalSite': 'fas fa-monument',
+      'artGallery': 'fas fa-palette',
+      'theatre': 'fas fa-theater-masks',
+      'localMarket': 'fas fa-shopping-basket',
+      'wineryTour': 'fas fa-wine-bottle',
+      
+      // Food & Drink
       'restaurant': 'fas fa-utensils',
       'bar': 'fas fa-glass-cheers',
+      'cafe': 'fas fa-coffee',
+      'localFood': 'fas fa-apple-alt',
+      'wineTasting': 'fas fa-wine-glass-alt',
+      
+      // Adventure
       'kayaking': 'fas fa-ship',
       'rafting': 'fas fa-water',
+      'paragliding': 'fas fa-parachute-box',
+      'zipline': 'fas fa-mountain',
+      
+      // Relaxation
       'spa': 'fas fa-spa',
       'yoga': 'fas fa-spa',
+      'meditation': 'fas fa-om',
+      'hotSprings': 'fas fa-hot-tub',
+      
+      // Family
       'playground': 'fas fa-child',
-      'zoo': 'fas fa-paw'
+      'zoo': 'fas fa-paw',
+      'aquarium': 'fas fa-fish',
+      'amusementPark': 'fas fa-ferris-wheel'
     };
     
     return iconMap[code] || 'fas fa-map-marker-alt';
@@ -345,6 +503,9 @@ export class AddPropertyComponent implements OnInit {
       throw new Error('User not authenticated');
     }
 
+    // Map selected activities to boolean fields
+    const selectedActivityCodes = this.selectedActivities.map(a => a.code);
+    
     return {
       ownerId: currentUser.id,
       title: this.propertyData.title,
@@ -355,7 +516,7 @@ export class AddPropertyComponent implements OnInit {
       county: this.propertyData.county,
       country: this.propertyData.country,
       postalCode: this.propertyData.postalCode,
-      latitude: 44.4268,
+      latitude: 44.4268, // Default Bucharest coordinates
       longitude: 26.1025,
       pricePerNight: this.propertyData.pricePerNight,
       minNights: this.propertyData.minNights || 1,
@@ -364,16 +525,78 @@ export class AddPropertyComponent implements OnInit {
       checkOutTime: this.propertyData.checkOutTime ? this.propertyData.checkOutTime + ':00' : '11:00:00',
       maxGuests: this.propertyData.maxGuests,
       bathrooms: this.propertyData.bathrooms,
-      kitchen: this.getSelectedAmenities().includes('kitchen'),
+      kitchen: this.amenities.find(a => a.backendField === 'kitchen')?.selected || false,
       livingSpace: this.propertyData.livingSpace || 0,
-      petFriendly: this.getSelectedAmenities().includes('petFriendly'),
-      smokeDetector: true,
+      petFriendly: this.amenities.find(a => a.backendField === 'petFriendly')?.selected || false,
+      smokeDetector: true, // Default safety features
       fireExtinguisher: true,
       carbonMonoxideDetector: true,
       lockType: 'standard',
-      neighborhoodDescription: 'Great neighborhood with many amenities',
+      neighborhoodDescription: this.propertyData.description.substring(0, 200) + '...', // Truncate description
       tags: this.getSelectedAmenities(),
-      instantBook: false
+      instantBook: false,
+
+      // === OUTDOOR ACTIVITIES ===
+      hiking: selectedActivityCodes.includes('hiking'),
+      biking: selectedActivityCodes.includes('biking'),
+      swimming: selectedActivityCodes.includes('swimming'),
+      fishing: selectedActivityCodes.includes('fishing'),
+      skiing: selectedActivityCodes.includes('skiing'),
+      snowboarding: selectedActivityCodes.includes('snowboarding'),
+      horseRiding: selectedActivityCodes.includes('horseRiding'),
+      climbing: selectedActivityCodes.includes('climbing'),
+      camping: selectedActivityCodes.includes('camping'),
+      beach: selectedActivityCodes.includes('beach'),
+
+      // === CULTURAL ACTIVITIES ===
+      museum: selectedActivityCodes.includes('museum'),
+      historicalSite: selectedActivityCodes.includes('historicalSite'),
+      artGallery: selectedActivityCodes.includes('artGallery'),
+      theatre: selectedActivityCodes.includes('theatre'),
+      localMarket: selectedActivityCodes.includes('localMarket'),
+      wineryTour: selectedActivityCodes.includes('wineryTour'),
+
+      // === FOOD & DRINK ===
+      restaurant: selectedActivityCodes.includes('restaurant'),
+      bar: selectedActivityCodes.includes('bar'),
+      cafe: selectedActivityCodes.includes('cafe'),
+      localFood: selectedActivityCodes.includes('localFood'),
+      wineTasting: selectedActivityCodes.includes('wineTasting'),
+
+      // === ADVENTURE ACTIVITIES ===
+      kayaking: selectedActivityCodes.includes('kayaking'),
+      rafting: selectedActivityCodes.includes('rafting'),
+      paragliding: selectedActivityCodes.includes('paragliding'),
+      zipline: selectedActivityCodes.includes('zipline'),
+
+      // === RELAXATION ===
+      spa: selectedActivityCodes.includes('spa'),
+      yoga: selectedActivityCodes.includes('yoga'),
+      meditation: selectedActivityCodes.includes('meditation'),
+      hotSprings: selectedActivityCodes.includes('hotSprings'),
+
+      // === FAMILY ACTIVITIES ===
+      playground: selectedActivityCodes.includes('playground'),
+      zoo: selectedActivityCodes.includes('zoo'),
+      aquarium: selectedActivityCodes.includes('aquarium'),
+      amusementPark: selectedActivityCodes.includes('amusementPark'),
+
+      // === PROPERTY AMENITIES ===
+      wifi: this.amenities.find(a => a.backendField === 'wifi')?.selected || false,
+      airConditioning: this.amenities.find(a => a.backendField === 'airConditioning')?.selected || false,
+      heating: this.amenities.find(a => a.backendField === 'heating')?.selected || false,
+      pool: this.amenities.find(a => a.backendField === 'pool')?.selected || false,
+      parking: this.amenities.find(a => a.backendField === 'parking')?.selected || false,
+      fireplace: this.amenities.find(a => a.backendField === 'fireplace')?.selected || false,
+      balcony: this.amenities.find(a => a.backendField === 'balcony')?.selected || false,
+      garden: this.amenities.find(a => a.backendField === 'garden')?.selected || false,
+      tv: this.amenities.find(a => a.backendField === 'tv')?.selected || false,
+      hotTub: this.amenities.find(a => a.backendField === 'hotTub')?.selected || false,
+      wheelchairAccessible: this.amenities.find(a => a.backendField === 'wheelchairAccessible')?.selected || false,
+      bbq: this.amenities.find(a => a.backendField === 'bbq')?.selected || false,
+      breakfastIncluded: this.amenities.find(a => a.backendField === 'breakfastIncluded')?.selected || false,
+      washer: this.amenities.find(a => a.backendField === 'washer')?.selected || false,
+      dryer: this.amenities.find(a => a.backendField === 'dryer')?.selected || false
     };
   }
 
