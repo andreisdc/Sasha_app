@@ -5,131 +5,125 @@ import {
   inject,
   computed,
   signal,
+  OnInit,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { PropertyService } from '../../../core/services/property.service';
-import { NzTableModule } from 'ng-zorro-antd/table';
+import { PropertyService, Property } from '../../../core/services/property-service'; // 👈 Importă Property de aici
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzCarouselModule } from 'ng-zorro-antd/carousel';
-import { Property } from '../../../core/interfaces/property.interface';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzRateModule } from 'ng-zorro-antd/rate';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-datagrid-component',
-
+  standalone: true,
   imports: [
     CommonModule,
     NgOptimizedImage,
-    NzTableModule,
+    FormsModule,
     NzPaginationModule,
     NzCardModule,
-    NzGridModule,
     NzIconModule,
     NzButtonModule,
-    NzAvatarModule,
     NzSpinModule,
-    NzCarouselModule,
+    NzTagModule,
+    NzRateModule,
   ],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DatagridComponent {
+export class DatagridComponent implements OnInit {
   private propertyService = inject(PropertyService);
+  private router = inject(Router);
 
-  // local UI state as signals
-  private readonly _currentIndex = signal<Record<number, number>>({});
-  get currentIndex(): Record<number, number> {
-    return this._currentIndex();
-  }
+  // Signals - folosim Property din serviciu
+  properties = signal<Property[]>([]);
+  loading = signal(true);
+  error = signal<string | null>(null);
+  pageIndex = signal(1);
+  pageSize = signal(12);
+  totalProperties = signal(0);
 
-  private readonly _hovered = signal<number | null>(null);
-  get hovered(): number | null {
-    return this._hovered();
-  }
-  set hovered(value: number | null) {
-    this._hovered.set(value);
-  }
-
-  private readonly _pageIndex = signal(1);
-  private readonly _pageSize = signal(15);
-
-  // data streams bridged to signals
-  private readonly _allProperties = toSignal<Property[] | null>(
-    this.propertyService.getProperties(),
-    { initialValue: null },
-  );
-
-  private readonly _selectedCategory = toSignal(
-    this.propertyService.selectedCategory$,
-    { initialValue: 'All Categories' },
-  );
-
-  // derived state
-  private readonly _filteredProperties = computed(() => {
-    const all = this._allProperties();
-    const category = this._selectedCategory();
-    return all ? this.propertyService.getFilteredProperties(all, category) : [];
+  // Computed
+  paginatedProperties = computed(() => {
+    const startIndex = (this.pageIndex() - 1) * this.pageSize();
+    const endIndex = startIndex + this.pageSize();
+    return this.properties().slice(startIndex, endIndex);
   });
 
-  get properties(): Property[] {
-    const start = (this._pageIndex() - 1) * this._pageSize();
-    const end = this._pageIndex() * this._pageSize();
-    return this._filteredProperties().slice(start, end);
+  ngOnInit() {
+    this.loadProperties();
   }
 
-  get pageIndex(): number {
-    return this._pageIndex();
-  }
+  loadProperties() {
+    this.loading.set(true);
+    this.error.set(null);
 
-  get pageSize(): number {
-    return this._pageSize();
-  }
-
-  get total(): number {
-    return this._filteredProperties().length;
-  }
-
-  get loading(): boolean {
-    return this._allProperties() === null;
+    this.propertyService.getAllVerifiedProperties().subscribe({
+      next: (properties) => {
+        this.properties.set(properties);
+        this.totalProperties.set(properties.length);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set('Failed to load properties. Please try again.');
+        this.loading.set(false);
+        console.error('Error loading properties:', err);
+      }
+    });
   }
 
   onPageChange(page: number): void {
-    this._pageIndex.set(page);
+    this.pageIndex.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  next(prop: Property) {
-    const id = prop.id;
-    this._currentIndex.update((ci) => {
-      const cur = ci[id] ?? 0;
-      return { ...ci, [id]: (cur + 1) % prop.images.length };
-    });
+  navigateToProperty(propertyId: string): void {
+    this.router.navigate(['/property', propertyId]);
   }
 
-  prev(prop: Property) {
-    const id = prop.id;
-    this._currentIndex.update((ci) => {
-      const cur = ci[id] ?? 0;
-      return {
-        ...ci,
-        [id]: (cur - 1 + prop.images.length) % prop.images.length,
-      };
-    });
+  toggleLike(property: Property, event: Event): void {
+    event.stopPropagation();
   }
 
-  toggleLike(property: Property) {
-    property.liked = !property.liked;
-    console.log(
-      `Property with ID ${property.id} liked status: ${property.liked}`,
-    );
+  formatPrice(price: number): string {
+    return `€${price.toLocaleString()}`;
   }
 
-  scrollToTop() {
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  getPropertyTypeIcon(type: string): string {
+    const icons: { [key: string]: string } = {
+      'apartment': 'home',
+      'hotel': 'building',
+      'house': 'home',
+      'villa': 'crown',
+      'cabin': 'tree',
+      'cottage': 'tree',
+      'chalet': 'tree',
+      'studio': 'appstore',
+      'loft': 'build',
+      'bungalow': 'home'
+    };
+    return icons[type?.toLowerCase()] || 'home';
+  }
+
+  getPropertyTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'apartment': 'Apartment',
+      'hotel': 'Hotel',
+      'house': 'House',
+      'villa': 'Villa',
+      'cabin': 'Cabin',
+      'cottage': 'Cottage',
+      'chalet': 'Chalet',
+      'studio': 'Studio',
+      'loft': 'Loft',
+      'bungalow': 'Bungalow'
+    };
+    return labels[type?.toLowerCase()] || type;
   }
 }

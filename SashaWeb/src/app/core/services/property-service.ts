@@ -656,7 +656,7 @@ export class PropertyService {
       );
   }
 
-  // GET ALL PROPERTIES (LIGHTWEIGHT)
+  // GET ALL PROPERTIES (LIGHTWEIGHT) - TOATE proprietățile
   getAllProperties(): Observable<Property[]> {
     return this.http.get<ApiResponse<PropertySummary[]>>(this.apiUrl)
       .pipe(
@@ -665,6 +665,26 @@ export class PropertyService {
             return response.data.map(summary => this.convertSummaryToProperty(summary));
           } else {
             throw new Error(response.message || 'Failed to fetch properties');
+          }
+        })
+      );
+  }
+
+  // ✅ GET ALL VERIFIED PROPERTIES (LIGHTWEIGHT) - doar proprietățile verificate
+  getAllVerifiedProperties(): Observable<Property[]> {
+    return this.http.get<ApiResponse<PropertySummary[]>>(this.apiUrl)
+      .pipe(
+        map(response => {
+          if (response.success && response.data) {
+            // Filtrează doar proprietățile verificate
+            const verifiedProperties = response.data
+              .filter(summary => summary.isVerified)
+              .map(summary => this.convertSummaryToProperty(summary));
+            
+            console.log(`✅ Retrieved ${verifiedProperties.length} verified properties`);
+            return verifiedProperties;
+          } else {
+            throw new Error(response.message || 'Failed to fetch verified properties');
           }
         })
       );

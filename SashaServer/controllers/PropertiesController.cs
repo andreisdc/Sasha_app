@@ -193,57 +193,61 @@ namespace SashaServer.Controllers
         // ================================
         // 📋 GET ALL PROPERTIES (LIGHTWEIGHT - pentru liste)
         // ================================
-        [HttpGet]
-        public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetAllProperties()
+       // ================================
+// 📋 GET ALL VERIFIED PROPERTIES (LIGHTWEIGHT - pentru liste)
+// ================================
+[HttpGet]
+public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetAllProperties()
+{
+    try
+    {
+        _logger.LogInformation("📋 Getting all verified properties (lightweight)");
+
+        // Folosim metoda optimizată care include cover photos și filtrăm doar proprietățile verificate
+        var propertiesWithCovers = _dataMap.GetPropertiesWithCoverPhotos();
+        var verifiedProperties = propertiesWithCovers.Where(p => p.IsVerified).ToList();
+        
+        var propertyResponses = verifiedProperties.Select(property => 
         {
-            try
+            return new PropertySummaryResponse
             {
-                _logger.LogInformation("📋 Getting all properties (lightweight)");
+                Id = property.Id,
+                OwnerId = property.OwnerId,
+                Title = property.Title,
+                City = property.City,
+                Country = property.Country,
+                PricePerNight = property.PricePerNight,
+                Bathrooms = property.Bathrooms,
+                MaxGuests = property.MaxGuests,
+                AverageRating = property.AverageRating,
+                ReviewCount = property.ReviewCount,
+                IsVerified = property.IsVerified,
+                Status = property.Status,
+                CoverImageUrl = property.CoverImageUrl,
+                CreatedAt = property.CreatedAt
+            };
+        }).ToList();
 
-                // Folosim metoda optimizată care include cover photos
-                var propertiesWithCovers = _dataMap.GetPropertiesWithCoverPhotos();
-                
-                var propertyResponses = propertiesWithCovers.Select(property => 
-                {
-                    return new PropertySummaryResponse
-                    {
-                        Id = property.Id,
-                        OwnerId = property.OwnerId,
-                        Title = property.Title,
-                        City = property.City,
-                        Country = property.Country,
-                        PricePerNight = property.PricePerNight,
-                        Bathrooms = property.Bathrooms,
-                        MaxGuests = property.MaxGuests,
-                        AverageRating = property.AverageRating,
-                        ReviewCount = property.ReviewCount,
-                        IsVerified = property.IsVerified,
-                        Status = property.Status,
-                        CoverImageUrl = property.CoverImageUrl,
-                        CreatedAt = property.CreatedAt
-                    };
-                }).ToList();
+        _logger.LogInformation("✅ Retrieved {Count} verified properties", propertyResponses.Count);
 
-                _logger.LogInformation("✅ Retrieved {Count} properties", propertyResponses.Count);
-
-                return Ok(new ApiResponse<List<PropertySummaryResponse>>
-                {
-                    Success = true,
-                    Message = $"Retrieved {propertyResponses.Count} properties",
-                    Data = propertyResponses
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error getting all properties");
-                return StatusCode(500, new ApiResponse<string>
-                {
-                    Success = false,
-                    Message = "Internal server error",
-                    Data = null
-                });
-            }
-        }
+        return Ok(new ApiResponse<List<PropertySummaryResponse>>
+        {
+            Success = true,
+            Message = $"Retrieved {propertyResponses.Count} verified properties",
+            Data = propertyResponses
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "❌ Error getting verified properties");
+        return StatusCode(500, new ApiResponse<string>
+        {
+            Success = false,
+            Message = "Internal server error",
+            Data = null
+        });
+    }
+}
 
         // ================================
         // 🔍 GET PROPERTY BY ID (FULL DETAILS)
