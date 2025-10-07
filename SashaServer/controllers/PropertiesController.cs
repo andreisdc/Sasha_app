@@ -507,57 +507,130 @@ namespace SashaServer.Controllers
         // ================================
         // 👤 GET USER UNVERIFIED PROPERTIES
         // ================================
-        [HttpGet("user/{userId}/unverified")]
-        public ActionResult<ApiResponse<List<PropertySummaryResponse>>> GetUserUnverifiedProperties(Guid userId)
+       // ================================
+// 👑 GET ALL UNVERIFIED PROPERTIES (FOR ADMIN DASHBOARD)
+// ================================
+[HttpGet("admin/unverified")]
+public ActionResult<ApiResponse<List<PropertyAdminResponse>>> GetAllUnverifiedPropertiesForAdmin()
+{
+    try
+    {
+        _logger.LogInformation("👑 Getting all unverified properties for admin dashboard");
+
+        // Obține toate proprietățile
+        var allProperties = _dataMap.GetProperties();
+        
+        // DEBUG: Log all properties
+        _logger.LogInformation("📊 Total properties in system: {Count}", allProperties.Count);
+        
+        var unverifiedProperties = allProperties.Where(p => !p.IsVerified).ToList();
+
+        // DEBUG: Log filtered results
+        _logger.LogInformation("🔍 After filtering - Unverified properties: {Count}", unverifiedProperties.Count);
+        
+        // DEBUG: Log each property for verification
+        foreach (var prop in unverifiedProperties)
         {
-            try
-            {
-                _logger.LogInformation("👤 Getting unverified properties for user: {UserId}", userId);
-
-                var userProperties = _dataMap.GetUserPropertiesWithCoverPhotos(userId);
-                var unverifiedProperties = userProperties.Where(p => !p.IsVerified).ToList();
-
-                var propertyResponses = unverifiedProperties.Select(property => 
-                {
-                    return new PropertySummaryResponse
-                    {
-                        Id = property.Id,
-                        OwnerId = property.OwnerId,
-                        Title = property.Title,
-                        City = property.City,
-                        Country = property.Country,
-                        PricePerNight = property.PricePerNight,
-                        Bathrooms = property.Bathrooms,
-                        MaxGuests = property.MaxGuests,
-                        AverageRating = property.AverageRating,
-                        ReviewCount = property.ReviewCount,
-                        IsVerified = property.IsVerified,
-                        Status = property.Status,
-                        CoverImageUrl = property.CoverImageUrl,
-                        CreatedAt = property.CreatedAt
-                    };
-                }).ToList();
-
-                _logger.LogInformation("✅ Retrieved {Count} unverified properties for user {UserId}", propertyResponses.Count, userId);
-
-                return Ok(new ApiResponse<List<PropertySummaryResponse>>
-                {
-                    Success = true,
-                    Message = $"Retrieved {propertyResponses.Count} unverified properties",
-                    Data = propertyResponses
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error getting user unverified properties: {UserId}", userId);
-                return StatusCode(500, new ApiResponse<string>
-                {
-                    Success = false,
-                    Message = "Internal server error",
-                    Data = null
-                });
-            }
+            _logger.LogInformation("🏠 Property: {Id}, Title: {Title}, IsVerified: {IsVerified}", 
+                prop.Id, prop.Title, prop.IsVerified);
         }
+
+        var propertyResponses = unverifiedProperties.Select(property => 
+        {
+            // Obține detaliile utilizatorului (proprietarului)
+            var owner = _dataMap.GetUserById(property.OwnerId);
+            var ownerName = owner != null ? $"{owner.FirstName} {owner.LastName}" : "Unknown";
+
+            return new PropertyAdminResponse
+            {
+                Id = property.Id,
+                OwnerId = property.OwnerId,
+                OwnerName = ownerName,
+                Title = property.Title,
+                Description = property.Description,
+                LocationType = property.LocationType,
+                Address = property.Address,
+                City = property.City,
+                County = property.County,
+                Country = property.Country,
+                PricePerNight = property.PricePerNight,
+                Bathrooms = property.Bathrooms,
+                MaxGuests = property.MaxGuests,
+                AverageRating = property.AverageRating,
+                ReviewCount = property.ReviewCount,
+                IsVerified = property.IsVerified,
+                Status = property.Status,
+                CreatedAt = property.CreatedAt
+            };
+        }).ToList();
+
+        _logger.LogInformation("✅ Retrieved {Count} unverified properties for admin", propertyResponses.Count);
+
+        return Ok(new ApiResponse<List<PropertyAdminResponse>>
+        {
+            Success = true,
+            Message = $"Retrieved {propertyResponses.Count} unverified properties",
+            Data = propertyResponses
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "❌ Error getting unverified properties for admin");
+        return StatusCode(500, new ApiResponse<string>
+        {
+            Success = false,
+            Message = "Internal server error",
+            Data = null
+        });
+    }
+}
+        // ================================
+// 🖼️ GET PROPERTY PHOTOS
+// ================================
+[HttpGet("{propertyId}/photos")]
+public ActionResult<ApiResponse<List<string>>> GetPropertyPhotos(Guid propertyId)
+{
+    try
+    {
+        _logger.LogInformation("🖼️ Getting photos for property: {PropertyId}", propertyId);
+
+        var property = _dataMap.GetPropertyById(propertyId);
+        if (property == null)
+        {
+            return NotFound(new ApiResponse<string>
+            {
+                Success = false,
+                Message = "Property not found",
+                Data = null
+            });
+        }
+
+        // Folosește metoda care returnează TOATE pozele pentru proprietate
+        var propertyPhotos = _dataMap.GetPropertyPhotosWithDetails(propertyId);
+        var photoUrls = propertyPhotos.Select(pp => pp.FilePath).ToList();
+
+        _logger.LogInformation("✅ Retrieved {Count} photos for property {PropertyId}", photoUrls.Count, propertyId);
+
+        return Ok(new ApiResponse<List<string>>
+        {
+            Success = true,
+            Message = $"Retrieved {photoUrls.Count} photos",
+            Data = photoUrls
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "❌ Error getting property photos: {PropertyId}", propertyId);
+        return StatusCode(500, new ApiResponse<string>
+        {
+            Success = false,
+            Message = "Internal server error",
+            Data = null
+        });
+    }
+}
+
+
 
         // ================================
         // 🖼️ UPLOAD PHOTOS
@@ -816,6 +889,8 @@ namespace SashaServer.Controllers
         // ================================
         // PRIVATE METHODS
         // ================================
+
+
 
         private PropertyResponse MapToPropertyResponse(Property property)
         {

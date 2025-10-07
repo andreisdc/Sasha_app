@@ -1,106 +1,215 @@
 <div class="admin-container">
   <div class="admin-header">
     <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
-    <p>Manage users and properties</p>
+    <p>Manage seller verifications and property approvals</p>
   </div>
 
   <div class="admin-content">
+    <!-- Cards cu statistici -->
     <div class="stats-cards">
-      <div class="stat-card">
+      <div class="stat-card" (click)="setActiveTab('sellers')">
         <div class="stat-icon users">
           <i class="fas fa-users"></i>
         </div>
         <div class="stat-info">
-          <h3>{{ pendingRequests.length }}</h3>
-          <span>Pending Verifications</span>
+          <h3>{{ totalPendingSellers }}</h3>
+          <span>Pending Seller Verifications</span>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" (click)="setActiveTab('properties')">
         <div class="stat-icon properties">
           <i class="fas fa-home"></i>
         </div>
         <div class="stat-info">
-          <h3>156</h3>
-          <span>Properties</span>
+          <h3>{{ totalUnverifiedProperties }}</h3>
+          <span>Unverified Properties</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon bookings">
-          <i class="fas fa-calendar-check"></i>
+      <div class="stat-card" (click)="refreshData()">
+        <div class="stat-icon pending">
+          <i class="fas fa-sync-alt"></i>
         </div>
         <div class="stat-info">
-          <h3>89</h3>
-          <span>Active Bookings</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon revenue">
-          <i class="fas fa-dollar-sign"></i>
-        </div>
-        <div class="stat-info">
-          <h3>$12,450</h3>
-          <span>Total Revenue</span>
+          <h3>{{ totalPendingItems }}</h3>
+          <span>Total Pending Items</span>
         </div>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading pending requests...</p>
+    <!-- Navigare prin tab-uri -->
+    <div class="admin-tabs">
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'sellers'"
+        (click)="setActiveTab('sellers')">
+        <i class="fas fa-user-check"></i>
+        Seller Verifications ({{ totalPendingSellers }})
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'properties'"
+        (click)="setActiveTab('properties')">
+        <i class="fas fa-home"></i>
+        Unverified Properties ({{ totalUnverifiedProperties }})
+      </button>
     </div>
 
-    <!-- Error Message -->
-    <div *ngIf="errorMessage" class="error-message">
-      <i class="fas fa-exclamation-circle"></i>
-      {{ errorMessage }}
-    </div>
-
-    <div class="recent-activity">
-      <h2>Pending Verification Requests ({{ pendingRequests.length }})</h2>
-      
-      <div *ngIf="!isLoading && pendingRequests.length === 0" class="empty-state">
-        <i class="fas fa-check-circle"></i>
-        <h3>No Pending Requests</h3>
-        <p>All verification requests have been processed.</p>
+    <!-- Conținut pentru Seller Verifications -->
+    <div *ngIf="activeTab === 'sellers'" class="tab-content">
+      <!-- Loading State -->
+      <div *ngIf="isLoadingSellers" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading seller verification requests...</p>
       </div>
 
-      <div *ngIf="!isLoading && pendingRequests.length > 0" class="activity-table">
-        <div class="table-header">
-          <div class="col-icon">User</div>
-          <div class="col-details">Details</div>
-          <div class="col-time">Submitted</div>
-          <div class="col-actions">Actions</div>
-        </div>
+      <!-- Error Message -->
+      <div *ngIf="errorMessageSellers && !isLoadingSellers" class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessageSellers }}
+        <button (click)="loadSellersData()" class="retry-btn">
+          Retry
+        </button>
+      </div>
+
+      <div class="recent-activity sellers-table">
+        <h2>
+          <i class="fas fa-user-check"></i>
+          Pending Seller Verifications ({{ totalPendingSellers }})
+        </h2>
         
-        <div class="table-body">
-          <div *ngFor="let request of pendingRequests" class="table-row">
-            <div class="col-icon">
-              <div class="icon-wrapper user">
-                <i class="fas fa-user"></i>
+        <div *ngIf="!isLoadingSellers && pendingRequests.length === 0" class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <h3>No Pending Seller Verifications</h3>
+          <p>All seller verification requests have been processed.</p>
+        </div>
+
+        <div *ngIf="!isLoadingSellers && pendingRequests.length > 0" class="activity-table">
+          <div class="table-header">
+            <div class="col-icon">User</div>
+            <div class="col-details">Details</div>
+            <div class="col-time">Submitted</div>
+            <div class="col-actions">Actions</div>
+          </div>
+          
+          <div class="table-body">
+            <div *ngFor="let request of pendingRequests" class="table-row">
+              <div class="col-icon">
+                <div class="icon-wrapper user">
+                  <i class="fas fa-user"></i>
+                </div>
+              </div>
+              <div class="col-details">
+                <div class="item-title">{{ request.firstName }} {{ request.lastName }}</div>
+                <div class="item-subtitle">
+                  <div><strong>CNP:</strong> {{ request.cnp }}</div>
+                  <div><strong>Address:</strong> {{ request.address }}</div>
+                </div>
+              </div>
+              <div class="col-time">
+                <div class="time">{{ getTimeAgo(request.createdAt) }}</div>
+                <div class="date">{{ request.createdAt | date:'MMM d, y' }}</div>
+              </div>
+              <div class="col-actions">
+                <button (click)="viewUserPhoto(request)" class="btn-view">
+                  <i class="fas fa-eye"></i> View ID
+                </button>
+                <button (click)="approveRequest(request)" class="btn-approve">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+                <button (click)="rejectRequest(request)" class="btn-reject">
+                  <i class="fas fa-times"></i> Reject
+                </button>
               </div>
             </div>
-            <div class="col-details">
-              <div class="item-title">{{ request.firstName }} {{ request.lastName }}</div>
-              <div class="item-subtitle">
-                <div><strong>CNP:</strong> {{ request.cnp }}</div>
-                <div><strong>Address:</strong> {{ request.address }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conținut pentru Unverified Properties -->
+    <div *ngIf="activeTab === 'properties'" class="tab-content">
+      <!-- Loading State -->
+      <div *ngIf="isLoadingProperties" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading unverified properties...</p>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessageProperties && !isLoadingProperties" class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessageProperties }}
+        <button (click)="loadPropertiesData()" class="retry-btn">
+          Retry
+        </button>
+      </div>
+
+      <div class="recent-activity properties-table">
+        <h2>
+          <i class="fas fa-home"></i>
+          Unverified Properties ({{ totalUnverifiedProperties }})
+        </h2>
+        
+        <div *ngIf="!isLoadingProperties && unverifiedProperties.length === 0" class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <h3>No Unverified Properties</h3>
+          <p>All properties have been verified.</p>
+        </div>
+
+        <div *ngIf="!isLoadingProperties && unverifiedProperties.length > 0" class="activity-table">
+          <div class="table-header">
+            <div class="col-icon">Property</div>
+            <div class="col-details">Details</div>
+            <div class="col-location">Location</div>
+            <div class="col-price">Price</div>
+            <div class="col-time">Created</div>
+            <div class="col-actions">Actions</div>
+          </div>
+          
+          <div class="table-body">
+            <div *ngFor="let property of unverifiedProperties" class="table-row">
+              <div class="col-icon">
+                <div class="icon-wrapper property">
+                  <i class="fas fa-home"></i>
+                </div>
               </div>
-            </div>
-            <div class="col-time">
-              <div class="time">{{ getTimeAgo(request.createdAt) }}</div>
-              <div class="date">{{ request.createdAt | date:'MMM d, y' }}</div>
-            </div>
-            <div class="col-actions">
-              <button (click)="viewPhoto(request)" class="btn-view">
-                <i class="fas fa-eye"></i> View Photo
-              </button>
-              <button (click)="approveRequest(request)" class="btn-approve">
-                <i class="fas fa-check"></i> Approve
-              </button>
-              <button (click)="rejectRequest(request)" class="btn-reject">
-                <i class="fas fa-times"></i> Reject
-              </button>
+              <div class="col-details">
+                <div class="item-title">{{ property.title }}</div>
+                <div class="item-subtitle">
+                  <div><strong>Owner:</strong> {{ property.ownerName || 'Unknown' }}</div>
+                  <div><strong>Location Type:</strong> {{ property.locationType }}</div>
+                  <div><strong>Guests:</strong> {{ property.maxGuests }} • <strong>Bathrooms:</strong> {{ property.bathrooms }}</div>
+                  <div class="description" *ngIf="property.description">
+                    <strong>Description:</strong> {{ property.description | slice:0:100 }}{{ property.description.length > 100 ? '...' : '' }}
+                  </div>
+                </div>
+              </div>
+              <div class="col-location">
+                <div class="location-info">
+                  <div class="city"><strong>{{ property.city }}</strong></div>
+                  <div class="address" *ngIf="property.address">{{ property.address }}</div>
+                  <div class="county" *ngIf="property.county">{{ property.county }}</div>
+                  <div class="country">{{ property.country }}</div>
+                </div>
+              </div>
+              <div class="col-price">
+                <div class="price">${{ property.pricePerNight }}</div>
+                <div class="price-label">per night</div>
+              </div>
+              <div class="col-time">
+                <div class="time">{{ getTimeAgo(property.createdAt) }}</div>
+                <div class="date">{{ property.createdAt | date:'MMM d, y' }}</div>
+              </div>
+              <div class="col-actions">
+                <button (click)="viewPropertyPhotos(property)" class="btn-view">
+                  <i class="fas fa-images"></i> View Photos
+                </button>
+                <button (click)="verifyProperty(property)" class="btn-approve">
+                  <i class="fas fa-check"></i> Verify
+                </button>
+                <button (click)="deleteProperty(property)" class="btn-delete">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -111,11 +220,30 @@
     <div *ngIf="isViewingPhoto" class="photo-modal" (click)="closePhoto()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>ID Verification Photo</h3>
+          <h3>
+            <i class="fas" [class.fa-id-card]="currentPhotoType === 'user'" 
+                          [class.fa-home]="currentPhotoType === 'property'"></i>
+            {{ currentPhotoType === 'user' ? 'ID Verification Photo' : 'Property Photos' }}
+            <span *ngIf="currentPhotoType === 'property' && currentPropertyImages.length > 1" class="photo-counter">
+              ({{ currentImageIndex + 1 }}/{{ currentPropertyImages.length }})
+            </span>
+          </h3>
           <button class="close-btn" (click)="closePhoto()">&times;</button>
         </div>
         <div class="modal-body">
-          <img [src]="currentPhotoUrl" alt="ID Photo" class="photo-image" />
+          <img [src]="currentPhotoUrl" 
+               [alt]="currentPhotoType === 'user' ? 'ID Photo' : 'Property Photo'" 
+               class="photo-image" />
+          
+          <!-- Navigare pentru pozele proprietății -->
+          <div *ngIf="currentPhotoType === 'property' && currentPropertyImages.length > 1" class="photo-navigation">
+            <button class="nav-btn prev" (click)="previousPhoto()">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="nav-btn next" (click)="nextPhoto()">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>

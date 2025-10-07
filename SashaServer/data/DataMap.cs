@@ -879,68 +879,68 @@ public bool UpdateProperty(Property property)
     };
 }
         public List<Property> GetProperties()
+{
+    var properties = new List<Property>();
+
+    using var conn = new NpgsqlConnection(_connectionString);
+    conn.Open();
+
+    var cmd = new NpgsqlCommand(
+        @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
+                    postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
+                    check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
+                    smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
+                    average_rating, review_count, neighborhood_description, tags, instant_book,
+                    created_at, updated_at, is_verified  -- ← ADAUGĂ ACEST CÂMP AICI
+            FROM t_properties", conn);
+
+    using var reader = cmd.ExecuteReader();
+    while (reader.Read())
+    {
+        var property = new Property
         {
-            var properties = new List<Property>();
+            Id = reader.GetGuid(0),
+            OwnerId = reader.GetGuid(1),
+            Title = reader.GetString(2),
+            Description = reader.GetString(3),
+            LocationType = reader.GetString(4),
+            Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
+            City = reader.IsDBNull(6) ? "" : reader.GetString(6),
+            County = reader.IsDBNull(7) ? "" : reader.GetString(7),
+            Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
+            PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
+            Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
+            Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
+            Status = reader.GetString(12),
+            PricePerNight = reader.GetDecimal(13),
+            MinNights = reader.GetInt32(14),
+            MaxNights = reader.GetInt32(15),
+            CheckInTime = reader.GetTimeSpan(16),
+            CheckOutTime = reader.GetTimeSpan(17),
+            MaxGuests = reader.GetInt32(18),
+            Bathrooms = reader.GetInt32(19),
+            Kitchen = reader.GetBoolean(20),
+            LivingSpace = reader.GetDecimal(21),
+            PetFriendly = reader.GetBoolean(22),
+            SmokeDetector = reader.GetBoolean(23),
+            FireExtinguisher = reader.GetBoolean(24),
+            CarbonMonoxideDetector = reader.GetBoolean(25),
+            LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
+            AverageRating = reader.GetDecimal(27),
+            ReviewCount = reader.GetInt32(28),
+            NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
+            Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30),
+            InstantBook = reader.GetBoolean(31),
+            CreatedAt = reader.GetDateTime(32),
+            UpdatedAt = reader.GetDateTime(33),
+            IsVerified = reader.GetBoolean(34)  // ← ADAUGĂ ACESTA LINIE
+        };
 
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
+        properties.Add(property);
+    }
 
-            var cmd = new NpgsqlCommand(
-                @"SELECT id, owner_id, title, description, location_type, address, city, county, country,
-                            postal_code, latitude, longitude, status, price_per_night, min_nights, max_nights,
-                            check_in_time, check_out_time, max_guests, bathrooms, kitchen, living_space, pet_friendly,
-                            smoke_detector, fire_extinguisher, carbon_monoxide_detector, lock_type,
-                            average_rating, review_count, neighborhood_description, tags, instant_book,
-                            created_at, updated_at
-                    FROM t_properties", conn);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                var property = new Property
-                {
-                    Id = reader.GetGuid(0),
-                    OwnerId = reader.GetGuid(1),
-                    Title = reader.GetString(2),
-                    Description = reader.GetString(3),
-                    LocationType = reader.GetString(4),
-                    Address = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                    City = reader.IsDBNull(6) ? "" : reader.GetString(6),
-                    County = reader.IsDBNull(7) ? "" : reader.GetString(7),
-                    Country = reader.IsDBNull(8) ? "Romania" : reader.GetString(8),
-                    PostalCode = reader.IsDBNull(9) ? "" : reader.GetString(9),
-                    Latitude = reader.IsDBNull(10) ? 0 : reader.GetDouble(10),
-                    Longitude = reader.IsDBNull(11) ? 0 : reader.GetDouble(11),
-                    Status = reader.GetString(12),
-                    PricePerNight = reader.GetDecimal(13),
-                    MinNights = reader.GetInt32(14),
-                    MaxNights = reader.GetInt32(15),
-                    CheckInTime = reader.GetTimeSpan(16),
-                    CheckOutTime = reader.GetTimeSpan(17),
-                    MaxGuests = reader.GetInt32(18),
-                    Bathrooms = reader.GetInt32(19),
-                    Kitchen = reader.GetBoolean(20),
-                    LivingSpace = reader.GetDecimal(21),
-                    PetFriendly = reader.GetBoolean(22),
-                    SmokeDetector = reader.GetBoolean(23),
-                    FireExtinguisher = reader.GetBoolean(24),
-                    CarbonMonoxideDetector = reader.GetBoolean(25),
-                    LockType = reader.IsDBNull(26) ? "" : reader.GetString(26),
-                    AverageRating = reader.GetDecimal(27),
-                    ReviewCount = reader.GetInt32(28),
-                    NeighborhoodDescription = reader.IsDBNull(29) ? "" : reader.GetString(29),
-                    Tags = reader.IsDBNull(30) ? Array.Empty<string>() : reader.GetFieldValue<string[]>(30),
-                    InstantBook = reader.GetBoolean(31),
-                    CreatedAt = reader.GetDateTime(32),
-                    UpdatedAt = reader.GetDateTime(33)
-                };
-
-                properties.Add(property);
-            }
-
-            return properties;
-        }
-
+    return properties;
+}
         // ================================
         // 4️⃣ PROPERTY PHOTOS
         // ================================

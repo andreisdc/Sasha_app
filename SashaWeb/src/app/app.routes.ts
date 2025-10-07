@@ -44,14 +44,17 @@ export const routes: Routes = [
       import('./pages/add-property/add-property').then((m) => m.AddPropertyComponent),
     canActivate: [AuthGuard],
   },
-
+  {
+    path: 'edit-property/:id', // ✅ RUTĂ NOUĂ PENTRU EDITARE PROPRIETATE
+    loadComponent: () =>
+      import('./pages/edit-property/edit-property').then((m) => m.EditProperty),
+    canActivate: [AuthGuard],
+  },
   {
     path: 'property/:id', // ✅ RUTA PENTRU VIZUALIZARE PROPRIETATE
     loadComponent: () =>
       import('./pages/property-details/property-details').then((m) => m.PropertyDetails),
   },
-  
-
 
   // ✅ Ruta de admin securizată
   {

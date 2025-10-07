@@ -15,6 +15,7 @@ export const SERVER = {
   // 2️⃣ PENDING APPROVE ENDPOINTS
   // ================================
   PENDING_APPROVE_PATH: '/api/pendingapprove',
+  PENDING_APPROVE_PATH_PROPERTIES: '/properties',
   GET_ALL_PENDING_APPROVALS: '/api/pendingapprove',
   GET_PENDING_APPROVE_BY_ID: '/api/pendingapprove/', // + id
   ADD_PENDING_APPROVE: '/api/pendingapprove',

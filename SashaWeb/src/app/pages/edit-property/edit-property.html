@@ -1,1 +1,451 @@
-<p>edit-property works!</p>
+<div class="edit-property-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Edit Property</h1>
+    <p>Update your property details and amenities</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading property details...</p>
+  </div>
+
+  <!-- Edit Form -->
+  <form *ngIf="!isLoading && propertyForm" [formGroup]="propertyForm" (ngSubmit)="onSubmit()" class="edit-form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h2>Basic Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="title">Property Title *</label>
+          <input 
+            type="text" 
+            id="title" 
+            formControlName="title" 
+            placeholder="Enter property title"
+            [class.error]="propertyForm.get('title')?.invalid && propertyForm.get('title')?.touched">
+          <div *ngIf="propertyForm.get('title')?.invalid && propertyForm.get('title')?.touched" class="error-message">
+            <span *ngIf="propertyForm.get('title')?.errors?.['required']">Title is required</span>
+            <span *ngIf="propertyForm.get('title')?.errors?.['minlength']">
+              Title must be at least 5 characters
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="description">Description *</label>
+          <textarea 
+            id="description" 
+            formControlName="description" 
+            rows="4"
+            placeholder="Describe your property..."
+            [class.error]="propertyForm.get('description')?.invalid && propertyForm.get('description')?.touched"></textarea>
+          <div *ngIf="propertyForm.get('description')?.invalid && propertyForm.get('description')?.touched" class="error-message">
+            <span *ngIf="propertyForm.get('description')?.errors?.['required']">Description is required</span>
+            <span *ngIf="propertyForm.get('description')?.errors?.['minlength']">
+              Description must be at least 50 characters
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="propertyType">Property Type *</label>
+          <select id="propertyType" formControlName="propertyType"
+                  [class.error]="propertyForm.get('propertyType')?.invalid && propertyForm.get('propertyType')?.touched">
+            <option value="">Select property type</option>
+            <option value="apartment">Apartment</option>
+            <option value="house">House</option>
+            <option value="villa">Villa</option>
+            <option value="studio">Studio</option>
+            <option value="condo">Condo</option>
+            <option value="cabin">Cabin</option>
+            <option value="chalet">Chalet</option>
+          </select>
+          <div *ngIf="propertyForm.get('propertyType')?.invalid && propertyForm.get('propertyType')?.touched" class="error-message">
+            Property type is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="maxGuests">Max Guests *</label>
+          <input 
+            type="number" 
+            id="maxGuests" 
+            formControlName="maxGuests" 
+            min="1" max="20"
+            [class.error]="propertyForm.get('maxGuests')?.invalid && propertyForm.get('maxGuests')?.touched">
+          <div *ngIf="propertyForm.get('maxGuests')?.invalid && propertyForm.get('maxGuests')?.touched" class="error-message">
+            Maximum guests must be between 1 and 20
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="bedrooms">Bedrooms</label>
+          <input type="number" id="bedrooms" formControlName="bedrooms" min="0" max="20">
+        </div>
+
+        <div class="form-group">
+          <label for="bathrooms">Bathrooms *</label>
+          <input 
+            type="number" 
+            id="bathrooms" 
+            formControlName="bathrooms" 
+            min="0" max="10" step="0.5"
+            [class.error]="propertyForm.get('bathrooms')?.invalid && propertyForm.get('bathrooms')?.touched">
+          <div *ngIf="propertyForm.get('bathrooms')?.invalid && propertyForm.get('bathrooms')?.touched" class="error-message">
+            Bathrooms is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="livingSpace">Living Space (m²)</label>
+          <input type="number" id="livingSpace" formControlName="livingSpace" min="0" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Section -->
+    <div class="form-section">
+      <h2>Location</h2>
+      
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="address">Address *</label>
+          <input 
+            type="text" 
+            id="address" 
+            formControlName="address" 
+            placeholder="Full address"
+            [class.error]="propertyForm.get('address')?.invalid && propertyForm.get('address')?.touched">
+          <div *ngIf="propertyForm.get('address')?.invalid && propertyForm.get('address')?.touched" class="error-message">
+            <span *ngIf="propertyForm.get('address')?.errors?.['required']">Address is required</span>
+            <span *ngIf="propertyForm.get('address')?.errors?.['minlength']">
+              Address must be at least 5 characters
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="city">City *</label>
+          <input 
+            type="text" 
+            id="city" 
+            formControlName="city" 
+            placeholder="City"
+            [class.error]="propertyForm.get('city')?.invalid && propertyForm.get('city')?.touched">
+          <div *ngIf="propertyForm.get('city')?.invalid && propertyForm.get('city')?.touched" class="error-message">
+            City is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="county">County</label>
+          <input type="text" id="county" formControlName="county" placeholder="County">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="country">Country *</label>
+          <select id="country" formControlName="country">
+            <option value="Romania">Romania</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="postalCode">Postal Code</label>
+          <input type="text" id="postalCode" formControlName="postalCode" placeholder="Postal code">
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <div class="form-section">
+      <h2>Pricing & Availability</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="pricePerNight">Price per Night (€) *</label>
+          <input 
+            type="number" 
+            id="pricePerNight" 
+            formControlName="pricePerNight" 
+            min="1" step="0.01"
+            [class.error]="propertyForm.get('pricePerNight')?.invalid && propertyForm.get('pricePerNight')?.touched">
+          <div *ngIf="propertyForm.get('pricePerNight')?.invalid && propertyForm.get('pricePerNight')?.touched" class="error-message">
+            Price per night is required and must be at least €1
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="minNights">Minimum Nights *</label>
+          <input 
+            type="number" 
+            id="minNights" 
+            formControlName="minNights" 
+            min="1" max="30"
+            [class.error]="propertyForm.get('minNights')?.invalid && propertyForm.get('minNights')?.touched">
+          <div *ngIf="propertyForm.get('minNights')?.invalid && propertyForm.get('minNights')?.touched" class="error-message">
+            Minimum nights must be between 1 and 30
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="maxNights">Maximum Nights</label>
+          <input type="number" id="maxNights" formControlName="maxNights" min="1" max="365">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="checkInTime">Check-in Time</label>
+          <input type="time" id="checkInTime" formControlName="checkInTime">
+        </div>
+
+        <div class="form-group">
+          <label for="checkOutTime">Check-out Time</label>
+          <input type="time" id="checkOutTime" formControlName="checkOutTime">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="instantBook">
+            <span class="checkmark"></span>
+            Instant Book
+          </label>
+          <span class="checkbox-description">Allow guests to book without approval</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Property Amenities Section -->
+    <div class="form-section">
+      <h2>Property Amenities</h2>
+      <p class="section-description">Select all amenities available at your property</p>
+      
+      <div class="amenities-grid">
+        <!-- Essentials -->
+        <div class="amenity-category">
+          <h3>Essentials</h3>
+          <div class="amenities-list">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="wifi">
+              <span class="checkmark"></span>
+              <i class="fas fa-wifi"></i>
+              WiFi
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="airConditioning">
+              <span class="checkmark"></span>
+              <i class="fas fa-snowflake"></i>
+              Air Conditioning
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="heating">
+              <span class="checkmark"></span>
+              <i class="fas fa-thermometer-half"></i>
+              Heating
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="kitchen">
+              <span class="checkmark"></span>
+              <i class="fas fa-utensils"></i>
+              Kitchen
+            </label>
+          </div>
+        </div>
+
+        <!-- Facilities -->
+        <div class="amenity-category">
+          <h3>Facilities</h3>
+          <div class="amenities-list">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="washer">
+              <span class="checkmark"></span>
+              <i class="fas fa-soap"></i>
+              Washer
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="dryer">
+              <span class="checkmark"></span>
+              <i class="fas fa-wind"></i>
+              Dryer
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="pool">
+              <span class="checkmark"></span>
+              <i class="fas fa-swimming-pool"></i>
+              Pool
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="hotTub">
+              <span class="checkmark"></span>
+              <i class="fas fa-hot-tub"></i>
+              Hot Tub
+            </label>
+          </div>
+        </div>
+
+        <!-- Outdoor -->
+        <div class="amenity-category">
+          <h3>Outdoor</h3>
+          <div class="amenities-list">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="parking">
+              <span class="checkmark"></span>
+              <i class="fas fa-parking"></i>
+              Parking
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="balcony">
+              <span class="checkmark"></span>
+              <i class="fas fa-building"></i>
+              Balcony
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="garden">
+              <span class="checkmark"></span>
+              <i class="fas fa-seedling"></i>
+              Garden
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="bbq">
+              <span class="checkmark"></span>
+              <i class="fas fa-fire"></i>
+              BBQ Grill
+            </label>
+          </div>
+        </div>
+
+        <!-- Entertainment -->
+        <div class="amenity-category">
+          <h3>Entertainment</h3>
+          <div class="amenities-list">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="tv">
+              <span class="checkmark"></span>
+              <i class="fas fa-tv"></i>
+              TV
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="fireplace">
+              <span class="checkmark"></span>
+              <i class="fas fa-fire"></i>
+              Fireplace
+            </label>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <div class="amenity-category">
+          <h3>Services</h3>
+          <div class="amenities-list">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="breakfastIncluded">
+              <span class="checkmark"></span>
+              <i class="fas fa-coffee"></i>
+              Breakfast Included
+            </label>
+          </div>
+        </div>
+
+        <!-- Accessibility -->
+        <div class="amenity-category">
+          <h3>Accessibility</h3>
+          <div class="amenities-list">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="wheelchairAccessible">
+              <span class="checkmark"></span>
+              <i class="fas fa-wheelchair"></i>
+              Wheelchair Accessible
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Safety Features -->
+    <div class="form-section">
+      <h2>Safety Features</h2>
+      <div class="safety-grid">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="smokeDetector">
+          <span class="checkmark"></span>
+          <i class="fas fa-smoke"></i>
+          Smoke Detector
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="fireExtinguisher">
+          <span class="checkmark"></span>
+          <i class="fas fa-fire-extinguisher"></i>
+          Fire Extinguisher
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="carbonMonoxideDetector">
+          <span class="checkmark"></span>
+          <i class="fas fa-gas-pump"></i>
+          Carbon Monoxide Detector
+        </label>
+      </div>
+    </div>
+
+    <!-- Policies -->
+    <div class="form-section">
+      <h2>Policies</h2>
+      <div class="policies-grid">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="petFriendly">
+          <span class="checkmark"></span>
+          <i class="fas fa-paw"></i>
+          Pet Friendly
+        </label>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="goBack()" [disabled]="isSubmitting">
+        <i class="fas fa-arrow-left"></i>
+        Cancel
+      </button>
+      
+      <div class="action-buttons">
+        <button type="button" class="btn-outline" (click)="previewProperty()" [disabled]="isSubmitting">
+          <i class="fas fa-eye"></i>
+          Preview
+        </button>
+        
+        <button type="submit" class="btn-primary" [disabled]="propertyForm.invalid || isSubmitting">
+          <i class="fas fa-save"></i>
+          {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-banner">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="success-banner">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+</div>
