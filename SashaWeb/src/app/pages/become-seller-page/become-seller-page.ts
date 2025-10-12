@@ -1,24 +1,18 @@
 // become-seller-page.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
-import {
-  trigger,
-  transition,
-  style,
-  animate,
-  query,
-  stagger,
-  keyframes,
-} from '@angular/animations';
+import { Router } from '@angular/router';
 import { PendingApproveService } from '../../core/services/pending-approve-service';
 import { AuthService } from '../../core/services/auth-service';
+import { ToastService } from '../../core/services/toast';
+import { ToastComponent } from '../../components/toast/toast'; // Adaugă această linie
 
 interface Step {
   number: number;
   title: string;
-  status: 'completed' | 'current' | 'upcoming' | 'error';
+  description: string;
+  status: 'completed' | 'active' | 'upcoming';
 }
 
 interface FormData {
@@ -29,118 +23,21 @@ interface FormData {
   idDocument: File | null;
 }
 
-interface Star {
-  emoji: string;
-  style: any;
-}
-
 @Component({
   selector: 'app-become-seller-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ToastComponent], // Adaugă ToastComponent aici
   templateUrl: './become-seller-page.html',
-  styleUrls: ['./become-seller-page.less'],
-  animations: [
-    trigger('pageTransition', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(20px)' }),
-        animate(
-          '0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 1, transform: 'translateY(0)' }),
-        ),
-      ]),
-    ]),
-    trigger('stepTransition', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateX(30px)' }),
-        animate(
-          '0.5s 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 1, transform: 'translateX(0)' }),
-        ),
-      ]),
-      transition(':leave', [
-        animate(
-          '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 0, transform: 'translateX(-30px)' }),
-        ),
-      ]),
-    ]),
-    trigger('fadeInUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(20px)' }),
-        animate(
-          '0.6s 0.1s cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 1, transform: 'translateY(0)' }),
-        ),
-      ]),
-    ]),
-    trigger('bounceIn', [
-      transition(':enter', [
-        animate(
-          '0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          keyframes([
-            style({ opacity: 0, transform: 'scale(0.3)', offset: 0 }),
-            style({ opacity: 1, transform: 'scale(1.1)', offset: 0.6 }),
-            style({ transform: 'scale(0.95)', offset: 0.8 }),
-            style({ opacity: 1, transform: 'scale(1)', offset: 1 }),
-          ]),
-        ),
-      ]),
-    ]),
-    trigger('staggerItem', [
-      transition(':enter', [
-        query('.feature-item', [
-          style({ opacity: 0, transform: 'translateX(-20px)' }),
-          stagger('150ms', [
-            animate(
-              '0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-              style({ opacity: 1, transform: 'translateX(0)' }),
-            ),
-          ]),
-        ]),
-      ]),
-    ]),
-    trigger('pulse', [
-      transition(':enter', [
-        style({ transform: 'scale(1)' }),
-        animate(
-          '2s infinite',
-          keyframes([
-            style({ transform: 'scale(1)', offset: 0 }),
-            style({ transform: 'scale(1.05)', offset: 0.5 }),
-            style({ transform: 'scale(1)', offset: 1 }),
-          ]),
-        ),
-      ]),
-    ]),
-    trigger('shake', [
-      transition(':enter', [
-        animate(
-          '0.5s ease-in-out',
-          keyframes([
-            style({ transform: 'translateX(0)', offset: 0 }),
-            style({ transform: 'translateX(-10px)', offset: 0.1 }),
-            style({ transform: 'translateX(10px)', offset: 0.2 }),
-            style({ transform: 'translateX(-10px)', offset: 0.3 }),
-            style({ transform: 'translateX(10px)', offset: 0.4 }),
-            style({ transform: 'translateX(-10px)', offset: 0.5 }),
-            style({ transform: 'translateX(10px)', offset: 0.6 }),
-            style({ transform: 'translateX(-10px)', offset: 0.7 }),
-            style({ transform: 'translateX(10px)', offset: 0.8 }),
-            style({ transform: 'translateX(-10px)', offset: 0.9 }),
-            style({ transform: 'translateX(0)', offset: 1 }),
-          ]),
-        ),
-      ]),
-    ]),
-  ],
+  styleUrls: ['./become-seller-page.less']
 })
 export class BecomeSellerPageComponent implements OnInit {
+  private toastService = inject(ToastService);
+  
   currentStep = 1;
   acceptedGdpr = false;
   isSubmitting = false;
   submitError = '';
-  submissionStatus: 'idle' | 'success' | 'error' = 'idle';
+  isDragging = false;
 
   formData: FormData = {
     firstName: '',
@@ -150,253 +47,332 @@ export class BecomeSellerPageComponent implements OnInit {
     idDocument: null,
   };
 
-  stars: Star[] = [
-    { emoji: '⭐', style: { top: '15%', left: '5%', animationDelay: '0s' } },
-    {
-      emoji: '🌟',
-      style: { top: '25%', right: '10%', animationDelay: '0.3s' },
-    },
-    {
-      emoji: '✨',
-      style: { bottom: '35%', left: '15%', animationDelay: '0.6s' },
-    },
-    {
-      emoji: '💫',
-      style: { bottom: '15%', right: '20%', animationDelay: '0.9s' },
-    },
-    { emoji: '🎊', style: { top: '45%', left: '45%', animationDelay: '1.2s' } },
-  ];
-
-  errorStars: Star[] = [
-    { emoji: '❌', style: { top: '10%', left: '10%', animationDelay: '0s' } },
-    {
-      emoji: '⚠️',
-      style: { top: '20%', right: '15%', animationDelay: '0.3s' },
-    },
-    {
-      emoji: '🚫',
-      style: { bottom: '30%', left: '20%', animationDelay: '0.6s' },
-    },
-    {
-      emoji: '🔴',
-      style: { bottom: '20%', right: '25%', animationDelay: '0.9s' },
-    },
-    { emoji: '💥', style: { top: '40%', left: '50%', animationDelay: '1.2s' } },
-  ];
-
   steps: Step[] = [
-    { number: 1, title: 'Security', status: 'current' },
-    { number: 2, title: 'Personal Info', status: 'upcoming' },
-    { number: 3, title: 'ID Upload', status: 'upcoming' },
-    { number: 4, title: 'Complete', status: 'upcoming' },
+    { 
+      number: 1, 
+      title: 'Security & Privacy', 
+      description: 'Learn how we protect your data',
+      status: 'active' 
+    },
+    { 
+      number: 2, 
+      title: 'Personal Information', 
+      description: 'Tell us about yourself',
+      status: 'upcoming' 
+    },
+    { 
+      number: 3, 
+      title: 'ID Verification', 
+      description: 'Upload your ID document',
+      status: 'upcoming' 
+    },
+    { 
+      number: 4, 
+      title: 'Completion', 
+      description: 'Review and submit',
+      status: 'upcoming' 
+    }
   ];
 
   constructor(
     private pendingApproveService: PendingApproveService,
     private authService: AuthService,
     private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
-    const currentUser = this.authService.getCurrentUser();
-    // Pre-populează datele dacă sunt disponibile
+    this.loadUserData();
   }
 
-  getStepCircleClass(step: Step): string {
-    if (this.submissionStatus === 'error' && step.number === 4) {
-      return 'step-circle step-error';
+  private loadUserData() {
+    this.ngZone.run(() => {
+      try {
+        const user = this.authService.getCurrentUser();
+        if (user) {
+          this.formData.firstName = user.firstName || '';
+          this.formData.lastName = user.lastName || '';
+          this.toastService.info('Welcome back! Your information has been loaded.');
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        this.toastService.error('Failed to load user data');
+      }
+    });
+  }
+
+  // Navigation between steps
+  goToStep(stepNumber: number) {
+    this.ngZone.run(() => {
+      if (stepNumber < this.currentStep) {
+        this.currentStep = stepNumber;
+        this.updateStepStatus();
+        this.toastService.info(`Returned to ${this.steps[stepNumber - 1].title}`);
+      }
+    });
+  }
+
+  onFileSelected(event: Event) {
+    this.ngZone.run(() => {
+      const input = event.target as HTMLInputElement;
+      const file = input.files?.[0];
+      if (file && this.validateFile(file)) {
+        this.formData.idDocument = file;
+        this.toastService.success('ID document uploaded successfully!');
+      }
+    });
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = false;
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    this.ngZone.run(() => {
+      this.isDragging = false;
+      
+      const files = event.dataTransfer?.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (this.validateFile(file)) {
+          this.formData.idDocument = file;
+          this.toastService.success('ID document uploaded successfully!');
+        }
+      }
+    });
+  }
+
+  private validateFile(file: File): boolean {
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    const maxSize = 5 * 1024 * 1024;
+
+    if (!validTypes.includes(file.type)) {
+      this.toastService.error('Please upload a JPG, PNG, or PDF file');
+      return false;
     }
-    return `step-circle step-${step.status}`;
-  }
 
-  getStepTextClass(step: Step): string {
-    if (this.submissionStatus === 'error' && step.number === 4) {
-      return 'step-label label-error';
+    if (file.size > maxSize) {
+      this.toastService.error('File size must be less than 5MB');
+      return false;
     }
-    return `step-label label-${step.status}`;
+
+    return true;
   }
 
-  getConnectorClass(step: Step): string {
-    if (this.submissionStatus === 'error' && step.number === 3) {
-      return 'step-connector connector-error';
-    }
-    return step.status === 'completed'
-      ? 'step-connector connector-completed'
-      : 'step-connector connector-upcoming';
-  }
-
-  getNextButtonClass(): string {
-    return this.canProceedToNextStep()
-      ? 'next-button button-enabled'
-      : 'next-button button-disabled';
-  }
-
-  getSubmitButtonClass(): string {
-    return this.canSubmitVerification() && !this.isSubmitting
-      ? 'submit-button button-enabled'
-      : 'submit-button button-disabled';
-  }
-
-  onFileSelected(event: any, field: keyof FormData): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.formData[field] = file;
-    }
+  getFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   canProceedToNextStep(): boolean {
     switch (this.currentStep) {
-      case 1:
-        return this.acceptedGdpr;
-      case 2:
-        return this.canProceedToStep3();
-      case 3:
-        return this.canProceedToStep4();
-      default:
-        return true;
+      case 1: return this.acceptedGdpr;
+      case 2: return this.canProceedToStep3();
+      case 3: return this.canSubmitVerification();
+      default: return true;
     }
   }
 
   canProceedToStep3(): boolean {
-    return (
-      !!this.formData.firstName &&
-      !!this.formData.lastName &&
-      !!this.formData.address &&
-      !!this.formData.cnp
-    );
-  }
-
-  canProceedToStep4(): boolean {
-    return !!this.formData.idDocument;
+    const isValid = !!(this.formData.firstName?.trim() && 
+                      this.formData.lastName?.trim() && 
+                      this.formData.address?.trim() && 
+                      this.formData.cnp?.trim());
+    
+    if (!isValid && this.formData.firstName && this.formData.lastName) {
+      this.toastService.warning('Please fill in all required fields');
+    }
+    
+    return isValid;
   }
 
   canSubmitVerification(): boolean {
     return !!this.formData.idDocument && !this.isSubmitting;
   }
 
-  hasUploadedFiles(): boolean {
-    return !!this.formData.idDocument;
+  nextStep(): void {
+    this.ngZone.run(() => {
+      if (this.currentStep < 4 && this.canProceedToNextStep()) {
+        this.updateStepStatus(this.currentStep, 'completed');
+        this.currentStep++;
+        this.updateStepStatus(this.currentStep, 'active');
+        
+        // Toast messages for each step
+        switch (this.currentStep) {
+          case 2:
+            this.toastService.info('Please fill in your personal information');
+            break;
+          case 3:
+            this.toastService.info('Upload your ID document for verification');
+            break;
+          case 4:
+            this.toastService.success('All steps completed! Ready to submit.');
+            break;
+        }
+      } else if (!this.canProceedToNextStep()) {
+        this.showStepValidationError();
+      }
+    });
   }
 
-  nextStep(): void {
-    if (this.currentStep < 4 && this.canProceedToNextStep()) {
-      this.updateStepStatus(this.currentStep, 'completed');
-      this.currentStep++;
-      this.updateStepStatus(this.currentStep, 'current');
+  private showStepValidationError() {
+    switch (this.currentStep) {
+      case 1:
+        this.toastService.warning('Please accept the security agreement to continue');
+        break;
+      case 2:
+        this.toastService.warning('Please fill in all required fields');
+        break;
+      case 3:
+        this.toastService.warning('Please upload your ID document');
+        break;
     }
   }
 
   previousStep(): void {
-    if (this.currentStep > 1) {
-      this.updateStepStatus(this.currentStep, 'upcoming');
-      this.currentStep--;
-      this.updateStepStatus(this.currentStep, 'current');
-      this.submissionStatus = 'idle'; // Reset status when going back
-    }
-  }
-
-  async submitVerification(): Promise<void> {
-  if (!this.canSubmitVerification()) return;
-
-  this.isSubmitting = true;
-  this.submitError = '';
-  this.submissionStatus = 'idle';
-
-  try {
-    console.log('Starting verification submission...');
-
-    // ia user-ul curent
-    const currentUser = await this.authService.me().toPromise();
-    if (!currentUser || !currentUser.id) {
-      throw new Error('You must be logged in to submit verification');
-    }
-
-    const userId = currentUser.id;
-    console.log('User ID:', userId);
-
-    // pregătim FormData
-    const formData = new FormData();
-    formData.append("UserId", userId);
-    formData.append("FirstName", this.formData.firstName);
-    formData.append("LastName", this.formData.lastName);
-    formData.append("Address", this.formData.address)
-    formData.append("Cnp", this.formData.cnp);
-    if (this.formData.idDocument) {
-      formData.append("Photo", this.formData.idDocument);
-    }
-
-    console.log("Sending form data:", formData);
-
-    await this.pendingApproveService.createPendingApprove(formData).toPromise();
-
-    // succes
-    this.submissionStatus = 'success';
-    this.nextStep();
-  } catch (error: any) {
-    console.error('Error submitting verification:', error);
-
-    if (error.error) {
-      this.submitError = error.error.message || error.message;
-    } else {
-      this.submitError = error.message || 'Failed to submit verification.';
-    }
-
-    this.submissionStatus = 'error';
-    this.nextStep();
-  } finally {
-    this.isSubmitting = false;
-  }
-}
-
-
-  retrySubmission(): void {
-    this.currentStep = 3;
-    this.updateStepStatus(3, 'current');
-    this.updateStepStatus(4, 'upcoming');
-    this.submissionStatus = 'idle';
-    this.submitError = '';
-  }
-
-  private fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        const base64Data = base64.split(',')[1];
-        resolve(base64Data || base64);
-      };
-      reader.onerror = (error) => reject(error);
+    this.ngZone.run(() => {
+      if (this.currentStep > 1) {
+        this.updateStepStatus(this.currentStep, 'upcoming');
+        this.currentStep--;
+        this.updateStepStatus(this.currentStep, 'active');
+        this.submitError = '';
+        this.toastService.info(`Returned to ${this.steps[this.currentStep - 1].title}`);
+      }
     });
   }
 
-  private generateGuid(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0;
-        const v = c == 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      },
-    );
+  async submitVerification(): Promise<void> {
+    if (!this.canSubmitVerification()) {
+      this.toastService.warning('Please complete all requirements before submitting');
+      return;
+    }
+
+    this.ngZone.run(() => {
+      this.isSubmitting = true;
+      this.submitError = '';
+    });
+
+    try {
+      this.toastService.info('Submitting your verification...');
+
+      const currentUser = await this.authService.me().toPromise();
+      if (!currentUser?.id) {
+        throw new Error('You must be logged in to submit verification');
+      }
+
+      const formData = new FormData();
+      formData.append("UserId", currentUser.id);
+      formData.append("FirstName", this.formData.firstName);
+      formData.append("LastName", this.formData.lastName);
+      formData.append("Address", this.formData.address);
+      formData.append("Cnp", this.formData.cnp);
+      
+      if (this.formData.idDocument) {
+        formData.append("Photo", this.formData.idDocument);
+      }
+
+      await this.pendingApproveService.createPendingApprove(formData).toPromise();
+      
+      this.ngZone.run(() => {
+        this.isSubmitting = false;
+        this.toastService.success('Verification submitted successfully! Welcome to the Wanderlust host community! 🎉');
+        this.nextStep();
+      });
+
+    } catch (error: any) {
+      this.ngZone.run(() => {
+        this.isSubmitting = false;
+        const errorMessage = error.error?.message || error.message || 'Failed to submit verification';
+        this.submitError = errorMessage;
+        this.toastService.error(errorMessage);
+      });
+    }
   }
 
   startTutorial(): void {
-    this.router.navigate(['/tutorial']);
+    this.ngZone.run(() => {
+      this.toastService.info('Starting host tutorial...');
+      setTimeout(() => {
+        this.router.navigate(['/host/tutorial']);
+      }, 1000);
+    });
   }
 
   skipTutorial(): void {
-    this.router.navigate(['/dashboard']);
+    this.ngZone.run(() => {
+      this.toastService.success('Welcome to Wanderlust! Your host journey begins now! 🏠');
+      setTimeout(() => {
+        this.router.navigate(['/dashboard']);
+      }, 1500);
+    });
   }
 
-  goToDashboard(): void {
-    this.router.navigate(['/dashboard']);
+  private updateStepStatus(stepNumber?: number, status?: Step['status']): void {
+    this.ngZone.run(() => {
+      if (stepNumber && status) {
+        const step = this.steps.find(s => s.number === stepNumber);
+        if (step) {
+          step.status = status;
+        }
+      } else {
+        // Update all steps based on current step
+        this.steps.forEach(step => {
+          if (step.number < this.currentStep) {
+            step.status = 'completed';
+          } else if (step.number === this.currentStep) {
+            step.status = 'active';
+          } else {
+            step.status = 'upcoming';
+          }
+        });
+      }
+    });
   }
 
-  private updateStepStatus(stepNumber: number, status: Step['status']): void {
-    const step = this.steps.find((s) => s.number === stepNumber);
-    if (step) {
-      step.status = status;
-    }
+  // Validare CNP
+  validateCNP(): void {
+    this.ngZone.run(() => {
+      if (!this.formData.cnp) return;
+      
+      const cnp = this.formData.cnp.trim();
+      if (cnp.length !== 13) {
+        this.toastService.warning('CNP must be exactly 13 digits');
+        return;
+      }
+      
+      if (!/^\d+$/.test(cnp)) {
+        this.toastService.warning('CNP must contain only digits');
+        return;
+      }
+      
+      this.toastService.success('CNP format is valid');
+    });
+  }
+
+  // Validare nume
+  validateNames(): void {
+    this.ngZone.run(() => {
+      if (!this.formData.firstName?.trim() || !this.formData.lastName?.trim()) {
+        return;
+      }
+      
+      const nameRegex = /^[a-zA-ZăâîșțĂÂÎȘȚ\s-]+$/;
+      if (!nameRegex.test(this.formData.firstName) || !nameRegex.test(this.formData.lastName)) {
+        this.toastService.warning('Names should contain only letters and valid characters');
+        return;
+      }
+      
+      this.toastService.success('Names are valid');
+    });
   }
 }
