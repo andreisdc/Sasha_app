@@ -31,6 +31,14 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   
+  // ✅ RUTE NOI PENTRU ACTIVITY HOSTING
+  {
+    path: 'become-activity-host',
+    loadComponent: () =>
+      import('./pages/become-activity-host/become-activity-host').then((m) => m.BecomeActivityHostComponent),
+    canActivate: [AuthGuard],
+  },
+  
   // ✅ Rute pentru proprietăți
   {
     path: 'properties',
@@ -45,13 +53,13 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
-    path: 'edit-property/:id', // ✅ RUTĂ NOUĂ PENTRU EDITARE PROPRIETATE
+    path: 'edit-property/:id',
     loadComponent: () =>
       import('./pages/edit-property/edit-property').then((m) => m.EditProperty),
     canActivate: [AuthGuard],
   },
   {
-    path: 'property/:id', // ✅ RUTA PENTRU VIZUALIZARE PROPRIETATE
+    path: 'property/:id',
     loadComponent: () =>
       import('./pages/property-details/property-details').then((m) => m.PropertyDetails),
   },
