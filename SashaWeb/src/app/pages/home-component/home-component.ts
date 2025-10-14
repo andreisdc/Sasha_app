@@ -13,10 +13,11 @@ import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
 import { Navbar } from "../../components/navbar/navbar";
+import { HeroSectionComponent } from "../../components/hero-section-component/hero-section-component";
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, SearchSection, Navbar],
+  imports: [CommonModule, DatagridComponent, SearchSection, Navbar, HeroSectionComponent],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
