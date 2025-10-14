@@ -147,6 +147,11 @@ export class Navbar implements OnInit, OnDestroy {
     this.router.navigate(['/login']); 
   }
 
+  goToSignup(): void { 
+    this.dropdownOpen = false;
+    this.router.navigate(['/login']); 
+  }
+
   /**
    * Navighează către profilul utilizatorului
    */

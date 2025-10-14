@@ -1,0 +1,59 @@
+<section id="accommodations" class="properties-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="premium-badge">
+        <span class="badge-icon">🏢</span>
+        Premium Accommodations
+      </div>
+      
+      <h2 class="section-title">
+        Find Your Perfect
+        <span class="title-accent">Sanctuary</span>
+      </h2>
+      
+      <p class="section-description">
+        From luxury resorts to cozy hideaways, discover accommodations that exceed expectations
+      </p>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories-container">
+      <app-badge 
+        *ngFor="let category of categories"
+        variant="outline"
+        className="category-badge"
+      >
+        <span class="category-icon">{{ getIconSvg(category.icon) }}</span>
+        <span class="category-label">{{ category.label }}</span>
+        <span class="category-count">({{ category.count }})</span>
+      </app-badge>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="properties-grid">
+      <app-property-card
+        *ngFor="let property of properties"
+        [id]="property.id"
+        [title]="property.title"
+        [location]="property.location"
+        [image]="property.image"
+        [price]="property.price"
+        [rating]="property.rating"
+        [reviews]="property.reviews"
+        [category]="property.category"
+        className="animate-fade-in"
+      ></app-property-card>
+    </div>
+
+    <!-- Load More -->
+    <div class="load-more-container">
+      <app-button 
+        size="lg" 
+        variant="outline"
+        className="load-more-btn"
+      >
+        Discover More Properties
+      </app-button>
+    </div>
+  </div>
+</section>

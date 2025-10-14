@@ -40,6 +40,8 @@
 
   // Left section - Logo
   .navbar-left {
+    flex: 0 0 auto;
+    
     .logo-container {
       display: flex;
       align-items: center;
@@ -84,8 +86,9 @@
     }
   }
 
-  // Center section - Navigation
+  // Center section - Navigation - CORECTAT
   .navbar-center {
+    flex: 0 0 auto;
     display: flex;
     gap: 0.75rem;
     align-items: center;
@@ -94,6 +97,10 @@
     border-radius: @radius-lg;
     border: 1px solid @border;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 
     .nav-link {
       color: @muted;
@@ -107,6 +114,7 @@
       border-radius: 10px;
       transition: @transition;
       position: relative;
+      white-space: nowrap;
 
       i {
         color: @muted;
@@ -161,9 +169,11 @@
 
   // Right section - User actions
   .navbar-right {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-left: auto;
 
     .login-btn {
       background: transparent;
@@ -177,6 +187,7 @@
       align-items: center;
       gap: 0.5rem;
       transition: @transition;
+      white-space: nowrap;
 
       &:hover {
         border-color: @primary;
@@ -196,6 +207,7 @@
       cursor: pointer;
       transition: @transition;
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      white-space: nowrap;
 
       &:hover {
         transform: translateY(-2px);
@@ -220,6 +232,7 @@
         gap: 0.5rem;
         transition: @transition;
         font-weight: 500;
+        white-space: nowrap;
 
         &:hover {
           color: @primary;
@@ -278,7 +291,7 @@
         .status-dot {
           position: absolute;
           bottom: 3px;
-          right: 3px;
+          right: 0px;
           width: 10px;
           height: 10px;
           background: @success;
@@ -504,6 +517,16 @@
 }
 
 // Responsive design
+@media (max-width: 1024px) {
+  .navbar {
+    .navbar-center {
+      position: static;
+      transform: none;
+      margin: 0;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .navbar {
     padding: 0 1.5rem;

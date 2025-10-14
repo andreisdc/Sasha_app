@@ -14,10 +14,11 @@ import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
 import { Navbar } from "../../components/navbar/navbar";
 import { HeroSectionComponent } from "../../components/hero-section-component/hero-section-component";
+import { PropertiesSectionComponent } from "../../components/properties-section-component/properties-section-component";
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, SearchSection, Navbar, HeroSectionComponent],
+  imports: [CommonModule, DatagridComponent, SearchSection, Navbar, HeroSectionComponent, PropertiesSectionComponent],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

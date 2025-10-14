@@ -1,135 +1,175 @@
 <nav class="navbar" *ngIf="!isLoading">
-  <!-- Loading State (ascuns când isLoading este false) -->
-  
-  <!-- Left: Logo -->
+  <!-- Left Section - Logo -->
   <div class="navbar-left">
-    <div class="logo-container">
+    <a class="logo-container" routerLink="/">
       <div class="logo-icon">
-        <i class="fas fa-plane"></i>
+        <i class="fas fa-compass"></i>
       </div>
       <span class="logo-text">Wanderlust</span>
-    </div>
+    </a>
   </div>
 
-  <!-- Center: Navigation -->
+  <!-- Center Section - Navigation -->
   <div class="navbar-center">
-    <a routerLink="/home" class="nav-link">
-      <i class="fas fa-home"></i>
-      <span>Home</span>
+    <a 
+      class="nav-link" 
+      routerLink="/discover"
+      routerLinkActive="active"
+      [@navItemAnimation]>
+      <i class="fas fa-search"></i>
+      <span>Discover</span>
     </a>
-    <a routerLink="/destinations" class="nav-link">
-      <i class="fas fa-map-marked-alt"></i>
+    
+    <a 
+      class="nav-link" 
+      routerLink="/destinations"
+      routerLinkActive="active"
+      [@navItemAnimation]>
+      <i class="fas fa-map-marker-alt"></i>
       <span>Destinations</span>
     </a>
-    <a routerLink="/experiences" class="nav-link">
+    
+    <a 
+      class="nav-link" 
+      routerLink="/experiences"
+      routerLinkActive="active"
+      [@navItemAnimation]>
       <i class="fas fa-star"></i>
       <span>Experiences</span>
     </a>
     
-    <!-- ✅ Buton Admin Dashboard -->
-    <a *ngIf="user?.isAdmin && isAdminView" 
-       (click)="goToAdminDashboard()" 
-       class="nav-link admin-nav">
-      <i class="fas fa-shield-alt"></i>
-      <span>Admin Dashboard</span>
+    <a 
+      class="nav-link" 
+      routerLink="/deals"
+      routerLinkActive="active"
+      [@navItemAnimation]>
+      <i class="fas fa-tag"></i>
+      <span>Deals</span>
     </a>
   </div>
 
-  <!-- Right: Login / Avatar -->
+  <!-- Right Section - User Actions -->
   <div class="navbar-right">
-    <ng-container *ngIf="!isLoggedIn; else loggedBlock">
+    <ng-container *ngIf="!isLoggedIn; else loggedInTemplate">
+      <!-- Not logged in state -->
       <button class="login-btn" (click)="goToLogin()">
-        <i class="fas fa-user"></i>
-        Sign In
-      </button>
-      <button class="primary-btn" (click)="goToLogin()">
-        List Your Property
+        <i class="fas fa-sign-in-alt"></i>
+        <span>Login</span>
       </button>
     </ng-container>
 
-    <ng-template #loggedBlock>
+    <ng-template #loggedInTemplate>
+      <!-- Logged in state -->
       <div class="user-info">
-        
-        <button class="icon-btn properties-btn" *ngIf="user?.isSeller && !isAdminView">
-          <i class="fas fa-plus"></i>
-          <span>List Property</span>
-        </button>
 
-        <div class="user-avatar" (click)="toggleDropdown()">
-          <div class="avatar" [style.background-color]="avatarColor">
-            <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== 'assets/default-avatar.png'; else initial">
-              <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
-            </ng-container>
-            <ng-template #initial>
-              {{ userInitial }}
-            </ng-template>
+        <!-- User Avatar & Dropdown -->
+        <div class="user-avatar">
+          <div class="avatar" (click)="toggleDropdown()">
+            <img 
+              [src]="displayProfilePicture" 
+              [alt]="user?.username"
+              class="avatar-img"
+              onerror="this.src='assets/default-avatar.png'">
+            <div class="status-dot"></div>
           </div>
-          <div class="status-dot"></div>
-        </div>
 
-        <!-- Dropdown Menu -->
-        <div class="dropdown" *ngIf="dropdownOpen" @dropdownAnimation>
-          <div class="user-profile">
-            <div class="dropdown-avatar" [style.background-color]="avatarColor">
-              <ng-container *ngIf="displayProfilePicture && displayProfilePicture !== 'assets/default-avatar.png'; else initialDropdown">
-                <img [src]="displayProfilePicture" alt="Avatar" class="avatar-img">
+          <!-- Dropdown Menu -->
+          <div 
+            class="dropdown" 
+            *ngIf="dropdownOpen"
+            [@dropdownAnimation]>
+            
+            <!-- User Profile Section -->
+            <div class="user-profile">
+              <div class="dropdown-avatar">
+                <img 
+                  [src]="displayProfilePicture" 
+                  [alt]="user?.username"
+                  class="avatar-img"
+                  onerror="this.src='assets/default-avatar.png'">
+              </div>
+              <div class="user-details">
+                <div class="dropdown-username">
+                  {{ displayUsername }}
+                  <span *ngIf="user?.isAdmin" class="admin-indicator">
+                    <i class="fas fa-crown"></i>
+                  </span>
+                </div>
+                <div class="user-email">{{ displayEmail }}</div>
+                
+                <!-- View Mode Indicator -->
+                <div 
+                  *ngIf="user?.isAdmin"
+                  class="view-mode-indicator"
+                  [class.admin-mode]="isAdminView"
+                  [class.user-mode]="!isAdminView">
+                  <i class="fas" [class.fa-user-shield]="isAdminView" [class.fa-user]="!isAdminView"></i>
+                  {{ isAdminView ? 'Admin Mode' : 'User Mode' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Dropdown Menu Items -->
+            <div class="dropdown-menu">
+              <!-- Regular User Options (doar în mod User) -->
+              <ng-container *ngIf="!isAdminView">
+                <div class="menu-item" (click)="goToProfile()">
+                  <i class="fas fa-user"></i>
+                  <span>Profile</span>
+                </div>
+                
+                <div class="menu-item" (click)="goToHistory()">
+                  <i class="fas fa-history"></i>
+                  <span>Booking History</span>
+                </div>
+
+
+                <!-- Seller Options (doar în mod User) -->
+                <ng-container *ngIf="canShowSellerOptions">
+                  <div class="menu-item seller-option" (click)="goToProperties()">
+                    <i class="fas fa-home"></i>
+                    <span>My Properties</span>
+                  </div>
+                  
+                  <div class="menu-item seller-option" (click)="goToListProperty()">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>List Property</span>
+                  </div>
+                </ng-container>
+
+                <!-- Become Seller Option (doar în mod User) -->
+                <div 
+                  *ngIf="showBecomeSeller"
+                  class="menu-item seller-option" 
+                  (click)="becomeSeller()">
+                  <i class="fas fa-store"></i>
+                  <span>Become a Seller</span>
+                </div>
               </ng-container>
-              <ng-template #initialDropdown>
-                {{ userInitial }}
-              </ng-template>
-            </div>
-            <div class="user-details">
-              <div class="dropdown-username">
-                {{ user?.username || 'User' }}
-                <span *ngIf="user?.isAdmin" class="admin-indicator">
-                  <i class="fas fa-shield-alt"></i>
-                </span>
-              </div>
-              <div class="user-email">
-                {{ user?.email || 'Premium Member' }}
-              </div>
-              <!-- ✅ Indicator pentru modul curent -->
-              <div *ngIf="isAdminView" class="view-mode-indicator admin-mode">
-                <i class="fas fa-eye"></i> Admin View Active
-              </div>
-              <div *ngIf="!isAdminView && user?.isAdmin" class="view-mode-indicator user-mode">
-                <i class="fas fa-user"></i> User View Active
-              </div>
-            </div>
-          </div>
 
-          <div class="dropdown-menu">
-            <a (click)="goToProfile()" class="menu-item">
-              <i class="fas fa-user"></i>
-              <span>My Profile</span>
-            </a>
-            
-            <!-- ✅ Switch-ul care doar comută modul -->
-            <a *ngIf="user?.isAdmin" (click)="toggleAdminView()" class="menu-item admin-option">
-              <i class="fas fa-sync-alt"></i>
-              <span>{{ isAdminView ? 'Switch to User View' : 'Switch to Admin View' }}</span>
-            </a>
-            
-            <a *ngIf="!user?.isSeller && !isAdminView" (click)="becomeSeller()" class="menu-item seller-option">
-              <i class="fas fa-store"></i>
-              <span>Become Seller</span>
-            </a>
-            
-            <ng-container *ngIf="user?.isSeller && !isAdminView">
-              <a (click)="goToProperties()" class="menu-item">
-                <i class="fas fa-building"></i>
-                <span>My Properties</span>
-              </a>
-              <a (click)="goToHistory()" class="menu-item">
-                <i class="fas fa-history"></i>
-                <span>Booking History</span>
-              </a>
-            </ng-container>
-            
-            <a (click)="logout()" class="menu-item logout-option">
-              <i class="fas fa-sign-out-alt"></i>
-              <span>Logout</span>
-            </a>
+              <!-- Admin Options -->
+              <ng-container *ngIf="user?.isAdmin">
+                <div class="menu-item admin-option" (click)="toggleAdminView()">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>{{ isAdminView ? 'Switch to User View' : 'Switch to Admin View' }}</span>
+                </div>
+                
+                <!-- Dashboard doar în mod Admin -->
+                <div 
+                  *ngIf="isAdminView"
+                  class="menu-item admin-option" 
+                  (click)="goToAdminDashboard()">
+                  <i class="fas fa-tachometer-alt"></i>
+                  <span>Admin Dashboard</span>
+                </div>
+              </ng-container>
+
+              <!-- Logout Option -->
+              <div class="menu-item logout-option" (click)="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
