@@ -1,0 +1,208 @@
+<app-navbar></app-navbar>
+<div class="properties-page">
+  <div class="container">
+    <div class="page-content">
+      <!-- Sidebar Filters -->
+      <aside class="filters-sidebar">
+        <!-- Search in Sidebar -->
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              class="search-input" 
+              placeholder="Search properties..."
+              [value]="selectedFilters.search"
+              (input)="onSearchChange($any($event.target).value)"
+            >
+          </div>
+        </div>
+
+        <div class="filters-header">
+          <h3>Filters 
+            <span *ngIf="getActiveFiltersCount() > 0" class="active-filters-count">
+              ({{ getActiveFiltersCount() }})
+            </span>
+          </h3>
+          <button class="clear-filters" (click)="clearFilters()">Clear All</button>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <h4 class="filter-title">Price Range (per night)</h4>
+          <div class="filter-options">
+            <label *ngFor="let range of priceRanges" class="filter-option">
+              <input 
+                type="radio" 
+                name="priceRange" 
+                [value]="range.value"
+                [checked]="selectedFilters.priceRange === range.value"
+                (change)="onFilterChange('priceRange', range.value)">
+              <span class="checkmark"></span>
+              {{ range.label }}
+            </label>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="filter-group">
+          <h4 class="filter-title">Property Type</h4>
+          <div class="filter-options">
+            <label *ngFor="let category of categories" class="filter-option">
+              <input 
+                type="radio" 
+                name="category" 
+                [value]="category.value"
+                [checked]="selectedFilters.category === category.value"
+                (change)="onFilterChange('category', category.value)">
+              <span class="checkmark"></span>
+              {{ category.label }}
+              <span class="count">({{ category.count }})</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Bedrooms -->
+        <div class="filter-group">
+          <h4 class="filter-title">Bedrooms</h4>
+          <div class="filter-options">
+            <label class="filter-option">
+              <input 
+                type="radio" 
+                name="bedrooms" 
+                value="1"
+                [checked]="selectedFilters.bedrooms === '1'"
+                (change)="onFilterChange('bedrooms', '1')">
+              <span class="checkmark"></span>
+              1 Bedroom
+            </label>
+            <label class="filter-option">
+              <input 
+                type="radio" 
+                name="bedrooms" 
+                value="2"
+                [checked]="selectedFilters.bedrooms === '2'"
+                (change)="onFilterChange('bedrooms', '2')">
+              <span class="checkmark"></span>
+              2 Bedrooms
+            </label>
+            <label class="filter-option">
+              <input 
+                type="radio" 
+                name="bedrooms" 
+                value="3"
+                [checked]="selectedFilters.bedrooms === '3'"
+                (change)="onFilterChange('bedrooms', '3')">
+              <span class="checkmark"></span>
+              3+ Bedrooms
+            </label>
+          </div>
+        </div>
+
+        <!-- Amenities -->
+        <div class="filter-group">
+          <h4 class="filter-title">Amenities</h4>
+          <div class="filter-options">
+            <label *ngFor="let amenity of amenities" class="filter-option">
+              <input 
+                type="checkbox" 
+                [value]="amenity"
+                [checked]="selectedFilters.amenities.includes(amenity)"
+                (change)="onFilterChange('amenities', amenity)">
+              <span class="checkmark checkbox"></span>
+              {{ amenity }}
+            </label>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Properties Main Content -->
+      <main class="properties-main">
+        <!-- Results Header -->
+        <div class="results-header">
+          <h2 class="results-count">
+            <span *ngIf="getActiveFiltersCount() > 0" class="filtered-indicator">
+              • {{ getActiveFiltersCount() }} filter{{ getActiveFiltersCount() > 1 ? 's' : '' }} applied
+            </span>
+          </h2>
+        </div>
+
+        <!-- Properties Grid -->
+        <div class="properties-grid">
+          <div *ngFor="let property of filteredProperties" class="property-card-horizontal">
+            <!-- Property Image -->
+            <div class="property-image">
+              <img [src]="property.image" [alt]="property.title">
+              <div class="property-badge">{{ property.category }}</div>
+            </div>
+
+            <!-- Property Details -->
+            <div class="property-details">
+              <div class="property-header">
+                <div class="property-title-section">
+                  <h3 class="property-title">{{ property.title }}</h3>
+                  <p class="property-location">📍 {{ property.location }}</p>
+                </div>
+                <div class="property-price">${{ property.price }}<span class="price-period">/night</span></div>
+              </div>
+
+              <div class="property-features">
+                <div class="feature">
+                  <span class="feature-icon">🛏️</span>
+                  <span>{{ property.bedrooms }} Bed</span>
+                </div>
+                <div class="feature">
+                  <span class="feature-icon">🚿</span>
+                  <span>{{ property.bathrooms }} Bath</span>
+                </div>
+                <div class="feature">
+                  <span class="feature-icon">📐</span>
+                  <span>{{ property.area }}</span>
+                </div>
+              </div>
+
+              <div class="property-amenities">
+                <span *ngFor="let amenity of property.amenities.slice(0, 3)" class="amenity-tag">
+                  {{ amenity }}
+                </span>
+                <span *ngIf="property.amenities.length > 3" class="amenity-more">
+                  +{{ property.amenities.length - 3 }} more
+                </span>
+              </div>
+
+              <div class="property-footer">
+                <div class="property-rating">
+                  <span class="rating-stars">★★★★★</span>
+                  <span class="rating-value">{{ property.rating }}</span>
+                  <span class="reviews">({{ property.reviews }} reviews)</span>
+                </div>
+                <button class="book-now-btn">
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Results -->
+        <div *ngIf="filteredProperties.length === 0" class="no-results">
+          <div class="no-results-content">
+            <span class="no-results-icon">🔍</span>
+            <h3>No properties found</h3>
+            <p>Try adjusting your filters or search terms to find more options.</p>
+            <button class="clear-filters-btn" (click)="clearFilters()">
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+
+        <!-- Load More -->
+        <div *ngIf="filteredProperties.length > 0" class="load-more-container">
+          <app-button size="lg" variant="outline" className="load-more-btn">
+            Show More Properties
+          </app-button>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

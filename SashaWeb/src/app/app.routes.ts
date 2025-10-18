@@ -38,10 +38,16 @@ export const routes: Routes = [
       import('./pages/become-activity-host/become-activity-host').then((m) => m.BecomeActivityHostComponent),
     canActivate: [AuthGuard],
   },
+
+  {
+    path:'properties',
+    loadComponent:() =>
+      import('./pages/properties-page-component/properties-page-component').then((m)=>m.PropertiesPageComponent),
+  },
   
   // ✅ Rute pentru proprietăți
   {
-    path: 'properties',
+    path: 'myProperties',
     loadComponent: () =>
       import('./pages/my-properties/my-properties').then((m) => m.MyProperties),
     canActivate: [AuthGuard],
