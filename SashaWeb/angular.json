@@ -48,7 +48,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.less"],
+            "styles": ["src/styles.less","node_modules/leaflet/dist/leaflet.css"],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {

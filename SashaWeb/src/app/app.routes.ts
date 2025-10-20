@@ -29,6 +29,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/become-seller-page/become-seller-page').then((m) => m.BecomeSellerPageComponent),
     canActivate: [AuthGuard],
+  }, 
+   {
+    path: 'destination',
+    loadComponent: () =>
+      import('./pages/destination-page/destination-page').then((m) => m.DestinationPage),
+    canActivate: [AuthGuard],
   },
   
   // ✅ RUTE NOI PENTRU ACTIVITY HOSTING
