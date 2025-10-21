@@ -14,14 +14,23 @@ interface Location {
   name: string; lat: number; lng: number; slug: string; type: string; image: string;
   description: string; highlights: string[]; bestTime: string; county: string;
   population?: string; founded?: string; traditionalCraft?: string;
-  bestMonths?: string[]; // Adăugat: luni recomandate pentru vizită
-  seasons?: string[]; // Adăugat: sezoane recomandate
+  bestMonths?: string[]; 
+  seasons?: string[]; 
 }
 
 interface MonthOption {
   value: string;
   name: string;
   season: string;
+}
+
+// NOU: Interfață pentru detaliile categoriei
+interface CategoryDetail {
+  name: string; // 'castle', 'nature', etc.
+  displayName: string; // 'Castles', 'Natural Wonders'
+  description: string;
+  image: string; // URL către o imagine reprezentativă
+  facts: string[]; // Fapte interesante
 }
 
 @Component({
@@ -44,14 +53,14 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   private markerLayerGroup: L.LayerGroup = L.layerGroup();
   private romaniaOutlineLayer: L.Layer | null = null;
   
-  public readonly options = {
+ public readonly options = {
     layers: [L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors, &copy; CARTO'
     })],
     zoom: 7, 
     center: L.latLng(45.9432, 24.9668),
     minZoom: 6, 
-    maxZoom: 12,
+    maxZoom: 15,
     maxBounds: L.latLngBounds(
       L.latLng(43.5, 20.0),
       L.latLng(48.5, 30.0)
@@ -59,14 +68,12 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     maxBoundsViscosity: 1.0,
     zoomControl: false
   };
-
   public activeFilter: string = 'all';
   public filterTypes: string[] = [];
   public locations: Location[] = [];
   public counties: string[] = [];
   public selectedCounty: string = 'all';
 
-  // Filtre noi pentru sezon și lună
   public selectedSeason: string = 'all';
   public selectedMonth: string = 'all';
   public seasons: string[] = ['all', 'spring', 'summer', 'autumn', 'winter'];
@@ -86,10 +93,129 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     { value: 'december', name: 'Decembrie', season: 'winter' }
   ];
 
-  public activeLocation: Location | null = null;
+  // MODIFICAT: Starea panoului va gestiona acum ambele tipuri de conținut
+  public activePanelContent: Location | CategoryDetail | null = null;
+  public panelContentType: 'location' | 'category' | null = null;
   public panelState: 'in' | 'out' = 'out';
 
   private iconCache: Map<string, L.DivIcon> = new Map();
+
+  // NOU: Datele pentru panoul de categorii
+  // Notă: Va trebui să adaugi imaginile corespunzătoare în folderul `assets`
+  private categoryDetails: { [key: string]: CategoryDetail } = {
+    'castle': {
+      name: 'castle',
+      displayName: 'Castles & Palaces',
+      description: 'Romania is famed for its stunning castles, from medieval strongholds to royal palaces. These structures are rich in history, legend, and architectural beauty, often set in dramatic landscapes.',
+      image: 'assets/images/categories/category-castle.jpg', // Asigură-te că ai această imagine
+      facts: [
+        'Bran Castle is famously (though inaccurately) linked to the Dracula legend.',
+        'Peleș Castle was the first in Europe to be fully lit by electricity.',
+        'Corvin Castle is one of the largest castles in Europe and a prime example of Gothic architecture.'
+      ]
+    },
+    'nature': {
+      name: 'nature',
+      displayName: 'Natural Wonders',
+      description: 'From the peaks of the Carpathian Mountains to the unique ecosystem of the Danube Delta, Romania offers breathtaking natural diversity. Explore national parks, waterfalls, caves, and pristine forests.',
+      image: 'assets/images/categories/category-nature.jpg',
+      facts: [
+        'The Danube Delta is a UNESCO World Heritage site and a paradise for bird watchers.',
+        'The Carpathian Mountains are home to the largest populations of brown bears, wolves, and lynx in Europe.',
+        'Bigăr Waterfall is famous for the unique way the water spreads over a moss-covered rock.'
+      ]
+    },
+    'village': {
+      name: 'village',
+      displayName: 'Traditional Villages',
+      description: 'Discover the heart of Romanian culture in its traditional villages. Here, ancient customs, crafts, and a simpler way of life are preserved, offering a unique glimpse into the country\'s soul.',
+      image: 'assets/images/categories/category-village.jpg',
+      facts: [
+        'The painted monasteries of Bucovina are UNESCO World Heritage sites.',
+        'Maramureș is famous for its unique wooden churches with towering spires.',
+        'Villages like Viscri and Biertan in Transylvania have fortified churches, also part of UNESCO heritage.'
+      ]
+    },
+    'monastery': {
+      name: 'monastery',
+      displayName: 'Monasteries',
+      description: 'Romanian monasteries are centers of spiritual life, art, and history. Many are architectural masterpieces, renowned for their stunning frescoes, peaceful courtyards, and rich collections.',
+      image: 'assets/images/categories/category-monastery.jpg',
+      facts: [
+        'Voroneț Monastery is known as the "Sistine Chapel of the East" for its vibrant blue frescoes.',
+        'Many monasteries were built by great rulers like Stephen the Great as a sign of gratitude after battles.',
+        'The monasteries in Oltenia (like Horezu) are known for the distinct "Brâncovenesc" architectural style.'
+      ]
+    },
+    'city': {
+      name: 'city',
+      displayName: 'Historic Cities',
+      description: 'Explore Romania\'s vibrant cities, where medieval history blends with modern energy. Discover charming old towns, grand architecture, and a lively cultural scene.',
+      image: 'assets/images/categories/category-city.jpg',
+      facts: [
+        'Sighișoara boasts one of the last inhabited medieval citadels in Europe and is a UNESCO site.',
+        'Brașov features the "Black Church", the largest Gothic church between Vienna and Istanbul.',
+        'Timișoara was the first city in mainland Europe to have electric street lighting.'
+      ]
+    },
+    'fortress': {
+      name: 'fortress',
+      displayName: 'Fortresses & Citadels',
+      description: 'Standing as silent witnesses to a turbulent history, Romania\'s fortresses range from imposing hilltop citadels to heavily fortified churches built by Saxon settlers in Transylvania.',
+      image: 'assets/images/categories/category-fortress.jpg',
+      facts: [
+        'Râșnov Fortress was built by Teutonic Knights in the 13th century and offered refuge for villagers.',
+        'The Alba Carolina Citadel in Alba Iulia is a massive, star-shaped Vauban-style fortress.',
+        'Many Transylvanian villages have fortified churches, unique in Europe, built to protect against invasions.'
+      ]
+    },
+    'beach': {
+      name: 'beach',
+      displayName: 'Black Sea Beaches',
+      description: 'Romania\'s Black Sea coast offers sandy beaches, vibrant resorts, and therapeutic mud spas. From the lively atmosphere of Mamaia to the relaxed vibe of Vama Veche, there is a spot for everyone.',
+      image: 'assets/images/categories/category-beach.jpg',
+      facts: [
+        'Techirghiol Lake, near the coast, is famous for its sapropelic mud, known for its healing properties.',
+        'Mamaia is one of the oldest and largest resorts, known for its vibrant nightlife.',
+        'Vama Veche maintains a bohemian, artistic atmosphere, popular with students and creatives.'
+      ]
+    },
+    'mountain': {
+      name: 'mountain',
+      displayName: 'Mountain Adventures',
+      description: 'The Carpathian Mountains are the green heart of Romania, offering endless opportunities for hiking, wildlife watching, and exploring scenic routes like the Transfăgărășan and Transalpina.',
+      image: 'assets/images/categories/category-mountain.jpg',
+      facts: [
+        'The Transfăgărășan was named "the best road in the world" by Top Gear.',
+        'The Carpathians are divided into three main ranges: Eastern, Southern (with the highest peaks), and Western.',
+        'Piatra Craiului National Park is a massive limestone ridge, perfect for challenging hikes.'
+      ]
+    },
+    'history': {
+      name: 'history',
+      displayName: 'Historical Sites',
+      description: 'Journey back in time by visiting Romania\'s rich historical sites. From the ruins of the ancient Dacian kingdom to medieval towns and Roman vestiges, the past is always present.',
+      image: 'assets/images/categories/category-history.jpg',
+      facts: [
+        'Sarmizegetusa Regia was the capital and most important military and religious center of the ancient Dacians.',
+        'Adamclisi features a grand monument, Tropaeum Traiani, built by Emperor Trajan to celebrate his victory over the Dacians.',
+        'The Histria Citadel is the oldest certified town on Romanian territory, founded by Greek colonists.'
+      ]
+    },
+    'ski': {
+      name: 'ski',
+      displayName: 'Ski Resorts',
+      description: 'During winter, Romania\'s mountains transform into a paradise for ski and snowboard enthusiasts. Resorts like Poiana Brașov, Sinaia, and Predeal offer slopes for all skill levels.',
+      image: 'assets/images/categories/category-ski.jpg',
+      facts: [
+        'Poiana Brașov is the largest and one of the most modern ski resorts in Romania.',
+        'Sinaia is known as the "Pearl of the Carpathians" and offers high-altitude skiing.',
+        'The ski season in Romania generally lasts from December until March or April, depending on the altitude.'
+      ]
+    }
+
+  };
+
 
   constructor(
     private readonly http: HttpClient,
@@ -121,6 +247,15 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
       this.map.remove();
       this.iconCache.clear();
     }
+  }
+
+  // NOU: Getters pentru a accesa ușor conținutul activ în template
+  public get activeLocation(): Location | null {
+    return this.panelContentType === 'location' ? (this.activePanelContent as Location) : null;
+  }
+  
+  public get activeCategory(): CategoryDetail | null {
+    return this.panelContentType === 'category' ? (this.activePanelContent as CategoryDetail) : null;
   }
 
   onMapReady($event: L.Map) {
@@ -182,14 +317,12 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(l => l.county === this.selectedCounty);
     }
 
-    // Filtrare după sezon
     if (this.selectedSeason !== 'all') {
       filtered = filtered.filter(l => 
         l.seasons && l.seasons.includes(this.selectedSeason)
       );
     }
 
-    // Filtrare după lună
     if (this.selectedMonth !== 'all') {
       filtered = filtered.filter(l => 
         l.bestMonths && l.bestMonths.includes(this.selectedMonth)
@@ -259,7 +392,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     return monthColors[month] || monthColors['all'];
   }
 
-  // Restul metodelor rămân la fel...
   private getIconForLocation(type: string = 'default', zoomLevel?: number): L.DivIcon {
     const cacheKey = `${type}_${zoomLevel || this.map?.getZoom() || 7}`;
     
@@ -386,20 +518,39 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  // MODIFICAT: Logica de deschidere panou
   public openPanelWithLocation(location: Location) {
-    this.activeLocation = location;
+    this.activePanelContent = location;
+    this.panelContentType = 'location';
     this.panelState = 'in';
     this.cdr.detectChanges();
   }
 
+  // NOU: Metodă pentru a deschide panoul cu detalii despre categorie
+  public openPanelWithCategory(type: string) {
+    const categoryData = this.categoryDetails[type];
+    if (categoryData) {
+      this.activePanelContent = categoryData;
+      this.panelContentType = 'category';
+      this.panelState = 'in';
+      this.cdr.detectChanges();
+    } else {
+      // Dacă nu avem detalii (ex: 'ski', 'beach' etc.), doar filtrăm
+      this.setFilter(type);
+    }
+  }
+
+  // MODIFICAT: Logica de închidere panou
   public closePanel() {
     this.panelState = 'out';
     this.cdr.detectChanges();
   }
 
+  // MODIFICAT: Logica de resetare după animație
   public onAnimationDone(event: any) {
     if (event.toState === 'out') {
-      this.activeLocation = null;
+      this.activePanelContent = null;
+      this.panelContentType = null;
       this.cdr.detectChanges();
     }
   }

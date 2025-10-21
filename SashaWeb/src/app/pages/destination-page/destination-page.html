@@ -1,7 +1,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <div class="page-wrapper">
 
-  <!-- Header Section -->
   <header class="page-header">
     <div class="header-content">
       <h1 class="page-title">Discover Romania</h1>
@@ -23,7 +22,6 @@
     </div>
   </header>
 
-  <!-- Map Section -->
   <section class="map-section">
     <div class="section-header">
       <h2 class="section-title">Interactive Map</h2>
@@ -31,9 +29,7 @@
     </div>
 
     <div class="map-container">
-      <!-- Filtre principale -->
       <div class="main-filters">
-        <!-- County Filter -->
         <div class="filter-group">
           <label for="county-select" class="filter-label">
             <i class="fa-solid fa-map"></i>
@@ -47,7 +43,6 @@
 
       </div>
 
-      <!-- Type Filter -->
       <div class="filter-bar">
         <span class="filter-label">Filter by Type:</span>
         <div class="filter-chips">
@@ -65,7 +60,6 @@
       </div>
 
 
-      <!-- Map -->
       <div class="map-frame">
         <div
           class="map"
@@ -75,7 +69,6 @@
         </div>
       </div>
 
-      <!-- Results Counter -->
       <div class="results-counter">
         <i class="fa-solid fa-location-dot"></i>
         Showing {{ getFilteredLocations().length }} of {{ locations.length }} destinations
@@ -89,7 +82,6 @@
     </div>
   </section>
 
-  <!-- Featured Categories Section -->
   <section class="categories-section">
     <div class="section-header">
       <h2 class="section-title">Popular Categories</h2>
@@ -100,8 +92,7 @@
       <div 
         *ngFor="let type of filterTypes.slice(1)" 
         class="category-card"
-        (click)="setFilter(type)">
-        <div class="category-icon">
+        (click)="openPanelWithCategory(type)"> <div class="category-icon">
           <i [class]="getIconClass(type)" [style.color]="getIconColor(type)"></i>
         </div>
         <h3 class="category-name">{{ type | titlecase }}</h3>
@@ -110,7 +101,6 @@
     </div>
   </section>
 
-  <!-- Details Panel -->
   <div
     class="details-panel"
     [@slideInOut]="panelState"
@@ -122,159 +112,199 @@
       </span>
     </button>
 
-    <div *ngIf="activeLocation" class="panel-scroll-content">
-      <!-- Panel Header with Image -->
-      <div class="panel-header">
-        <div class="panel-image">
-          <img [src]="activeLocation.image" [alt]="activeLocation.name">
-        </div>
-        <div class="panel-type-badge">
-          <span class="badge-icon">
-            <i [class]="getIconClass(activeLocation.type)" [style.color]="getIconColor(activeLocation.type)"></i>
-          </span>
-          {{ activeLocation.type | titlecase }}
-        </div>
-      </div>
-
-      <!-- Panel Content -->
-      <div class="panel-content">
-        <div class="panel-meta">
-          <span class="panel-county">
-            <span class="county-icon">
-              <i class="fa-solid fa-location-dot"></i>
+    <div *ngIf="activePanelContent" class="panel-scroll-content">
+      
+      <ng-container *ngIf="panelContentType === 'location' && activeLocation">
+        <div class="panel-header">
+          <div class="panel-image">
+            <img [src]="activeLocation.image" [alt]="activeLocation.name">
+          </div>
+          <div class="panel-type-badge">
+            <span class="badge-icon">
+              <i [class]="getIconClass(activeLocation.type)" [style.color]="getIconColor(activeLocation.type)"></i>
             </span>
-            {{ activeLocation.county }} County
-          </span>
+            {{ activeLocation.type | titlecase }}
+          </div>
         </div>
 
-        <h2 class="panel-title">{{ activeLocation.name }}</h2>
-        <p class="panel-description">{{ activeLocation.description }}</p>
-
-        <!-- Best Time & Seasons -->
-        <div class="panel-section" *ngIf="activeLocation.bestMonths || activeLocation.seasons">
-          <h4 class="section-title">
-            <span class="title-icon">
-              <i class="fa-solid fa-calendar-check"></i>
+        <div class="panel-content">
+          <div class="panel-meta">
+            <span class="panel-county">
+              <span class="county-icon">
+                <i class="fa-solid fa-location-dot"></i>
+              </span>
+              {{ activeLocation.county }} County
             </span>
-            Best Time to Visit
-          </h4>
-          <div class="time-info-grid">
-            <div class="time-info-item" *ngIf="activeLocation.bestTime">
-              <span class="time-icon">
-                <i class="fa-solid fa-clock"></i>
+          </div>
+
+          <h2 class="panel-title">{{ activeLocation.name }}</h2>
+          <p class="panel-description">{{ activeLocation.description }}</p>
+
+          <div class="panel-section" *ngIf="activeLocation.bestMonths || activeLocation.seasons">
+            <h4 class="section-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-calendar-check"></i>
               </span>
-              <div class="time-content">
-                <span class="time-label">Recommended</span>
-                <span class="time-value">{{ activeLocation.bestTime }}</span>
-              </div>
-            </div>
-            <div class="time-info-item" *ngIf="activeLocation.bestMonths && activeLocation.bestMonths.length > 0">
-              <span class="time-icon">
-                <i class="fa-solid fa-calendar"></i>
-              </span>
-              <div class="time-content">
-                <span class="time-label">Best Months</span>
-                <div class="month-tags">
-                  <span *ngFor="let month of getLocationMonthNames(activeLocation.bestMonths)" class="month-tag">
-                    {{ month }}
-                  </span>
+              Best Time to Visit
+            </h4>
+            <div class="time-info-grid">
+              <div class="time-info-item" *ngIf="activeLocation.bestTime">
+                <span class="time-icon">
+                  <i class="fa-solid fa-clock"></i>
+                </span>
+                <div class="time-content">
+                  <span class="time-label">Recommended</span>
+                  <span class="time-value">{{ activeLocation.bestTime }}</span>
                 </div>
               </div>
-            </div>
-            <div class="time-info-item" *ngIf="activeLocation.seasons && activeLocation.seasons.length > 0">
-              <span class="time-icon">
-                <i class="fa-solid fa-sun"></i>
-              </span>
-              <div class="time-content">
-                <span class="time-label">Seasons</span>
-                <div class="season-tags">
-                  <span *ngFor="let season of activeLocation.seasons" class="season-tag">
-                    {{ season | titlecase }}
-                  </span>
+              <div class="time-info-item" *ngIf="activeLocation.bestMonths && activeLocation.bestMonths.length > 0">
+                <span class="time-icon">
+                  <i class="fa-solid fa-calendar"></i>
+                </span>
+                <div class="time-content">
+                  <span class="time-label">Best Months</span>
+                  <div class="month-tags">
+                    <span *ngFor="let month of getLocationMonthNames(activeLocation.bestMonths)" class="month-tag">
+                      {{ month }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="time-info-item" *ngIf="activeLocation.seasons && activeLocation.seasons.length > 0">
+                <span class="time-icon">
+                  <i class="fa-solid fa-sun"></i>
+                </span>
+                <div class="time-content">
+                  <span class="time-label">Seasons</span>
+                  <div class="season-tags">
+                    <span *ngFor="let season of activeLocation.seasons" class="season-tag">
+                      {{ season | titlecase }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Location Info -->
-        <div class="location-details" *ngIf="activeLocation.population || activeLocation.founded || activeLocation.traditionalCraft">
-          <h4 class="details-title">
-            <span class="title-icon">
-              <i class="fa-solid fa-circle-info"></i>
-            </span>
-            Location Details
-          </h4>
-          <div class="details-grid">
-            <div class="detail-item" *ngIf="activeLocation.population">
-              <span class="detail-icon">
-                <i class="fa-solid fa-users"></i>
+          <div class="location-details" *ngIf="activeLocation.population || activeLocation.founded || activeLocation.traditionalCraft">
+            <h4 class="details-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-circle-info"></i>
               </span>
-              <div class="detail-content">
-                <span class="detail-label">Population</span>
-                <span class="detail-value">{{ activeLocation.population }}</span>
+              Location Details
+            </h4>
+            <div class="details-grid">
+              <div class="detail-item" *ngIf="activeLocation.population">
+                <span class="detail-icon">
+                  <i class="fa-solid fa-users"></i>
+                </span>
+                <div class="detail-content">
+                  <span class="detail-label">Population</span>
+                  <span class="detail-value">{{ activeLocation.population }}</span>
+                </div>
               </div>
-            </div>
-            <div class="detail-item" *ngIf="activeLocation.founded">
-              <span class="detail-icon">
-                <i class="fa-solid fa-calendar-day"></i>
-              </span>
-              <div class="detail-content">
-                <span class="detail-label">Founded</span>
-                <span class="detail-value">{{ activeLocation.founded }}</span>
+              <div class="detail-item" *ngIf="activeLocation.founded">
+                <span class="detail-icon">
+                  <i class="fa-solid fa-calendar-day"></i>
+                </span>
+                <div class="detail-content">
+                  <span class="detail-label">Founded</span>
+                  <span class="detail-value">{{ activeLocation.founded }}</span>
+                </div>
               </div>
-            </div>
-            <div class="detail-item" *ngIf="activeLocation.traditionalCraft">
-              <span class="detail-icon">
-                <i class="fa-solid fa-hammer"></i>
-              </span>
-              <div class="detail-content">
-                <span class="detail-label">Traditional Craft</span>
-                <span class="detail-value">{{ activeLocation.traditionalCraft }}</span>
+              <div class="detail-item" *ngIf="activeLocation.traditionalCraft">
+                <span class="detail-icon">
+                  <i class="fa-solid fa-hammer"></i>
+                </span>
+                <div class="detail-content">
+                  <span class="detail-label">Traditional Craft</span>
+                  <span class="detail-value">{{ activeLocation.traditionalCraft }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Highlights Section -->
-        <div class="panel-section">
-          <h4 class="section-title">
-            <span class="title-icon">
-              <i class="fa-solid fa-star"></i>
-            </span>
-            Main Attractions
-          </h4>
-          <ul class="panel-highlights-list">
-            <li *ngFor="let highlight of activeLocation.highlights" class="highlight-item">
-              <span class="highlight-icon">
-                <i class="fa-solid fa-check"></i>
+          <div class="panel-section">
+            <h4 class="section-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-star"></i>
               </span>
-              <span class="highlight-text">{{ highlight }}</span>
-            </li>
-          </ul>
+              Main Attractions
+            </h4>
+            <ul class="panel-highlights-list">
+              <li *ngFor="let highlight of activeLocation.highlights" class="highlight-item">
+                <span class="highlight-icon">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+                <span class="highlight-text">{{ highlight }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-actions">
+            <button class="panel-explore-btn" (click)="navigateToDestination(activeLocation.slug)">
+              Discover More
+              <span class="btn-icon">
+                <i class="fa-solid fa-arrow-right"></i>
+              </span>
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="panelContentType === 'category' && activeCategory">
+        <div class="panel-header">
+          <div class="panel-image">
+            <img [src]="activeCategory.image" [alt]="activeCategory.displayName">
+          </div>
+          <div class="panel-type-badge">
+            <span class="badge-icon">
+              <i [class]="getIconClass(activeCategory.name)" [style.color]="getIconColor(activeCategory.name)"></i>
+            </span>
+            {{ activeCategory.displayName }}
+          </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="panel-actions">
-          <button class="panel-explore-btn" (click)="navigateToDestination(activeLocation.slug)">
-            Discover More
-            <span class="btn-icon">
-              <i class="fa-solid fa-arrow-right"></i>
-            </span>
-          </button>
+        <div class="panel-content">
+          <h2 class="panel-title">{{ activeCategory.displayName }}</h2>
+          <p class="panel-description">{{ activeCategory.description }}</p>
+
+          <div class="panel-section">
+            <h4 class="section-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-star"></i>
+              </span>
+              Interesting Facts
+            </h4>
+            <ul class="panel-highlights-list">
+              <li *ngFor="let fact of activeCategory.facts" class="highlight-item">
+                <span class="highlight-icon">
+                  <i class="fa-solid fa-lightbulb"></i> </span>
+                <span class="highlight-text">{{ fact }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-actions">
+            <button class="panel-explore-btn" (click)="setFilter(activeCategory.name); closePanel()">
+              View all {{ activeCategory.displayName }}
+              <span class="btn-icon">
+                <i class="fa-solid fa-arrow-right"></i>
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
+      </ng-container>
+
     </div>
   </div>
 
-  <!-- Overlay -->
   <div
     class="panel-overlay"
     *ngIf="panelState === 'in'"
     (click)="closePanel()">
   </div>
 
-  <!-- Footer -->
   <footer class="page-footer">
     <div class="footer-content">
       <div class="footer-section">
