@@ -1,231 +1,443 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
+import { CommonModule } from '@angular/common';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+
+// Importăm fișierul JSON direct din același folder
+import * as locationsData from './data.json';
+import { Navbar } from "../../components/navbar/navbar";
+
+interface Location {
+  name: string; lat: number; lng: number; slug: string; type: string; image: string;
+  description: string; highlights: string[]; bestTime: string; county: string;
+  population?: string; founded?: string; traditionalCraft?: string;
+  bestMonths?: string[]; // Adăugat: luni recomandate pentru vizită
+  seasons?: string[]; // Adăugat: sezoane recomandate
+}
+
+interface MonthOption {
+  value: string;
+  name: string;
+  season: string;
+}
 
 @Component({
   selector: 'app-destination-page',
   standalone: true,
-  imports: [
-    LeafletModule
-  ],
+  imports: [CommonModule, LeafletModule, Navbar],
   templateUrl: './destination-page.html',
-  styleUrl: './destination-page.less'
+  styleUrls: ['./destination-page.less'],
+  animations: [
+    trigger('slideInOut', [
+      state('in', style({ transform: 'translateX(0%)' })),
+      state('out', style({ transform: 'translateX(100%)' })),
+      transition('out => in', animate('300ms ease-out')),
+      transition('in => out', animate('250ms ease-in'))
+    ])
+  ]
 })
-export class DestinationPage implements OnInit {
-onMapReady // Date extinse pentru locații cu imagini și descrieri
-($event: L.Map) {
-throw new Error('Method not implemented.');
-}
-
-  romaniaBounds = L.latLngBounds(
-    L.latLng(43.5, 20.0),
-    L.latLng(48.5, 30.0)
-  );
-
-  options = {
-    layers: [
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-      })
-    ],
-    zoom: 7,
+export class DestinationPageComponent implements OnInit, OnDestroy {
+  private map!: L.Map;
+  private markerLayerGroup: L.LayerGroup = L.layerGroup();
+  private romaniaOutlineLayer: L.Layer | null = null;
+  
+  public readonly options = {
+    layers: [L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors, &copy; CARTO'
+    })],
+    zoom: 7, 
     center: L.latLng(45.9432, 24.9668),
-    maxBounds: this.romaniaBounds,
-    minZoom: 7,
-    maxBoundsViscosity: 1.0
+    minZoom: 6, 
+    maxZoom: 12,
+    maxBounds: L.latLngBounds(
+      L.latLng(43.5, 20.0),
+      L.latLng(48.5, 30.0)
+    ),
+    maxBoundsViscosity: 1.0,
+    zoomControl: false
   };
 
-  layers: L.Layer[] = [];
-  hoverModal: any = null;
-  currentLocation: any = null;
+  public activeFilter: string = 'all';
+  public filterTypes: string[] = [];
+  public locations: Location[] = [];
+  public counties: string[] = [];
+  public selectedCounty: string = 'all';
 
-  // Date extinse pentru locații cu imagini și descrieri
-  locations = [
-    { 
-      name: 'Sinaia (Peleș Castle)', 
-      lat: 45.3600, 
-      lng: 25.5428, 
-      slug: 'sinaia',
-      image: 'https://images.unsplash.com/photo-1598366833090-ec0c89f6c5d6?w=400&h=300&fit=crop',
-      description: 'A stunning Neo-Renaissance castle nestled in the Carpathian Mountains, former summer residence of Romanian royalty.',
-      highlights: ['Peleș Castle', 'Sinaia Monastery', 'Carpathian Mountains', 'Cable car rides'],
-      bestTime: 'May - October'
-    },
-    { 
-      name: 'Brașov (Old Center)', 
-      lat: 45.6427, 
-      lng: 25.5887, 
-      slug: 'brasov',
-      image: 'https://images.unsplash.com/photo-1584646098377-6ac4e4e53e52?w=400&h=300&fit=crop',
-      description: 'Medieval Saxon city surrounded by mountains, famous for the Black Church and picturesque old town.',
-      highlights: ['Black Church', 'Council Square', 'Tâmpa Mountain', 'Rope Street'],
-      bestTime: 'Year-round'
-    },
-    { 
-      name: 'Sibiu (Grand Square)', 
-      lat: 45.7983, 
-      lng: 24.1521, 
-      slug: 'sibiu',
-      image: 'https://images.unsplash.com/photo-1591183481091-b0e8bed7e8c7?w=400&h=300&fit=crop',
-      description: 'European Capital of Culture in 2007, known for its Germanic architecture and the eyes of Sibiu.',
-      highlights: ['Grand Square', 'Liars Bridge', 'ASTRA Museum', 'Evangelical Cathedral'],
-      bestTime: 'April - September'
-    },
-    { 
-      name: 'Cluj-Napoca', 
-      lat: 46.7712, 
-      lng: 23.6236, 
-      slug: 'cluj-napoca',
-      image: 'https://images.unsplash.com/photo-1580136607996-b692c65ed1c1?w=400&h=300&fit=crop',
-      description: 'The heart of Transylvania, a vibrant university city with rich history and modern cultural scene.',
-      highlights: ['St. Michael Church', 'Central Park', 'Ethnographic Museum', 'Botanical Garden'],
-      bestTime: 'Year-round'
-    },
-    { 
-      name: 'Danube Delta (Tulcea)', 
-      lat: 45.1763, 
-      lng: 28.8024, 
-      slug: 'delta-dunarii',
-      image: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400&h=300&fit=crop',
-      description: 'UNESCO Biosphere Reserve, the second largest river delta in Europe with unique biodiversity.',
-      highlights: ['Bird watching', 'Boat tours', 'Fishing villages', 'Lily pads'],
-      bestTime: 'April - September'
-    },
-    { 
-      name: 'Transfăgărășan (Bâlea Lake)', 
-      lat: 45.6041, 
-      lng: 24.6163, 
-      slug: 'transfagarasan',
-      image: 'https://images.unsplash.com/photo-1506905925340-14faa3c85743?w=400&h=300&fit=crop',
-      description: 'One of the most spectacular mountain roads in the world, crossing the Făgăraș Mountains.',
-      highlights: ['Bâlea Lake', 'Bâlea Waterfall', 'Vidraru Dam', 'Mountain hiking'],
-      bestTime: 'June - September'
-    }
+  // Filtre noi pentru sezon și lună
+  public selectedSeason: string = 'all';
+  public selectedMonth: string = 'all';
+  public seasons: string[] = ['all', 'spring', 'summer', 'autumn', 'winter'];
+  public months: MonthOption[] = [
+    { value: 'all', name: 'Toate lunile', season: 'all' },
+    { value: 'january', name: 'Ianuarie', season: 'winter' },
+    { value: 'february', name: 'Februarie', season: 'winter' },
+    { value: 'march', name: 'Martie', season: 'spring' },
+    { value: 'april', name: 'Aprilie', season: 'spring' },
+    { value: 'may', name: 'Mai', season: 'spring' },
+    { value: 'june', name: 'Iunie', season: 'summer' },
+    { value: 'july', name: 'Iulie', season: 'summer' },
+    { value: 'august', name: 'August', season: 'summer' },
+    { value: 'september', name: 'Septembrie', season: 'autumn' },
+    { value: 'october', name: 'Octombrie', season: 'autumn' },
+    { value: 'november', name: 'Noiembrie', season: 'autumn' },
+    { value: 'december', name: 'Decembrie', season: 'winter' }
   ];
 
-  // Iconiță custom îmbunătățită
-  customMarkerIcon = L.divIcon({
-    className: 'custom-marker-icon',
-    html: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" 
-                  fill="#e65100" stroke="white" stroke-width="1"/>
-           </svg>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 24]
-  });
+  public activeLocation: Location | null = null;
+  public panelState: 'in' | 'out' = 'out';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  private iconCache: Map<string, L.DivIcon> = new Map();
+
+  constructor(
+    private readonly http: HttpClient,
+    private readonly router: Router,
+    private readonly zone: NgZone,
+    private readonly cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit() {
-    this.loadMapLayers();
+    let data = (locationsData as any).default;
+
+    if (data && data.locations) {
+      this.locations = data.locations as Location[];
+    } else {
+      this.locations = data as Location[];
+    }
+
+    const types = Array.from(new Set(this.locations.map(l => l.type))).sort();
+    this.filterTypes = ['all', ...types];
+    this.counties = ['all', ...Array.from(new Set(this.locations.map(l => l.county))).sort()];
   }
 
-  loadMapLayers() {
-    const markerLayers = this.locations.map(loc => {
-      const marker = L.marker([loc.lat, loc.lng], { icon: this.customMarkerIcon });
-
-      // Eveniment mouseover pentru afișarea modalului
-      marker.on('mouseover', (e) => {
-        this.showHoverModal(e, loc);
-      });
-
-      // Eveniment mouseout pentru ascunderea modalului
-      marker.on('mouseout', () => {
-        this.hideHoverModal();
-      });
-
-      // Eveniment click pentru navigare
-      marker.on('click', () => {
-        this.router.navigate(['/destination', loc.slug]);
-      });
-
-      return marker;
-    });
-
-    // Încarcă conturul țării
-    this.http.get('assets/data/romania.geojson').subscribe({
-      next: (geojsonData: any) => {
-        const contourStyle = {
-          color: "#003399",
-          weight: 2,
-          opacity: 0.9,
-          fillOpacity: 0.1,
-          fillColor: "#003399"
-        };
-        const geoJsonLayer = L.geoJSON(geojsonData, { style: contourStyle });
-        this.layers = [geoJsonLayer, ...markerLayers];
-      },
-      error: (err) => {
-        console.error('EROARE: Nu s-a putut încărca fișierul romania.geojson.', err);
-        this.layers = markerLayers;
+  ngOnDestroy() {
+    if (this.map) {
+      this.map.removeLayer(this.markerLayerGroup);
+      if (this.romaniaOutlineLayer) {
+        this.map.removeLayer(this.romaniaOutlineLayer);
       }
-    });
-  }
-
-  showHoverModal(e: any, location: any) {
-    this.hideHoverModal(); // Ascunde orice modal existent
-    
-    this.currentLocation = location;
-    
-    // Creează elementul modal
-    this.hoverModal = L.popup({
-      className: 'custom-hover-popup',
-      closeButton: false,
-      autoClose: false,
-      closeOnEscapeKey: false,
-      closeOnClick: false
-    })
-    .setLatLng(e.latlng)
-    .setContent(this.createPopupContent(location))
-    .openOn(e.target._map);
-  }
-
-  hideHoverModal() {
-    if (this.hoverModal) {
-      this.hoverModal.remove();
-      this.hoverModal = null;
+      this.map.remove();
+      this.iconCache.clear();
     }
   }
 
-  createPopupContent(location: any): string {
-    return `
-      <div class="location-popup">
-        <div class="popup-image">
-          <img src="${location.image}" alt="${location.name}" onerror="this.src='https://images.unsplash.com/photo-1506905925340-14faa3c85743?w=400&h=300&fit=crop'">
-          <div class="popup-overlay"></div>
-        </div>
-        <div class="popup-content">
-          <h3 class="popup-title">${location.name}</h3>
-          <p class="popup-description">${location.description}</p>
-          
-          <div class="popup-details">
-            <div class="detail-section">
-              <h4>🏔️ Highlights</h4>
-              <ul class="highlights-list">
-                ${location.highlights.map((highlight: string) => `<li>${highlight}</li>`).join('')}
-              </ul>
-            </div>
-            
-            <div class="detail-section">
-              <h4>📅 Best Time to Visit</h4>
-              <span class="best-time">${location.bestTime}</span>
-            </div>
-          </div>
-          
-          <button class="explore-btn" onclick="this.closest('.location-popup').dispatchEvent(new CustomEvent('explore', {bubbles: true}))">
-            Explore Destination →
-          </button>
+  onMapReady($event: L.Map) {
+    this.map = $event;
+    this.markerLayerGroup.addTo(this.map);
+    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+    
+    this.updateMapMarkers(); 
+    
+    this.map.on('zoomend', () => {
+      this.refreshMarkers();
+    });
+  }
+
+  private createFallbackOutline() {
+    const romaniaBounds = L.latLngBounds(
+      L.latLng(43.5, 20.0),
+      L.latLng(48.5, 30.0)
+    );
+    
+    this.romaniaOutlineLayer = L.rectangle(romaniaBounds, {
+      color: '#000000',
+      weight: 1.5,
+      fillColor: 'transparent',
+      fillOpacity: 0,
+      opacity: 0.8,
+      interactive: false
+    }).addTo(this.map);
+  }
+
+  public onCountyChange(event: Event): void {
+    const selectElement = event.target as HTMLSelectElement;
+    if (selectElement) {
+      this.setCounty(selectElement.value);
+    }
+  }
+
+
+  public setFilter(type: string) {
+    this.activeFilter = type;
+    this.updateMapMarkers();
+  }
+
+  public setCounty(county: string) {
+    this.selectedCounty = county;
+    this.updateMapMarkers();
+  }
+
+ 
+
+  public getFilteredLocations(): Location[] {
+    let filtered = this.locations;
+    
+    if (this.activeFilter !== 'all') {
+      filtered = filtered.filter(l => l.type === this.activeFilter);
+    }
+    
+    if (this.selectedCounty !== 'all') {
+      filtered = filtered.filter(l => l.county === this.selectedCounty);
+    }
+
+    // Filtrare după sezon
+    if (this.selectedSeason !== 'all') {
+      filtered = filtered.filter(l => 
+        l.seasons && l.seasons.includes(this.selectedSeason)
+      );
+    }
+
+    // Filtrare după lună
+    if (this.selectedMonth !== 'all') {
+      filtered = filtered.filter(l => 
+        l.bestMonths && l.bestMonths.includes(this.selectedMonth)
+      );
+    }
+    
+    return filtered;
+  }
+
+  public getSeasonIcon(season: string): string {
+    const seasonIcons: { [key: string]: string } = {
+      'all': 'fa-solid fa-calendar',
+      'spring': 'fa-solid fa-seedling',
+      'summer': 'fa-solid fa-sun',
+      'autumn': 'fa-solid fa-leaf',
+      'winter': 'fa-solid fa-snowflake'
+    };
+    return seasonIcons[season] || seasonIcons['all'];
+  }
+
+  public getSeasonColor(season: string): string {
+    const seasonColors: { [key: string]: string } = {
+      'all': '#6B7280',
+      'spring': '#10B981',
+      'summer': '#F59E0B',
+      'autumn': '#EA580C',
+      'winter': '#3B82F6'
+    };
+    return seasonColors[season] || seasonColors['all'];
+  }
+
+  public getMonthIcon(month: string): string {
+    const monthIcons: { [key: string]: string } = {
+      'all': 'fa-solid fa-calendar-days',
+      'january': 'fa-solid fa-snowflake',
+      'february': 'fa-solid fa-snowman',
+      'march': 'fa-solid fa-flower',
+      'april': 'fa-solid fa-umbrella',
+      'may': 'fa-solid fa-leaf',
+      'june': 'fa-solid fa-sun',
+      'july': 'fa-solid fa-temperature-high',
+      'august': 'fa-solid fa-sun',
+      'september': 'fa-solid fa-apple-whole',
+      'october': 'fa-solid fa-leaf',
+      'november': 'fa-solid fa-cloud-rain',
+      'december': 'fa-solid fa-snowflake'
+    };
+    return monthIcons[month] || monthIcons['all'];
+  }
+
+  public getMonthColor(month: string): string {
+    const monthColors: { [key: string]: string } = {
+      'all': '#6B7280',
+      'january': '#3B82F6',
+      'february': '#60A5FA',
+      'march': '#10B981',
+      'april': '#34D399',
+      'may': '#22C55E',
+      'june': '#F59E0B',
+      'july': '#F97316',
+      'august': '#EA580C',
+      'september': '#D97706',
+      'october': '#B45309',
+      'november': '#6B7280',
+      'december': '#1D4ED8'
+    };
+    return monthColors[month] || monthColors['all'];
+  }
+
+  // Restul metodelor rămân la fel...
+  private getIconForLocation(type: string = 'default', zoomLevel?: number): L.DivIcon {
+    const cacheKey = `${type}_${zoomLevel || this.map?.getZoom() || 7}`;
+    
+    if (this.iconCache.has(cacheKey)) {
+      return this.iconCache.get(cacheKey)!;
+    }
+
+    const iconColor = this.getIconColor(type);
+    const currentZoom = zoomLevel || this.map?.getZoom() || 7;
+    
+    let size, anchorX, anchorY;
+    
+    if (currentZoom >= 12) {
+      size = 48; anchorX = 24; anchorY = 48;
+    } else if (currentZoom >= 9) {
+      size = 40; anchorX = 20; anchorY = 40;
+    } else {
+      size = 32; anchorX = 16; anchorY = 32;
+    }
+
+    const iconClass = this.getIconClass(type);
+    
+    const html = `
+      <div class="custom-icon-marker" style="
+        background-color: ${iconColor}; width: ${size}px; height: ${size}px;
+        border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex;
+        align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        border: 2px solid white;
+      ">
+        <div class="icon-wrapper" style="
+          transform: rotate(45deg); display: flex; align-items: center; justify-content: center;
+          width: 100%; height: 100%; color: white; font-size: ${size * 0.4}px;
+        ">
+          <i class="${iconClass}"></i>
         </div>
       </div>
     `;
+
+    const icon = L.divIcon({
+      className: `custom-icon-marker-container-${type}`, html: html,
+      iconSize: [size, size], iconAnchor: [anchorX, anchorY], popupAnchor: [0, -anchorY]
+    });
+
+    this.iconCache.set(cacheKey, icon);
+    return icon;
   }
 
-  // Metodă pentru a naviga la destinație (folosită din template)
-  navigateToDestination(slug: string) {
-    this.router.navigate(['/destination', slug]);
+  public getIconClass(type: string): string {
+    const iconClasses: { [key: string]: string } = {
+      'all': 'fa-solid fa-globe-europe',
+      'castle': 'fa-solid fa-chess-rook',
+      'nature': 'fa-solid fa-tree',
+      'village': 'fa-solid fa-house-chimney',
+      'monastery': 'fa-solid fa-church',
+      'fortress': 'fa-solid fa-tent',
+      'beach': 'fa-solid fa-umbrella-beach',
+      'city': 'fa-solid fa-city',
+      'mountain': 'fa-solid fa-mountain',
+      'history': 'fa-solid fa-landmark',
+      'default': 'fa-solid fa-location-dot',
+      'ski': 'fa-solid fa-person-skiing'
+    };
+    return iconClasses[type] || iconClasses['default'];
+  }
+
+  public getLocationCountByType(type: string): number {
+    return this.locations.filter(l => l.type === type).length;
+  }
+
+  public getIconColor(type: string): string {
+    const colors: { [key: string]: string } = {
+      'all': '#3B82F6',
+      'castle': '#1E3A8A',
+      'nature': '#10B981',
+      'village': '#F97316',
+      'monastery': '#7C3AED',
+      'fortress': '#DC2626',
+      'beach': '#00A2D8',
+      'city': '#3B82F6',
+      'mountain': '#059669',
+      'history': '#EA580C',
+      'default': '#EA580C',
+      'ski': '#cdcdcdff'
+    };
+    return colors[type] || colors['default'];
+  }
+
+  private updateMapMarkers() {
+    if (!this.markerLayerGroup || !this.map) return;
+
+    this.markerLayerGroup.clearLayers();
+    this.addMarkersToMap();
+  }
+
+  private refreshMarkers() {
+    if (!this.markerLayerGroup || !this.map) return;
+    const existingMarkers: Array<{location: Location, marker: L.Marker}> = [];
+    this.markerLayerGroup.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        const location = (layer as any).locationData as Location;
+        if (location) {
+          existingMarkers.push({ location, marker: layer as L.Marker });
+        }
+      }
+    });
+    this.markerLayerGroup.clearLayers();
+    existingMarkers.forEach(({ location, marker }) => {
+      const newIcon = this.getIconForLocation(location.type);
+      marker.setIcon(newIcon);
+      this.markerLayerGroup.addLayer(marker);
+    });
+  }
+
+  private addMarkersToMap() {
+    const filteredLocations = this.getFilteredLocations();
+    filteredLocations.forEach(loc => {
+      const icon = this.getIconForLocation(loc.type);
+      const marker = L.marker([loc.lat, loc.lng], { icon: icon });
+      (marker as any).locationData = loc;
+      marker.on('click', () => {
+        this.zone.run(() => this.openPanelWithLocation(loc));
+      });
+      this.markerLayerGroup.addLayer(marker);
+    });
+  }
+
+  public openPanelWithLocation(location: Location) {
+    this.activeLocation = location;
+    this.panelState = 'in';
+    this.cdr.detectChanges();
+  }
+
+  public closePanel() {
+    this.panelState = 'out';
+    this.cdr.detectChanges();
+  }
+
+  public onAnimationDone(event: any) {
+    if (event.toState === 'out') {
+      this.activeLocation = null;
+      this.cdr.detectChanges();
+    }
+  }
+
+  public navigateToDestination(slug: string) {
+    this.closePanel();
+    setTimeout(() => {
+      this.router.navigate(['/destination', slug]);
+    }, 250);
+  }
+
+  public getLocationsByCounty(county: string): Location[] {
+    return this.locations.filter(l => l.county === county);
+  }
+
+  public getSelectedMonthName(): string {
+    if (this.selectedMonth === 'all') return '';
+    const month = this.months.find(m => m.value === this.selectedMonth);
+    return month ? month.name : '';
+  }
+
+  // Metodă pentru a obține numele sezonului selectat
+  public getSelectedSeasonName(): string {
+    if (this.selectedSeason === 'all') return '';
+    return this.selectedSeason.charAt(0).toUpperCase() + this.selectedSeason.slice(1);
+  }
+
+  // Metodă pentru a obține lunile recomandate pentru o destinație
+  public getLocationMonthNames(bestMonths: string[] | undefined): string[] {
+    if (!bestMonths) return [];
+    return bestMonths.map(month => {
+      const monthData = this.months.find(m => m.value === month);
+      return monthData ? monthData.name : month;
+    });
+  }
+
+  public getCountyTypes(county: string): number {
+    const locations = this.locations.filter(l => l.county === county);
+    return new Set(locations.map(l => l.type)).size;
   }
 }

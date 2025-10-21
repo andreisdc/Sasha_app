@@ -33,7 +33,7 @@ export const routes: Routes = [
    {
     path: 'destination',
     loadComponent: () =>
-      import('./pages/destination-page/destination-page').then((m) => m.DestinationPage),
+      import('./pages/destination-page/destination-page').then((m) => m.DestinationPageComponent),
     canActivate: [AuthGuard],
   },
   
