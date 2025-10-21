@@ -30,12 +30,19 @@ export const routes: Routes = [
       import('./pages/become-seller-page/become-seller-page').then((m) => m.BecomeSellerPageComponent),
     canActivate: [AuthGuard],
   }, 
-   {
-    path: 'destination',
+  {
+    path: 'discovery',
     loadComponent: () =>
       import('./pages/destination-page/destination-page').then((m) => m.DestinationPageComponent),
     canActivate: [AuthGuard],
+  },   
+  {
+    path: 'destinations',
+    loadComponent: () =>
+      import('./pages/destination-county-page/destination-county-page').then((m) => m.DestinationCountyPage),
+    canActivate: [AuthGuard],
   },
+
   
   // ✅ RUTE NOI PENTRU ACTIVITY HOSTING
   {

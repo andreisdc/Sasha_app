@@ -24,13 +24,12 @@ interface MonthOption {
   season: string;
 }
 
-// NOU: Interfață pentru detaliile categoriei
 interface CategoryDetail {
-  name: string; // 'castle', 'nature', etc.
-  displayName: string; // 'Castles', 'Natural Wonders'
+  name: string;
+  displayName: string;
   description: string;
-  image: string; // URL către o imagine reprezentativă
-  facts: string[]; // Fapte interesante
+  image: string;
+  facts: string[];
 }
 
 @Component({
@@ -49,11 +48,12 @@ interface CategoryDetail {
   ]
 })
 export class DestinationPageComponent implements OnInit, OnDestroy {
-  private map!: L.Map;
+  private map: L.Map | null = null;
   private markerLayerGroup: L.LayerGroup = L.layerGroup();
   private romaniaOutlineLayer: L.Layer | null = null;
+  private isDestroyed = false;
   
- public readonly options = {
+  public readonly options = {
     layers: [L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors, &copy; CARTO'
     })],
@@ -68,6 +68,7 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     maxBoundsViscosity: 1.0,
     zoomControl: false
   };
+  
   public activeFilter: string = 'all';
   public filterTypes: string[] = [];
   public locations: Location[] = [];
@@ -93,21 +94,18 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     { value: 'december', name: 'Decembrie', season: 'winter' }
   ];
 
-  // MODIFICAT: Starea panoului va gestiona acum ambele tipuri de conținut
   public activePanelContent: Location | CategoryDetail | null = null;
   public panelContentType: 'location' | 'category' | null = null;
   public panelState: 'in' | 'out' = 'out';
 
   private iconCache: Map<string, L.DivIcon> = new Map();
 
-  // NOU: Datele pentru panoul de categorii
-  // Notă: Va trebui să adaugi imaginile corespunzătoare în folderul `assets`
   private categoryDetails: { [key: string]: CategoryDetail } = {
     'castle': {
       name: 'castle',
       displayName: 'Castles & Palaces',
       description: 'Romania is famed for its stunning castles, from medieval strongholds to royal palaces. These structures are rich in history, legend, and architectural beauty, often set in dramatic landscapes.',
-      image: 'assets/images/categories/category-castle.jpg', // Asigură-te că ai această imagine
+      image: 'assets/images/categories/category-castle.jpg',
       facts: [
         'Bran Castle is famously (though inaccurately) linked to the Dracula legend.',
         'Peleș Castle was the first in Europe to be fully lit by electricity.',
@@ -213,9 +211,7 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
         'The ski season in Romania generally lasts from December until March or April, depending on the altitude.'
       ]
     }
-
   };
-
 
   constructor(
     private readonly http: HttpClient,
@@ -239,17 +235,35 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
+    
+    // Curățare sigură a hărții Leaflet
     if (this.map) {
-      this.map.removeLayer(this.markerLayerGroup);
-      if (this.romaniaOutlineLayer) {
-        this.map.removeLayer(this.romaniaOutlineLayer);
+      try {
+        // Îndepărtează straturile înainte de a elimina harta
+        if (this.markerLayerGroup) {
+          this.map.removeLayer(this.markerLayerGroup);
+        }
+        
+        if (this.romaniaOutlineLayer) {
+          this.map.removeLayer(this.romaniaOutlineLayer);
+        }
+        
+        // Șterge toate event listener-urile
+        this.map.off();
+        this.map.remove();
+        
+      } catch (error) {
+        console.warn('Eroare la curățarea hărții:', error);
+      } finally {
+        this.map = null;
       }
-      this.map.remove();
-      this.iconCache.clear();
     }
+    
+    // Curățare cache
+    this.iconCache.clear();
   }
 
-  // NOU: Getters pentru a accesa ușor conținutul activ în template
   public get activeLocation(): Location | null {
     return this.panelContentType === 'location' ? (this.activePanelContent as Location) : null;
   }
@@ -259,18 +273,29 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   }
 
   onMapReady($event: L.Map) {
+    if (this.isDestroyed) return;
+    
     this.map = $event;
-    this.markerLayerGroup.addTo(this.map);
-    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
     
-    this.updateMapMarkers(); 
-    
-    this.map.on('zoomend', () => {
-      this.refreshMarkers();
-    });
+    try {
+      this.markerLayerGroup.addTo(this.map);
+      L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+      
+      this.updateMapMarkers(); 
+      
+      this.map.on('zoomend', () => {
+        if (!this.isDestroyed) {
+          this.refreshMarkers();
+        }
+      });
+    } catch (error) {
+      console.warn('Eroare la inițializarea hărții:', error);
+    }
   }
 
   private createFallbackOutline() {
+    if (!this.map || this.isDestroyed) return;
+    
     const romaniaBounds = L.latLngBounds(
       L.latLng(43.5, 20.0),
       L.latLng(48.5, 30.0)
@@ -293,7 +318,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     }
   }
 
-
   public setFilter(type: string) {
     this.activeFilter = type;
     this.updateMapMarkers();
@@ -303,8 +327,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     this.selectedCounty = county;
     this.updateMapMarkers();
   }
-
- 
 
   public getFilteredLocations(): Location[] {
     let filtered = this.locations;
@@ -480,45 +502,59 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   }
 
   private updateMapMarkers() {
-    if (!this.markerLayerGroup || !this.map) return;
+    if (!this.markerLayerGroup || !this.map || this.isDestroyed) return;
 
-    this.markerLayerGroup.clearLayers();
-    this.addMarkersToMap();
+    try {
+      this.markerLayerGroup.clearLayers();
+      this.addMarkersToMap();
+    } catch (error) {
+      console.warn('Eroare la actualizarea markerelor:', error);
+    }
   }
 
   private refreshMarkers() {
-    if (!this.markerLayerGroup || !this.map) return;
-    const existingMarkers: Array<{location: Location, marker: L.Marker}> = [];
-    this.markerLayerGroup.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        const location = (layer as any).locationData as Location;
-        if (location) {
-          existingMarkers.push({ location, marker: layer as L.Marker });
+    if (!this.markerLayerGroup || !this.map || this.isDestroyed) return;
+    
+    try {
+      const existingMarkers: Array<{location: Location, marker: L.Marker}> = [];
+      this.markerLayerGroup.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          const location = (layer as any).locationData as Location;
+          if (location) {
+            existingMarkers.push({ location, marker: layer as L.Marker });
+          }
         }
-      }
-    });
-    this.markerLayerGroup.clearLayers();
-    existingMarkers.forEach(({ location, marker }) => {
-      const newIcon = this.getIconForLocation(location.type);
-      marker.setIcon(newIcon);
-      this.markerLayerGroup.addLayer(marker);
-    });
+      });
+      this.markerLayerGroup.clearLayers();
+      existingMarkers.forEach(({ location, marker }) => {
+        const newIcon = this.getIconForLocation(location.type);
+        marker.setIcon(newIcon);
+        this.markerLayerGroup.addLayer(marker);
+      });
+    } catch (error) {
+      console.warn('Eroare la refresh markerelor:', error);
+    }
   }
 
   private addMarkersToMap() {
+    if (!this.map || this.isDestroyed) return;
+    
     const filteredLocations = this.getFilteredLocations();
     filteredLocations.forEach(loc => {
-      const icon = this.getIconForLocation(loc.type);
-      const marker = L.marker([loc.lat, loc.lng], { icon: icon });
-      (marker as any).locationData = loc;
-      marker.on('click', () => {
-        this.zone.run(() => this.openPanelWithLocation(loc));
-      });
-      this.markerLayerGroup.addLayer(marker);
+      try {
+        const icon = this.getIconForLocation(loc.type);
+        const marker = L.marker([loc.lat, loc.lng], { icon: icon });
+        (marker as any).locationData = loc;
+        marker.on('click', () => {
+          this.zone.run(() => this.openPanelWithLocation(loc));
+        });
+        this.markerLayerGroup.addLayer(marker);
+      } catch (error) {
+        console.warn('Eroare la adăugarea markerului:', error);
+      }
     });
   }
 
-  // MODIFICAT: Logica de deschidere panou
   public openPanelWithLocation(location: Location) {
     this.activePanelContent = location;
     this.panelContentType = 'location';
@@ -526,7 +562,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // NOU: Metodă pentru a deschide panoul cu detalii despre categorie
   public openPanelWithCategory(type: string) {
     const categoryData = this.categoryDetails[type];
     if (categoryData) {
@@ -535,18 +570,15 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
       this.panelState = 'in';
       this.cdr.detectChanges();
     } else {
-      // Dacă nu avem detalii (ex: 'ski', 'beach' etc.), doar filtrăm
       this.setFilter(type);
     }
   }
 
-  // MODIFICAT: Logica de închidere panou
   public closePanel() {
     this.panelState = 'out';
     this.cdr.detectChanges();
   }
 
-  // MODIFICAT: Logica de resetare după animație
   public onAnimationDone(event: any) {
     if (event.toState === 'out') {
       this.activePanelContent = null;
@@ -555,11 +587,17 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  public navigateToDestination(slug: string) {
+  public navigateToDestination(slug: string): void { 
+    console.log('Navigating from destination:', slug);
     this.closePanel();
-    setTimeout(() => {
-      this.router.navigate(['/destination', slug]);
-    }, 250);
+    
+    // Soluție temporară - navighează către pagina de destinații cu filter
+    this.router.navigate(['/destinations'], { 
+      queryParams: { slug: slug } 
+    });
+    
+    // SAU navighează către discovery
+    // this.router.navigate(['/discovery']);
   }
 
   public getLocationsByCounty(county: string): Location[] {
@@ -572,13 +610,11 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     return month ? month.name : '';
   }
 
-  // Metodă pentru a obține numele sezonului selectat
   public getSelectedSeasonName(): string {
     if (this.selectedSeason === 'all') return '';
     return this.selectedSeason.charAt(0).toUpperCase() + this.selectedSeason.slice(1);
   }
 
-  // Metodă pentru a obține lunile recomandate pentru o destinație
   public getLocationMonthNames(bestMonths: string[] | undefined): string[] {
     if (!bestMonths) return [];
     return bestMonths.map(month => {
@@ -590,5 +626,30 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   public getCountyTypes(county: string): number {
     const locations = this.locations.filter(l => l.county === county);
     return new Set(locations.map(l => l.type)).size;
+  }
+
+  public navigateToCategory(type: string): void { 
+    this.closePanel();
+    this.router.navigate(['/destinations'], { 
+      queryParams: { type: type } 
+    });
+  }
+
+  public navigateToActiveCategory(): void {
+    if (this.activeCategory && this.panelContentType === 'category') {
+      this.navigateToCategory(this.activeCategory.name);
+    }
+  }
+
+  public navigateToCounty(county: string): void { 
+    this.closePanel();
+    this.router.navigate(['/destinations'], { 
+      queryParams: { county: county } 
+    });
+  }
+
+  public navigateToAllDestinations(): void {
+    this.closePanel();
+    this.router.navigate(['/destinations']);
   }
 }

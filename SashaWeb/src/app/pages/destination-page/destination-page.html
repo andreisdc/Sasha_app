@@ -33,14 +33,13 @@
         <div class="filter-group">
           <label for="county-select" class="filter-label">
             <i class="fa-solid fa-map"></i>
-            County:          <select id="county-select" class="filter-select" (change)="onCountyChange($event)">
+            County:
+          </label>
+          <select id="county-select" class="filter-select" (change)="onCountyChange($event)">
             <option value="all">All Counties</option>
             <option *ngFor="let county of counties.slice(1)" [value]="county">{{county}}</option>
           </select>
-          </label>
-
         </div>
-
       </div>
 
       <div class="filter-bar">
@@ -58,7 +57,6 @@
           </button>
         </div>
       </div>
-
 
       <div class="map-frame">
         <div
@@ -83,23 +81,24 @@
   </section>
 
   <section class="categories-section">
-    <div class="section-header">
-      <h2 class="section-title">Popular Categories</h2>
-      <p class="section-subtitle">Find destinations by your interests</p>
-    </div>
+  <div class="section-header">
+    <h2 class="section-title">Popular Categories</h2>
+    <p class="section-subtitle">Find destinations by your interests</p>
+  </div>
 
-    <div class="categories-grid">
-      <div 
-        *ngFor="let type of filterTypes.slice(1)" 
-        class="category-card"
-        (click)="openPanelWithCategory(type)"> <div class="category-icon">
-          <i [class]="getIconClass(type)" [style.color]="getIconColor(type)"></i>
-        </div>
-        <h3 class="category-name">{{ type | titlecase }}</h3>
-        <p class="category-count">{{ getLocationCountByType(type) }} destinations</p>
+  <div class="categories-grid">
+    <div 
+      *ngFor="let type of filterTypes.slice(1)" 
+      class="category-card"
+      (click)="openPanelWithCategory(type)"> <!-- Schimbat aici -->
+      <div class="category-icon">
+        <i [class]="getIconClass(type)" [style.color]="getIconColor(type)"></i>
       </div>
+      <h3 class="category-name">{{ type | titlecase }}</h3>
+      <p class="category-count">{{ getLocationCountByType(type) }} destinations</p>
     </div>
-  </section>
+  </div>
+</section>
 
   <div
     class="details-panel"
@@ -279,14 +278,15 @@
             <ul class="panel-highlights-list">
               <li *ngFor="let fact of activeCategory.facts" class="highlight-item">
                 <span class="highlight-icon">
-                  <i class="fa-solid fa-lightbulb"></i> </span>
+                  <i class="fa-solid fa-lightbulb"></i>
+                </span>
                 <span class="highlight-text">{{ fact }}</span>
               </li>
             </ul>
           </div>
 
           <div class="panel-actions">
-            <button class="panel-explore-btn" (click)="setFilter(activeCategory.name); closePanel()">
+            <button class="panel-explore-btn" (click)="navigateToActiveCategory()">
               View all {{ activeCategory.displayName }}
               <span class="btn-icon">
                 <i class="fa-solid fa-arrow-right"></i>
@@ -324,7 +324,7 @@
         <h3>Categories</h3>
         <ul class="footer-links">
           <li *ngFor="let type of filterTypes.slice(1, 6)">
-            <a href="#" (click)="setFilter(type); $event.preventDefault()">{{ type | titlecase }}</a>
+            <a href="#" (click)="navigateToCategory(type); $event.preventDefault()">{{ type | titlecase }}</a>
           </li>
         </ul>
       </div>
