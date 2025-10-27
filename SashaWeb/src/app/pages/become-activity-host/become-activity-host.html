@@ -1,0 +1,226 @@
+<!-- become-activity-host.component.html -->
+<div class="seller-onboarding">
+  
+  <app-toast></app-toast>
+
+  <div class="onboarding-container">
+    
+    <!-- Left Sidebar -->
+    <div class="onboarding-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">🎯</div>
+          <div class="logo-text">Wanderlust</div>
+        </div>
+        <h1 class="sidebar-title">Become an Activity Host</h1>
+        <p class="sidebar-subtitle">Share your passion and create unforgettable experiences for travelers</p>
+      </div>
+
+      <div class="steps-vertical">
+        <div *ngFor="let step of steps" 
+             [class]="'step-nav-item ' + step.status"
+             (click)="goToStep(step.number)">
+          <div class="step-number">{{step.number}}</div>
+          <div class="step-nav-text">
+            <h3>{{step.title}}</h3>
+            <p>{{step.description}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Content -->
+    <div class="onboarding-content">
+      
+      <!-- Step 1: Host Requirements -->
+      <div class="step-content" [class.active]="currentStep === 1">
+        <div class="content-header">
+          <h1>Welcome to Activity Hosting!</h1>
+          <p>Join our community of passionate hosts who share unique experiences with travelers from around the world.</p>
+        </div>
+
+        <div class="security-grid">
+          <div *ngFor="let requirement of hostRequirements" class="security-card">
+            <div class="security-card-icon">{{requirement.icon}}</div>
+            <h3>{{requirement.title}}</h3>
+            <p>{{requirement.description}}</p>
+          </div>
+        </div>
+
+        <label class="checkbox-modern">
+          <input type="checkbox" [(ngModel)]="acceptedGdpr">
+          <span class="checkbox-text">
+            I understand and agree to the secure handling of my data. I acknowledge that my information will be encrypted during processing and permanently deleted after verification.
+          </span>
+        </label>
+
+        <label class="checkbox-modern">
+          <input type="checkbox" [(ngModel)]="acceptedHostAgreement">
+          <span class="checkbox-text">
+            I agree to the Activity Host Agreement and commit to providing safe, high-quality experiences for all participants. I understand that my activities must comply with local laws and regulations.
+          </span>
+        </label>
+      </div>
+
+      <!-- Step 2: Personal Info -->
+      <div class="step-content" [class.active]="currentStep === 2">
+        <div class="content-header">
+          <h1>Personal Information</h1>
+          <p>We need some basic information to verify your identity and set up your host profile.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.firstName"
+                   class="form-input"
+                   placeholder="Enter your first name"
+                   (blur)="validateNames()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.lastName"
+                   class="form-input"
+                   placeholder="Enter your last name"
+                   (blur)="validateNames()">
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Complete Address *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.address"
+                   class="form-input"
+                   placeholder="Enter your full residential address">
+            <div class="input-hint">This helps us verify your location for activity hosting.</div>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Personal Numeric Code (CNP) *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.cnp"
+                   class="form-input"
+                   placeholder="Enter your 13-digit CNP"
+                   maxlength="13"
+                   (blur)="validateCNP()">
+            <div class="input-hint">Your CNP is encrypted immediately and permanently deleted after verification.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: ID Upload -->
+      <div class="step-content" [class.active]="currentStep === 3">
+        <div class="content-header">
+          <h1>Identity Verification</h1>
+          <p>To ensure the safety of our community, we need to verify your identity with a government-issued ID.</p>
+        </div>
+
+        <div class="upload-section" 
+             (click)="fileInput.click()"
+             (dragover)="onDragOver($event)"
+             (drop)="onFileDrop($event)"
+             (dragleave)="onDragLeave($event)"
+             [class.dragover]="isDragging">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">
+            <h3>Upload Your ID Document</h3>
+            <p>Click to select a file or drag and drop your ID card image here</p>
+            <p>We accept JPG, PNG, or PDF files up to 5MB in size</p>
+          </div>
+          <input #fileInput type="file" accept="image/*,.pdf" 
+                 (change)="onFileSelected($event)" 
+                 style="display: none">
+        </div>
+
+        <div *ngIf="formData.idDocument" class="file-preview">
+          <div class="file-icon">✅</div>
+          <div class="file-info">
+            <div class="file-name">{{formData.idDocument.name}}</div>
+            <div class="file-size">{{getFileSize(formData.idDocument.size)}}</div>
+          </div>
+        </div>
+
+        <div *ngIf="submitError" class="error-message">
+          {{submitError}}
+        </div>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div class="step-content" [class.active]="currentStep === 4">
+        <div class="success-screen">
+          <div class="success-icon">🎉</div>
+          <div class="success-content">
+            <h2>Welcome to Our Host Community!</h2>
+            <p>You are now verified as an Activity Host! Start creating amazing experiences and share your passion with travelers.</p>
+            
+            <div class="success-details">
+              <div class="detail-item">
+                <div class="detail-icon">⚡</div>
+                <div class="detail-text">
+                  <strong>Get Started Immediately</strong>
+                  <div>Create your first activity right away</div>
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-icon">💰</div>
+                <div class="detail-text">
+                  <strong>Start Earning</strong>
+                  <div>Set your prices and receive payments</div>
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-icon">🌍</div>
+                <div class="detail-text">
+                  <strong>Global Reach</strong>
+                  <div>Connect with travelers worldwide</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="onboarding-actions">
+        <div class="action-buttons">
+          <button *ngIf="currentStep > 1 && currentStep < 4" 
+                  (click)="previousStep()"
+                  class="btn btn-secondary">
+            Back
+          </button>
+          
+          <button *ngIf="currentStep < 3"
+                  (click)="nextStep()"
+                  [disabled]="!canProceedToNextStep()"
+                  class="btn btn-primary">
+            Continue
+          </button>
+          
+          <button *ngIf="currentStep === 3"
+                  (click)="submitVerification()"
+                  [disabled]="!canSubmitVerification()"
+                  class="btn btn-primary">
+            <span *ngIf="!isSubmitting">Complete Verification</span>
+            <span *ngIf="isSubmitting">Verifying...</span>
+          </button>
+          
+          <button *ngIf="currentStep === 4"
+                  (click)="startCreatingActivities()"
+                  class="btn btn-primary">
+            Create First Activity
+          </button>
+          
+          <button *ngIf="currentStep === 4"
+                  (click)="goToDashboard()"
+                  class="btn btn-secondary">
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,336 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<div class="page-wrapper">
+
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Discover Romania</h1>
+      <p class="page-subtitle">Explore the rich heritage and natural beauty of our country through its historic landmarks and traditional destinations</p>
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{locations.length}}</span>
+          <span class="stat-label">Destinations</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{counties.length - 1}}</span>
+          <span class="stat-label">Counties</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{filterTypes.length - 1}}</span>
+          <span class="stat-label">Categories</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="map-section">
+    <div class="section-header">
+      <h2 class="section-title">Interactive Map</h2>
+      <p class="section-subtitle">Click on markers to discover historic sites and traditional destinations</p>
+    </div>
+
+    <div class="map-container">
+      <div class="main-filters">
+        <div class="filter-group">
+          <label for="county-select" class="filter-label">
+            <i class="fa-solid fa-map"></i>
+            County:
+          </label>
+          <select id="county-select" class="filter-select" (change)="onCountyChange($event)">
+            <option value="all">All Counties</option>
+            <option *ngFor="let county of counties.slice(1)" [value]="county">{{county}}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-label">Filter by Type:</span>
+        <div class="filter-chips">
+          <button
+            *ngFor="let type of filterTypes"
+            class="filter-chip"
+            [class.active]="activeFilter === type"
+            (click)="setFilter(type)">
+            <span class="filter-icon">
+              <i [class]="getIconClass(type)" [style.color]="getIconColor(type)"></i>
+            </span>
+            {{ type === 'all' ? 'All Types' : (type | titlecase) }}
+          </button>
+        </div>
+      </div>
+
+      <div class="map-frame">
+        <div
+          class="map"
+          leaflet
+          [leafletOptions]="options"
+          (leafletMapReady)="onMapReady($event)">
+        </div>
+      </div>
+
+      <div class="results-counter">
+        <i class="fa-solid fa-location-dot"></i>
+        Showing {{ getFilteredLocations().length }} of {{ locations.length }} destinations
+        <span *ngIf="selectedSeason !== 'all'" class="filter-indicator">
+          • {{ getSelectedSeasonName() }}
+        </span>
+        <span *ngIf="selectedMonth !== 'all'" class="filter-indicator">
+          • {{ getSelectedMonthName() }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="categories-section">
+  <div class="section-header">
+    <h2 class="section-title">Popular Categories</h2>
+    <p class="section-subtitle">Find destinations by your interests</p>
+  </div>
+
+  <div class="categories-grid">
+    <div 
+      *ngFor="let type of filterTypes.slice(1)" 
+      class="category-card"
+      (click)="openPanelWithCategory(type)"> <!-- Schimbat aici -->
+      <div class="category-icon">
+        <i [class]="getIconClass(type)" [style.color]="getIconColor(type)"></i>
+      </div>
+      <h3 class="category-name">{{ type | titlecase }}</h3>
+      <p class="category-count">{{ getLocationCountByType(type) }} destinations</p>
+    </div>
+  </div>
+</section>
+
+  <div
+    class="details-panel"
+    [@slideInOut]="panelState"
+    (@slideInOut.done)="onAnimationDone($event)">
+
+    <button *ngIf="panelState === 'in'" class="panel-close-btn" (click)="closePanel()" aria-label="Close panel">
+      <span class="close-icon">
+        <i class="fa-solid fa-times"></i>
+      </span>
+    </button>
+
+    <div *ngIf="activePanelContent" class="panel-scroll-content">
+      
+      <ng-container *ngIf="panelContentType === 'location' && activeLocation">
+        <div class="panel-header">
+          <div class="panel-image">
+            <img [src]="activeLocation.image" [alt]="activeLocation.name">
+          </div>
+          <div class="panel-type-badge">
+            <span class="badge-icon">
+              <i [class]="getIconClass(activeLocation.type)" [style.color]="getIconColor(activeLocation.type)"></i>
+            </span>
+            {{ activeLocation.type | titlecase }}
+          </div>
+        </div>
+
+        <div class="panel-content">
+          <div class="panel-meta">
+            <span class="panel-county">
+              <span class="county-icon">
+                <i class="fa-solid fa-location-dot"></i>
+              </span>
+              {{ activeLocation.county }} County
+            </span>
+          </div>
+
+          <h2 class="panel-title">{{ activeLocation.name }}</h2>
+          <p class="panel-description">{{ activeLocation.description }}</p>
+
+          <div class="panel-section" *ngIf="activeLocation.bestMonths || activeLocation.seasons">
+            <h4 class="section-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-calendar-check"></i>
+              </span>
+              Best Time to Visit
+            </h4>
+            <div class="time-info-grid">
+              <div class="time-info-item" *ngIf="activeLocation.bestTime">
+                <span class="time-icon">
+                  <i class="fa-solid fa-clock"></i>
+                </span>
+                <div class="time-content">
+                  <span class="time-label">Recommended</span>
+                  <span class="time-value">{{ activeLocation.bestTime }}</span>
+                </div>
+              </div>
+              <div class="time-info-item" *ngIf="activeLocation.bestMonths && activeLocation.bestMonths.length > 0">
+                <span class="time-icon">
+                  <i class="fa-solid fa-calendar"></i>
+                </span>
+                <div class="time-content">
+                  <span class="time-label">Best Months</span>
+                  <div class="month-tags">
+                    <span *ngFor="let month of getLocationMonthNames(activeLocation.bestMonths)" class="month-tag">
+                      {{ month }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="time-info-item" *ngIf="activeLocation.seasons && activeLocation.seasons.length > 0">
+                <span class="time-icon">
+                  <i class="fa-solid fa-sun"></i>
+                </span>
+                <div class="time-content">
+                  <span class="time-label">Seasons</span>
+                  <div class="season-tags">
+                    <span *ngFor="let season of activeLocation.seasons" class="season-tag">
+                      {{ season | titlecase }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="location-details" *ngIf="activeLocation.population || activeLocation.founded || activeLocation.traditionalCraft">
+            <h4 class="details-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-circle-info"></i>
+              </span>
+              Location Details
+            </h4>
+            <div class="details-grid">
+              <div class="detail-item" *ngIf="activeLocation.population">
+                <span class="detail-icon">
+                  <i class="fa-solid fa-users"></i>
+                </span>
+                <div class="detail-content">
+                  <span class="detail-label">Population</span>
+                  <span class="detail-value">{{ activeLocation.population }}</span>
+                </div>
+              </div>
+              <div class="detail-item" *ngIf="activeLocation.founded">
+                <span class="detail-icon">
+                  <i class="fa-solid fa-calendar-day"></i>
+                </span>
+                <div class="detail-content">
+                  <span class="detail-label">Founded</span>
+                  <span class="detail-value">{{ activeLocation.founded }}</span>
+                </div>
+              </div>
+              <div class="detail-item" *ngIf="activeLocation.traditionalCraft">
+                <span class="detail-icon">
+                  <i class="fa-solid fa-hammer"></i>
+                </span>
+                <div class="detail-content">
+                  <span class="detail-label">Traditional Craft</span>
+                  <span class="detail-value">{{ activeLocation.traditionalCraft }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h4 class="section-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-star"></i>
+              </span>
+              Main Attractions
+            </h4>
+            <ul class="panel-highlights-list">
+              <li *ngFor="let highlight of activeLocation.highlights" class="highlight-item">
+                <span class="highlight-icon">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+                <span class="highlight-text">{{ highlight }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-actions">
+            <button class="panel-explore-btn" (click)="navigateToDestination(activeLocation.slug)">
+              Discover More
+              <span class="btn-icon">
+                <i class="fa-solid fa-arrow-right"></i>
+              </span>
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="panelContentType === 'category' && activeCategory">
+        <div class="panel-header">
+          <div class="panel-image">
+            <img [src]="activeCategory.image" [alt]="activeCategory.displayName">
+          </div>
+          <div class="panel-type-badge">
+            <span class="badge-icon">
+              <i [class]="getIconClass(activeCategory.name)" [style.color]="getIconColor(activeCategory.name)"></i>
+            </span>
+            {{ activeCategory.displayName }}
+          </div>
+        </div>
+
+        <div class="panel-content">
+          <h2 class="panel-title">{{ activeCategory.displayName }}</h2>
+          <p class="panel-description">{{ activeCategory.description }}</p>
+
+          <div class="panel-section">
+            <h4 class="section-title">
+              <span class="title-icon">
+                <i class="fa-solid fa-star"></i>
+              </span>
+              Interesting Facts
+            </h4>
+            <ul class="panel-highlights-list">
+              <li *ngFor="let fact of activeCategory.facts" class="highlight-item">
+                <span class="highlight-icon">
+                  <i class="fa-solid fa-lightbulb"></i>
+                </span>
+                <span class="highlight-text">{{ fact }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-actions">
+            <button class="panel-explore-btn" (click)="navigateToActiveCategory()">
+              View all {{ activeCategory.displayName }}
+              <span class="btn-icon">
+                <i class="fa-solid fa-arrow-right"></i>
+              </span>
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+  </div>
+
+  <div
+    class="panel-overlay"
+    *ngIf="panelState === 'in'"
+    (click)="closePanel()">
+  </div>
+
+  <footer class="page-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Explore Romania</h3>
+        <p>Discover the beauty and heritage of our country through its diverse destinations and rich cultural traditions.</p>
+      </div>
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="#">All Destinations</a></li>
+          <li><a href="#">Popular Cities</a></li>
+          <li><a href="#">Historic Sites</a></li>
+          <li><a href="#">Natural Parks</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Categories</h3>
+        <ul class="footer-links">
+          <li *ngFor="let type of filterTypes.slice(1, 6)">
+            <a href="#" (click)="navigateToCategory(type); $event.preventDefault()">{{ type | titlecase }}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 Discover Romania. All rights reserved.</p>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,188 @@
+{
+  "preferences": [
+    {
+      "id": "adventure",
+      "name": "Adventure & Sports",
+      "description": "Hiking, extreme sports and outdoor activities",
+      "icon": "fa-solid fa-person-hiking",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "culture",
+      "name": "Culture & History",
+      "description": "Museums, fortresses, churches and historical sites",
+      "icon": "fa-solid fa-landmark",
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "nature",
+      "name": "Nature & Relaxation",
+      "description": "Natural parks, lakes and scenic landscapes",
+      "icon": "fa-solid fa-tree",
+      "color": "#10B981"
+    },
+    {
+      "id": "wellness",
+      "name": "Wellness & Spa",
+      "description": "Spa resorts and relaxation centers",
+      "icon": "fa-solid fa-spa",
+      "color": "#EC4899"
+    },
+    {
+      "id": "gastronomy",
+      "name": "Gastronomy",
+      "description": "Traditional restaurants and culinary experiences",
+      "icon": "fa-solid fa-utensils",
+      "color": "#F97316"
+    },
+    {
+      "id": "photography",
+      "name": "Photography",
+      "description": "Spectacular places for memorable photos",
+      "icon": "fa-solid fa-camera",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "family",
+      "name": "Family & Kids",
+      "description": "Activities suitable for the whole family",
+      "icon": "fa-solid fa-children",
+      "color": "#EF4444"
+    },
+    {
+      "id": "romantic",
+      "name": "Romantic & Couples",
+      "description": "Perfect destinations for romantic getaways",
+      "icon": "fa-solid fa-heart",
+      "color": "#DC2626"
+    }
+  ],
+  "travelStyles": [
+    {
+      "id": "relaxed",
+      "name": "Relaxed & Comfort",
+      "description": "I like to enjoy travel at a leisurely pace",
+      "icon": "fa-solid fa-couch",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "adventurous",
+      "name": "Adventurous & Explorer",
+      "description": "I seek unique experiences and active exploration",
+      "icon": "fa-solid fa-binoculars",
+      "color": "#10B981"
+    },
+    {
+      "id": "cultural",
+      "name": "Cultural & Educational",
+      "description": "I'm interested in local history and culture",
+      "icon": "fa-solid fa-book-open",
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "luxury",
+      "name": "Luxury & Refined",
+      "description": "I prefer quality services and superior comfort",
+      "icon": "fa-solid fa-crown",
+      "color": "#F97316"
+    },
+    {
+      "id": "budget",
+      "name": "Budget & Authentic",
+      "description": "I look for authentic experiences at affordable prices",
+      "icon": "fa-solid fa-wallet",
+      "color": "#6B7280"
+    }
+  ],
+  "seasons": [
+    {
+      "id": "spring",
+      "name": "Spring",
+      "description": "March - May: Blooming nature and pleasant temperatures",
+      "icon": "fa-solid fa-seedling",
+      "color": "#22C55E"
+    },
+    {
+      "id": "summer",
+      "name": "Summer",
+      "description": "June - August: Long days and outdoor activities",
+      "icon": "fa-solid fa-sun",
+      "color": "#EAB308"
+    },
+    {
+      "id": "autumn",
+      "name": "Autumn",
+      "description": "September - November: Spectacular colors and harvest",
+      "icon": "fa-solid fa-leaf",
+      "color": "#EA580C"
+    },
+    {
+      "id": "winter",
+      "name": "Winter",
+      "description": "December - February: Winter sports and festive atmosphere",
+      "icon": "fa-solid fa-snowflake",
+      "color": "#60A5FA"
+    },
+    {
+      "id": "all_season",
+      "name": "All Seasons",
+      "description": "Destinations suitable regardless of season",
+      "icon": "fa-solid fa-calendar",
+      "color": "#6B7280"
+    }
+  ],
+  "durations": [
+    {
+      "id": "weekend",
+      "name": "Weekend Getaway",
+      "days": 2,
+      "description": "2-3 days - Perfect for a short escape"
+    },
+    {
+      "id": "short",
+      "name": "Short Week",
+      "days": 4,
+      "description": "4-5 days - Enough time to explore a region"
+    },
+    {
+      "id": "medium",
+      "name": "Full Week",
+      "days": 7,
+      "description": "6-8 days - Ideal for a comprehensive experience"
+    },
+    {
+      "id": "long",
+      "name": "Extended Vacation",
+      "days": 10,
+      "description": "9+ days - For deep exploration and multiple destinations"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "transfagarasan",
+      "name": "Transfăgărășan Road",
+      "county": "Argeș",
+      "type": "Scenic Road",
+      "image": "assets/images/destinations/transfagarasan.jpg",
+      "description": "The most spectacular road in Romania, offering unforgettable alpine landscapes along its 90 km.",
+      "tags": ["adventure", "photography", "nature"],
+      "travelStyles": ["adventurous", "cultural"],
+      "bestSeasons": ["summer", "autumn"],
+      "recommendedDuration": "weekend",
+      "highlights": ["Bâlea Lake", "Vidraru Dam", "Moldoveanu Peak", "Bâlea Waterfall"]
+    },
+    {
+      "id": "bran-castle",
+      "name": "Bran Castle",
+      "county": "Brașov",
+      "type": "Historic Castle",
+      "image": "assets/images/destinations/bran-castle.jpg",
+      "description": "Known as 'Dracula's Castle', it's one of the most impressive medieval fortresses in Europe.",
+      "tags": ["culture", "photography", "romantic"],
+      "travelStyles": ["cultural", "relaxed"],
+      "bestSeasons": ["all_season"],
+      "recommendedDuration": "weekend",
+      "highlights": ["Throne Room", "Secret Tunnel", "Castle Gardens", "History Museum"]
+    }
+  ]
+}

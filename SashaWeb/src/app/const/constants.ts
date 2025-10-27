@@ -1,40 +1,26 @@
 export const SERVER = {
   BASE_URL: 'http://localhost:5043',
 
-  // Auth endpoints
+  // ================================
+  // 1️⃣ AUTH ENDPOINTS
+  // ================================
   AUTH_PATH: '/auth',
   SIGNUP: '/auth/signup',
   LOGIN: '/auth/login',
   LOGOUT: '/auth/logout',
   ME: '/auth/me',
+  UPDATE_USER: '/auth/update',
 
-  // User endpoints (de exemplu pentru alte operațiuni)
-  USER_PATH: '/user',
-  GET_USER: '/user',           // eventual GET /user/:id
-  UPDATE_USER: '/user/update', // dacă implementezi update
-  DELETE_USER: '/user/delete', // dacă implementezi delete
-
-  // Properties endpoints (dacă vrei să le folosești pe frontend)
-  PROPERTIES_PATH: '/properties',
-  GET_PROPERTIES: '/properties',
-  GET_PROPERTY: '/properties/', // + id
-  ADD_PROPERTY: '/properties/add',
-  UPDATE_PROPERTY: '/properties/update',
-  DELETE_PROPERTY: '/properties/delete',
-
-  // Bookings endpoints
-  BOOKINGS_PATH: '/bookings',
-  GET_BOOKINGS: '/bookings',
-  ADD_BOOKING: '/bookings/add',
-  CANCEL_BOOKING: '/bookings/cancel',
-
-  // Reviews endpoints
-  REVIEWS_PATH: '/reviews',
-  GET_REVIEWS: '/reviews',
-  ADD_REVIEW: '/reviews/add',
-
-  // Notifications
-  NOTIFICATIONS_PATH: '/notifications',
-  GET_NOTIFICATIONS: '/notifications',
-  MARK_AS_READ: '/notifications/read'
+  // ================================
+  // 2️⃣ PENDING APPROVE ENDPOINTS
+  // ================================
+  PENDING_APPROVE_PATH: '/api/pendingapprove',
+  PENDING_APPROVE_PATH_PROPERTIES: '/properties',
+  GET_ALL_PENDING_APPROVALS: '/api/pendingapprove',
+  GET_PENDING_APPROVE_BY_ID: '/api/pendingapprove/', // + id
+  ADD_PENDING_APPROVE: '/api/pendingapprove',
+  UPDATE_PENDING_APPROVE: '/api/pendingapprove/', // + id
+  DELETE_PENDING_APPROVE: '/api/pendingapprove/', // + id
+  APPROVE_PENDING: '/api/pendingapprove/', // + id + /approve
+  REJECT_PENDING: '/api/pendingapprove/' // + id + /reject
 };

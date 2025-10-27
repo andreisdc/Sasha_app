@@ -1,0 +1,31 @@
+<div [class]="'property-card ' + className">
+  <div class="property-image">
+    <img 
+      [src]="image" 
+      [alt]="title"
+      class="image"
+    >
+    <div class="price-badge">
+      ${{ price }}/night
+    </div>
+  </div>
+  
+  <div class="property-content">
+    <div class="property-header">
+      <h3 class="property-title">{{ title }}</h3>
+      <div class="rating">
+        <span class="star">★</span>
+        <span class="rating-value">{{ rating }}</span>
+      </div>
+    </div>
+    
+    <p class="property-location">{{ location }}</p>
+    
+    <div class="property-footer">
+      <span class="category-badge">
+        {{ category }}
+      </span>
+      <span class="reviews">({{ reviews }} reviews)</span>
+    </div>
+  </div>
+</div>

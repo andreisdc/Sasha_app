@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SashaServer.Data;
 using SashaServer.Models;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -22,19 +24,11 @@ namespace SashaServer.Controllers
         [HttpPost("signup")]
         public IActionResult Signup([FromBody] SignupRequest req)
         {
-            _logger.LogInformation("[{Time}] Signup attempt for email: {Email}", DateTime.UtcNow, req.Email);
-
             if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
-            {
-                _logger.LogWarning("[{Time}] Signup failed: missing email or password", DateTime.UtcNow);
                 return BadRequest(new { message = "Email and password are required" });
-            }
 
             if (_data.UserExists(req.Email))
-            {
-                _logger.LogWarning("[{Time}] Signup failed: email already registered: {Email}", DateTime.UtcNow, req.Email);
                 return Conflict(new { message = "Email already registered" });
-            }
 
             var user = new User
             {
@@ -46,40 +40,102 @@ namespace SashaServer.Controllers
                 PhoneNumber = req.PhoneNumber,
                 PasswordHash = HashPassword(req.Password),
                 Rating = 0,
+                IsSeller = false,        // ✅ Default false la înregistrare
+                IsAdmin = false,         // ✅ Default false la înregistrare
+                IsVerified = false,      // ✅ Default false - necesită verificare email/etc
                 CreatedAt = DateTime.UtcNow
             };
 
             _data.AddUser(user);
-
-            _logger.LogInformation("[{Time}] User registered successfully: {Email}", DateTime.UtcNow, req.Email);
             return Ok(new { message = "User registered successfully" });
+        }
+
+        [HttpGet("check-admin")]
+
+        public IActionResult CheckAdminAccess()
+        {
+            try
+            {
+                if (!Request.Cookies.TryGetValue("AuthToken", out var token))
+                {
+                    _logger.LogWarning("No AuthToken cookie found");
+                    return Ok(new { hasAccess = false });
+                }
+
+                var user = _data.GetUserByToken(token);
+
+                if (user == null)
+                {
+                    _logger.LogWarning($"User not found for token: {token}");
+                    return Ok(new { hasAccess = false });
+                }
+
+                // 🔹 Log valoarea IsAdmin
+                _logger.LogInformation($"User {user.Email} IsAdmin = {user.IsAdmin}");
+
+                if (!user.IsAdmin)
+                {
+                    _logger.LogWarning($"Unauthorized admin access attempt by user: {user.Email}");
+                    return Ok(new { hasAccess = false });
+                }
+
+                return Ok(new { hasAccess = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking admin access");
+                return Ok(new { hasAccess = false });
+            }
+        }
+
+
+        [HttpGet("check-seller")]
+        public IActionResult CheckSellerAccess()
+        {
+            try
+            {
+                if (!Request.Cookies.TryGetValue("AuthToken", out var token))
+                    return Ok(new { hasAccess = false });
+
+                var user = _data.GetUserByToken(token);
+                
+                // ✅ Verifică în baza de date DE FIECARE DATĂ
+                if (user == null || !user.IsSeller)
+                {
+                    return Ok(new { hasAccess = false });
+                }
+
+                return Ok(new { hasAccess = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking seller access");
+                return Ok(new { hasAccess = false });
+            }
         }
 
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
-            _logger.LogInformation("[{Time}] Login attempt for email: {Email}", DateTime.UtcNow, req.Email);
-
-            var user = _data.GetUsers().FirstOrDefault(u => u.Email == req.Email);
+            var user = _data.GetUserByEmail(req.Email);
             if (user == null || user.PasswordHash != HashPassword(req.Password))
-            {
-                _logger.LogWarning("[{Time}] Login failed: invalid credentials for email: {Email}", DateTime.UtcNow, req.Email);
                 return Unauthorized(new { message = "Invalid credentials" });
-            }
 
+            // Ștergem toate sesiunile existente pentru acest user
+            _data.DeleteAllSessionsForUser(user.Id);
+
+            // Creăm sesiunea nouă
             var token = Guid.NewGuid().ToString();
-            var expiresAt = DateTime.UtcNow.AddDays(1);
-
+            var expiresAt = req.RememberMe ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddDays(1);
             _data.AddSession(user.Id, token, expiresAt);
 
             Response.Cookies.Append("AuthToken", token, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                Expires = expiresAt
+                Secure = false, // pune true în producție cu HTTPS
+                Expires = expiresAt,
+                SameSite = SameSiteMode.Strict
             });
-
-            _logger.LogInformation("[{Time}] Login successful: {Email}, Token issued", DateTime.UtcNow, req.Email);
 
             return Ok(new
             {
@@ -87,6 +143,13 @@ namespace SashaServer.Controllers
                 username = user.Username,
                 email = user.Email,
                 phoneNumber = user.PhoneNumber,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                rating = user.Rating,
+                profilePicture = user.ProfilePicture,
+                isSeller = user.IsSeller,    // ✅ Pentru UX în frontend
+                isAdmin = user.IsAdmin,      // ✅ Pentru UX în frontend
+                isVerified = user.IsVerified,// ✅ Pentru UX în frontend
                 expiresAt
             });
         }
@@ -94,31 +157,24 @@ namespace SashaServer.Controllers
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            _logger.LogInformation("[{Time}] Logout attempt", DateTime.UtcNow);
-
             if (!Request.Cookies.TryGetValue("AuthToken", out var token))
-            {
-                _logger.LogWarning("[{Time}] Logout failed: no token provided", DateTime.UtcNow);
                 return BadRequest(new { message = "No token provided" });
-            }
 
             _data.DeleteSession(token);
             Response.Cookies.Delete("AuthToken");
 
-            _logger.LogInformation("[{Time}] Logout successful, token deleted", DateTime.UtcNow);
             return Ok(new { message = "Logged out successfully" });
         }
 
         [HttpGet("me")]
         public IActionResult Me()
         {
-            if (!HttpContext.Items.TryGetValue("User", out var userObj) || userObj is not User user)
-            {
-                _logger.LogWarning("[{Time}] Me request failed: user not logged in", DateTime.UtcNow);
+            if (!Request.Cookies.TryGetValue("AuthToken", out var token))
                 return Unauthorized(new { message = "Not logged in" });
-            }
 
-            _logger.LogInformation("[{Time}] Me request success: {Email}", DateTime.UtcNow, user.Email);
+            var user = _data.GetUserByToken(token);
+            if (user == null) return Unauthorized(new { message = "Session expired or invalid" });
+
             return Ok(new
             {
                 user.Id,
@@ -127,7 +183,38 @@ namespace SashaServer.Controllers
                 user.PhoneNumber,
                 user.FirstName,
                 user.LastName,
-                user.Rating
+                user.Rating,
+                user.ProfilePicture,
+                isSeller = user.IsSeller,    // ✅ Pentru UX în frontend
+                isAdmin = user.IsAdmin,      // ✅ Pentru UX în frontend
+                isVerified = user.IsVerified // ✅ Pentru UX în frontend
+            });
+        }
+
+        [HttpPut("update")]
+        public IActionResult UpdateUser([FromBody] UpdateUserRequest req)
+        {
+            if (!Request.Cookies.TryGetValue("AuthToken", out var token))
+                return Unauthorized(new { message = "Not logged in" });
+
+            var user = _data.GetUserByToken(token);
+            if (user == null) return Unauthorized(new { message = "Session expired or invalid" });
+
+            user.Username = req.Username ?? user.Username;
+            user.PhoneNumber = req.PhoneNumber ?? user.PhoneNumber;
+            user.ProfilePicture = req.ProfilePicture ?? user.ProfilePicture;
+
+            _data.UpdateUser(user);
+            return Ok(new { 
+                message = "User updated", 
+                user = new {
+                    user.Username,
+                    user.PhoneNumber,
+                    user.ProfilePicture,
+                    isSeller = user.IsSeller,    // ✅ Include și noile câmpuri
+                    isAdmin = user.IsAdmin,
+                    isVerified = user.IsVerified
+                }
             });
         }
 

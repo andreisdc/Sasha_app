@@ -1,1 +1,12 @@
-<router-outlet />
+<!-- Loading Indicator -->
+<div *ngIf="isLoading" class="loading-overlay">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Se încarcă aplicația...</p>
+  </div>
+</div>
+
+<!-- Conținutul principal al aplicației -->
+<div [class.hidden]="isLoading">
+  <router-outlet />
+</div>

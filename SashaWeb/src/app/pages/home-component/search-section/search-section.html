@@ -15,5 +15,17 @@
       </form>
       <app-dropdown-menu></app-dropdown-menu>
     </div>
+
+    <div
+      class="scroll-buttons"
+      role="button"
+      tabindex="0"
+      (click)="scrollDown()"
+      (keydown.enter)="scrollDown()"
+      (keydown.space)="scrollDown()"
+    >
+      <p>Scroll for more</p>
+      <nz-icon nzType="caret-down" nzTheme="outline" class="scroll-arrow" />
+    </div>
   </div>
 </div>

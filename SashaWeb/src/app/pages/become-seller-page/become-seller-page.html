@@ -1,1 +1,238 @@
-<p>become-seller-page works!</p>
+<!-- become-seller-page.html -->
+<div class="seller-onboarding">
+  
+  <!-- Componenta Toast separată -->
+  <app-toast></app-toast>
+
+  <div class="onboarding-container">
+    
+    <!-- Left Sidebar -->
+    <div class="onboarding-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">🏠</div>
+          <div class="logo-text">Wanderlust</div>
+        </div>
+        <h1 class="sidebar-title">Become a Verified Host</h1>
+        <p class="sidebar-subtitle">Join thousands of trusted hosts worldwide and start earning with your space</p>
+      </div>
+
+      <div class="steps-vertical">
+        <div *ngFor="let step of steps" 
+             [class]="'step-nav-item ' + step.status"
+             (click)="goToStep(step.number)">
+          <div class="step-number">{{step.number}}</div>
+          <div class="step-nav-text">
+            <h3>{{step.title}}</h3>
+            <p>{{step.description}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Content -->
+    <div class="onboarding-content">
+      
+      <!-- Step 1: Security -->
+      <div class="step-content" [class.active]="currentStep === 1">
+        <div class="content-header">
+          <h1>Security & Privacy First</h1>
+          <p>Your safety and privacy are our top priority. We use military-grade encryption and follow strict data protection protocols to ensure your information remains secure throughout the verification process.</p>
+        </div>
+
+        <div class="security-grid">
+          <div class="security-card">
+            <div class="security-card-icon">🔒</div>
+            <h3>Bank-Level Encryption</h3>
+            <p>All your personal data and documents are encrypted using AES-256 encryption, the same standard used by financial institutions.</p>
+          </div>
+          
+          <div class="security-card">
+            <div class="security-card-icon">⏰</div>
+            <h3>Automatic Data Deletion</h3>
+            <p>Your sensitive documents and personal information are automatically deleted from our servers immediately after verification.</p>
+          </div>
+          
+          <div class="security-card">
+            <div class="security-card-icon">🛡️</div>
+            <h3>GDPR Compliant</h3>
+            <p>We strictly adhere to GDPR regulations and global data protection standards to safeguard your privacy rights.</p>
+          </div>
+          
+          <div class="security-card">
+            <div class="security-card-icon">🔍</div>
+            <h3>Zero Third-Party Sharing</h3>
+            <p>Your data never leaves our secure environment and is never shared with external companies or advertisers.</p>
+          </div>
+        </div>
+
+        <label class="checkbox-modern">
+          <input type="checkbox" [(ngModel)]="acceptedGdpr">
+          <span class="checkbox-text">
+            I understand and agree to the secure handling of my data. I acknowledge that my information will be encrypted during processing and permanently deleted after verification completion. I have read and agree to the Privacy Policy and Terms of Service.
+          </span>
+        </label>
+      </div>
+
+      <!-- Step 2: Personal Info -->
+      <div class="step-content" [class.active]="currentStep === 2">
+        <div class="content-header">
+          <h1>Personal Information</h1>
+          <p>We need some basic information to verify your identity and set up your host profile. This helps us ensure a safe and trustworthy community for all our users.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.firstName"
+                   class="form-input"
+                   placeholder="Enter your first name"
+                   (blur)="validateNames()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.lastName"
+                   class="form-input"
+                   placeholder="Enter your last name"
+                   (blur)="validateNames()">
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Complete Address *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.address"
+                   class="form-input"
+                   placeholder="Enter your full residential address">
+            <div class="input-hint">This helps us verify your location and ensure you're eligible to host in your area.</div>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Personal Numeric Code (CNP) *</label>
+            <input type="text" 
+                   [(ngModel)]="formData.cnp"
+                   class="form-input"
+                   placeholder="Enter your 13-digit CNP"
+                   maxlength="13"
+                   (blur)="validateCNP()">
+            <div class="input-hint">Your CNP is encrypted immediately upon entry and will be permanently deleted after verification. This is required for identity verification purposes only.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: ID Upload -->
+      <div class="step-content" [class.active]="currentStep === 3">
+        <div class="content-header">
+          <h1>Identity Verification</h1>
+          <p>To ensure the safety of our community, we need to verify your identity. Upload a clear photo of your government-issued ID card. This helps us confirm you are who you say you are.</p>
+        </div>
+
+        <div class="upload-section" 
+             (click)="fileInput.click()"
+             (dragover)="onDragOver($event)"
+             (drop)="onFileDrop($event)"
+             (dragleave)="onDragLeave($event)"
+             [class.dragover]="isDragging">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">
+            <h3>Upload Your ID Document</h3>
+            <p>Click to select a file or drag and drop your ID card image here</p>
+            <p>We accept JPG, PNG, or PDF files up to 5MB in size</p>
+          </div>
+          <input #fileInput type="file" accept="image/*,.pdf" 
+                 (change)="onFileSelected($event)" 
+                 style="display: none">
+        </div>
+
+        <div *ngIf="formData.idDocument" class="file-preview">
+          <div class="file-icon">✅</div>
+          <div class="file-info">
+            <div class="file-name">{{formData.idDocument.name}}</div>
+            <div class="file-size">{{getFileSize(formData.idDocument.size)}}</div>
+          </div>
+        </div>
+
+        <div *ngIf="submitError" class="error-message">
+          {{submitError}}
+        </div>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div class="step-content" [class.active]="currentStep === 4">
+        <div class="success-screen">
+          <div class="success-icon">✓</div>
+          <div class="success-content">
+            <h2>Congratulations! 🎉</h2>
+            <p>Your host verification has been successfully submitted! Welcome to the Wanderlust host community. We're excited to have you on board!</p>
+            
+            <div class="success-details">
+              <div class="detail-item">
+                <div class="detail-icon">⏱️</div>
+                <div class="detail-text">
+                  <strong>Processing Time</strong>
+                  <div>Typically 24-48 hours during business days</div>
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-icon">📧</div>
+                <div class="detail-text">
+                  <strong>Email Notification</strong>
+                  <div>You'll receive status updates at your registered email</div>
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-icon">⭐</div>
+                <div class="detail-text">
+                  <strong>Next Steps</strong>
+                  <div>Get ready to create your first listing and welcome guests</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="onboarding-actions">
+        <div class="action-buttons">
+          <button *ngIf="currentStep > 1 && currentStep < 4" 
+                  (click)="previousStep()"
+                  class="btn btn-secondary">
+            Back
+          </button>
+          
+          <button *ngIf="currentStep < 3"
+                  (click)="nextStep()"
+                  [disabled]="!canProceedToNextStep()"
+                  class="btn btn-primary">
+            Continue
+          </button>
+          
+          <button *ngIf="currentStep === 3"
+                  (click)="submitVerification()"
+                  [disabled]="!canSubmitVerification()"
+                  class="btn btn-primary">
+            <span *ngIf="!isSubmitting">Submit Verification</span>
+            <span *ngIf="isSubmitting">Submitting...</span>
+          </button>
+          
+          <button *ngIf="currentStep === 4"
+                  (click)="startTutorial()"
+                  class="btn btn-primary">
+            Start Host Tutorial
+          </button>
+          
+          <button *ngIf="currentStep === 4"
+                  (click)="skipTutorial()"
+                  class="btn btn-secondary">
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

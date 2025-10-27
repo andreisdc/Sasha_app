@@ -1,0 +1,371 @@
+<div class="properties-page">
+  <div class="container">
+    <div class="page-content">
+      <div class="mobile-overlay" 
+           [class.active]="showMobileFilters"
+           (click)="toggleMobileFilters()"></div>
+
+      <aside class="filters-sidebar" [class.mobile-open]="showMobileFilters">
+        <div class="sidebar-header">
+          <div class="header-content">
+            <div class="header-title">
+              <h2>Find Stays</h2>
+              <p>Discover your perfect accommodation</p>
+            </div>
+            <button class="mobile-close" (click)="toggleMobileFilters()">
+              <svg class="icon-svg-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="search-section">
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search destinations..."
+                [value]="selectedFilters.search"
+                (input)="onSearchChange($any($event.target).value)"
+              >
+              <button *ngIf="selectedFilters.search" class="clear-search" (click)="clearSearch()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="filters-content">
+          
+          <div class="filter-section collapsible active">
+            <div class="section-header" (click)="toggleFilterSection($event)">
+              <h3 class="section-title">
+                <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                Dates
+              </h3>
+              <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            <div class="section-content">
+              <div class="date-range-picker">
+                <div class="date-inputs">
+                  <div class="date-input">
+                    <label>Check-in</label>
+                    <input 
+                      type="date" 
+                      class="date-input-field"
+                      [value]="selectedFilters.checkIn"
+                      (change)="onFilterChange('checkIn', $any($event.target).value)"
+                    >
+                  </div>
+                  <div class="date-input">
+                    <label>Check-out</label>
+                    <input 
+                      type="date" 
+                      class="date-input-field"
+                      [value]="selectedFilters.checkOut"
+                      (change)="onFilterChange('checkOut', $any($event.target).value)"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section collapsible">
+            <div class="section-header" (click)="toggleFilterSection($event)">
+              <h3 class="section-title">
+                <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A1.875 1.875 0 0118 22.5H6a1.875 1.875 0 01-1.501-2.382z" />
+                </svg>
+                Guests
+              </h3>
+              <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            <div class="section-content">
+              <div class="guests-selector">
+                <div class="guest-rows">
+                  <div class="guest-row">
+                    <div class="guest-info"><span class="guest-label">Persons</span></div>
+                    <div class="guest-counter">
+                      <button type="button" class="counter-btn" (click)="adjustGuests('persons', -1)" [disabled]="selectedFilters.guests.persons <= 1">
+                        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg>
+                      </button>
+                      <span class="counter-value">{{ selectedFilters.guests.persons }}</span>
+                      <button type="button" class="counter-btn" (click)="adjustGuests('persons', 1)">
+                        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="guest-row">
+                    <div class="guest-info"><span class="guest-label">Rooms</span></div>
+                    <div class="guest-counter">
+                      <button type="button" class="counter-btn" (click)="adjustGuests('rooms', -1)" [disabled]="selectedFilters.guests.rooms <= 1">
+                        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg>
+                      </button>
+                      <span class="counter-value">{{ selectedFilters.guests.rooms }}</span>
+                      <button type="button" class="counter-btn" (click)="adjustGuests('rooms', 1)">
+                        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section collapsible">
+            <div class="section-header" (click)="toggleFilterSection($event)">
+              <h3 class="section-title">
+                <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0l.879-.659M12 21a9.002 9.002 0 00-9-9 9.002 9.002 0 009-9 9.002 9.002 0 009 9 9.002 9.002 0 00-9 9z" />
+                </svg>
+                Price Range
+              </h3>
+              <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            <div class="section-content">
+              <div class="price-range-section">
+                <div class="price-display">
+                  <span class="price-min">${{ selectedFilters.minPrice }}</span>
+                  <span class="price-separator">-</span>
+                  <span class="price-max">${{ selectedFilters.maxPrice }}</span>
+                </div>
+                <div class="price-slider-container">
+                  <input 
+                    type="range" 
+                    class="price-slider"
+                    min="0" 
+                    max="1000" 
+                    [value]="selectedFilters.maxPrice"
+                    (input)="onPriceRangeChange($any($event.target).value)"
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section collapsible">
+            <div class="section-header" (click)="toggleFilterSection($event)">
+              <h3 class="section-title">
+                <svg class="title-icon icon-category" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                Property Type
+              </h3>
+              <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            <div class="section-content">
+              <div class="filter-options-grid categories-grid">
+                <div *ngFor="let category of categories" 
+                     class="category-card"
+                     [class.active]="selectedFilters.category === category.value"
+                     (click)="onFilterChange('category', category.value)">
+                  
+                  <div class="category-icon">
+                    <svg *ngIf="category.value === ''" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                    <svg *ngIf="category.value === 'Luxury'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.31h5.513c.49 0 .704.656.34.969l-4.286 3.118a.562.562 0 00-.182.623l2.125 5.111a.563.563 0 01-.84.623l-4.286-3.118a.563.563 0 00-.651 0l-4.286 3.118a.563.563 0 01-.84-.623l2.125-5.111a.562.562 0 00-.182-.623l-4.286-3.118a.563.563 0 01.34-.969h5.513a.563.563 0 00.475-.31l2.125-5.112z" /></svg>
+                    <svg *ngIf="category.value === 'Beach'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21v-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3.75 21H1.5m1.5 0h2.25m0 0v-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m-4.5 0H9m0 0v-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m-4.5 0H15m0 0v-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m-4.5 0H21m0 0v-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3.75 21v-4.5A1.125 1.125 0 014.875 15h14.25c.621 0 1.125.504 1.125 1.125v4.5m-15 0H21m-1.5 0v-4.5c0-1.036-.84-1.875-1.875-1.875h-9.75c-1.036 0-1.875.84-1.875 1.875v4.5m13.5 0H6.375m0 0v-4.5c0-1.036-.84-1.875-1.875-1.875h-.75c-1.036 0-1.875.84-1.875 1.875v4.5m6.75 0H21" /></svg>
+                    <svg *ngIf="category.value === 'Mountain'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3m-16.5 0h16.5M3.75 3v1.5m16.5-1.5v1.5m-16.5 3v1.5m16.5-1.5v1.5m-16.5 3v1.5m16.5-1.5v1.5M3.75 12v1.5m16.5-1.5v1.5m-16.5 3v1.5m16.5-1.5v1.5M3.75 3h.008v.008H3.75V3zm.008 3h.008v.008H3.758V6zm.008 3h.008v.008H3.758V9zm.008 3h.008v.008H3.758v-.008zm.008 3h.008v.008H3.758v-.008zm.008 3h.008v.008H3.758v-.008zm16.492-3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm0-12h.008v.008h-.008V9zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm-3.008-3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm0-12h.008v.008h-.008V9zm.008 3h.008v.008h-.008v-.008zm-3.008-3h.008v.008h-.008V9zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm-3.008-3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm-3.008-3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm0-12h.008v.008h-.008V9zm.008 3h.008v.008h-.008v-.008zm-3.008-3h.008v.008h-.008V9zm.008 3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008zm-3.008-3h.008v.008h-.008v-.008zm.008 3h.008v.008h-.008v-.008z" /></svg>
+                    <svg *ngIf="category.value === 'City'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m-6.75-14.25v14.25m6.75-14.25v14.25m4.5-10.5v10.5m-4.5-10.5v10.5m4.5-10.5v10.5m-1.5-6.75v6.75m-1.5-6.75v6.75m-3-3.75v3.75m-1.5-3.75v3.75m1.5-3.75v3.75m-1.5-3.75v3.75m1.5-3.75v3.75m3 0v-3.75m-1.5-3.75v3.75m-1.5-3.75v3.75m1.5-3.75v3.75" /></svg>
+                    <svg *ngIf="category.value === 'Villa'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21H8.25M8.25 3.545v17.455M12.75 3.545v17.455M21 21H3.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545m0 17.455h4.5v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m-4.5 0H21" /></svg>
+                    <svg *ngIf="category.value === 'Trending'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.25 8.25 0 0112 21M15.362 5.214A8.25 8.25 0 001.638 5.214M12 21a8.25 8.25 0 0013.722-6.059M12 21a8.25 8.25 0 01-13.722-6.059" /></svg>
+                  </div>
+                  
+                  <div class="category-name">{{ category.label }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section collapsible">
+            <div class="section-header" (click)="toggleFilterSection($event)">
+              <h3 class="section-title">
+                <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                </svg>
+                Amenities
+              </h3>
+              <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            <div class="section-content">
+              <div class="amenities-grid">
+                <div *ngFor="let amenity of amenities" 
+                     class="amenity-option"
+                     [class.active]="selectedFilters.amenities.includes(amenity.value)"
+                     (click)="onFilterChange('amenities', amenity.value)">
+                  <div class="amenity-checkbox">
+                    <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <span class="amenity-label">{{ amenity.label }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section collapsible">
+            <div class="section-header" (click)="toggleFilterSection($event)">
+              <h3 class="section-title">
+                <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.31h5.513c.49 0 .704.656.34.969l-4.286 3.118a.562.562 0 00-.182.623l2.125 5.111a.563.563 0 01-.84.623l-4.286-3.118a.563.563 0 00-.651 0l-4.286 3.118a.563.563 0 01-.84-.623l2.125-5.111a.562.562 0 00-.182-.623l-4.286-3.118a.563.563 0 01.34-.969h5.513a.563.563 0 00.475-.31l2.125-5.112z" />
+                </svg>
+                Guest Rating
+              </h3>
+              <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            <div class="section-content">
+              <div class="rating-options">
+                <div *ngFor="let rating of ratingOptions" 
+                     class="rating-option"
+                     [class.active]="selectedFilters.rating === rating.value"
+                     (click)="onFilterChange('rating', rating.value)">
+                  <div class="rating-radio">
+                    <div class="radio-dot"></div>
+                  </div>
+                  <div class="rating-stars">
+                    <svg *ngFor="let star of [1,2,3,4,5]" 
+                         class="star"
+                         [class.filled]="isStarFilled(star, rating.value)"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="rating-label">{{ rating.label }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <div class="actions-grid">
+              <button class="clear-filters-btn" (click)="clearFilters()">
+                Clear All
+              </button>
+              <button class="apply-filters-btn" (click)="toggleMobileFilters()">
+                Show {{ filteredProperties.length }} Stays
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="properties-main">
+        <div class="results-header">
+          <h2 class="results-title">{{ getResultsTitle() }}</h2>
+          <div class="sort-options">
+            <select class="sort-select" [value]="selectedFilters.sortBy" (change)="onSortChange($any($event.target).value)">
+              <option value="recommended">Recommended</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Top Rated</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="properties-list">
+          
+          <div class="property-card" *ngFor="let property of sortedProperties">
+            <div class="card-image">
+              <img [src]="property.image" alt="{{ property.title }}" (error)="handleImageError($event)">
+              <div class="card-badge" *ngIf="property.featured">Featured</div>
+            </div>
+            
+            <div class="card-details">
+              <div class="card-location">{{ property.location }}</div>
+              <h3 class="card-title">{{ property.title }}</h3>
+              
+              <div class="card-info">
+                <div class="info-item">
+                  <svg class="icon-svg-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10.5 11.25h3M10.5 15h3M5.25 7.5V5.625c0-1.036.84-1.875 1.875-1.875h9.75c1.036 0 1.875.84 1.875 1.875V7.5" /></svg>
+                  <span>{{ property.bedrooms }} beds</span>
+                </div>
+                <div class="info-item">
+                  <svg class="icon-svg-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a5.25 5.25 0 016.34 4.306 5.25 5.25 0 01-1.32 3.93B12 21.75 3 14.986 3 11.056a5.25 5.25 0 016.34-4.306 5.25 5.25 0 012.66 0z" /></svg>
+                  <span>{{ property.bathrooms }} baths</span>
+                </div>
+                <div class="info-item">
+                  <svg class="icon-svg-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                  <span>{{ property.area }}</span>
+                </div>
+              </div>
+              
+              <div class="card-rating">
+                <svg class="star-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" />
+                </svg>
+                <strong>{{ property.rating }}</strong>
+                <span>({{ property.reviews }} reviews)</span>
+              </div>
+              
+              <div class="card-amenities">
+                <span *ngFor="let amenity of property.amenities.slice(0, 3)" class="amenity-tag">
+                  {{ amenity }}
+                </span>
+                <span *ngIf="property.amenities.length > 3" class="amenity-tag">+{{ property.amenities.length - 3 }} more</span>
+              </div>
+            </div>
+            
+            <div class="card-pricing">
+              <div class="price-info">
+                <span class="price-amount">${{ property.price }}</span>
+                <span class="price-label">/ night</span>
+              </div>
+              <div class="total-price-info" *ngIf="getTotalNights() > 1">
+                <span>${{ calculateTotalPrice(property.price) }} total for {{ getTotalNights() }} nights</span>
+              </div>
+              <button class="book-now-btn" (click)="bookNow(property)">
+                Book Now
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="sortedProperties.length === 0" class="no-results">
+            <h3>No Properties Found</h3>
+            <p>Try adjusting your filters or searching for a different destination.</p>
+          </div>
+
+        </div>
+
+        <div class="load-more-container" *ngIf="hasMoreProperties">
+          <button class="load-more-btn" (click)="loadMoreProperties()" [disabled]="loading">
+            {{ loading ? 'Loading...' : 'Load More Properties' }}
+          </button>
+        </div>
+      </main>
+
+      <div class="mobile-filters-trigger">
+        <button class="filters-toggle-btn" (click)="toggleMobileFilters()">
+          <svg class="filter-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+          </svg>
+          Filters
+          <span *ngIf="getActiveFiltersCount() > 0" class="filter-badge">
+            {{ getActiveFiltersCount() }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
