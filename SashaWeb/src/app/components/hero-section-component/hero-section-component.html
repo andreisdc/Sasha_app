@@ -1,0 +1,88 @@
+<section class="hero-section">
+  <!-- Background Image -->
+  <div class="background-container">
+    <img 
+      src="/assets/images/hero-travel.jpg" 
+      alt="Travel background"
+      class="background-image"
+    >
+    <div class="background-overlay"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <h1 class="title animate-fade-in">
+      Your Perfect Trip
+      <span class="highlight">Awaits</span>
+    </h1>
+    
+    <p class="subtitle animate-fade-in" [style.animation-delay.ms]="200">
+      Discover extraordinary places, personalized experiences, and unforgettable adventures
+    </p>
+
+    <!-- Search Bar -->
+    <div class="search-container animate-scale-in" [style.animation-delay.ms]="400">
+      <div class="search-grid">
+        <div class="input-container">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <input 
+            placeholder="Where to?"
+            class="search-input"
+          />
+        </div>
+        
+        <div class="input-container">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+            <line x1="16" x2="16" y1="2" y2="6"/>
+            <line x1="8" x2="8" y1="2" y2="6"/>
+            <line x1="3" x2="21" y1="10" y2="10"/>
+          </svg>
+          <input 
+            placeholder="Check-in"
+            type="date"
+            class="search-input"
+          />
+        </div>
+        
+        <div class="input-container">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+            <line x1="16" x2="16" y1="2" y2="6"/>
+            <line x1="8" x2="8" y1="2" y2="6"/>
+            <line x1="3" x2="21" y1="10" y2="10"/>
+          </svg>
+          <input 
+            placeholder="Check-out"
+            type="date"
+            class="search-input"
+          />
+        </div>
+        
+        <div class="input-container">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <input 
+            placeholder="Guests"
+            class="search-input"
+          />
+        </div>
+      </div>
+      
+      <button class="search-button">
+        <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+        </svg>
+        Search Adventures
+      </button>
+    </div>
+  </div>
+</section>

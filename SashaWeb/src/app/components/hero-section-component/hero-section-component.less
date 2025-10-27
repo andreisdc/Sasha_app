@@ -1,0 +1,228 @@
+.hero-section {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.background-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.background-image {
+  width: 100%;
+  height: 750px;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.9);
+}
+
+.background-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgb(0, 98, 255) 0%,
+    rgba(0, 145, 255, 0.7) 40%,
+    rgba(0, 85, 255, 0.8) 100%
+  );
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 0 1.5rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  
+  .highlight {
+    display: block;
+    color: #fbbf24; /* Culoare directă, nu gradient pe text */
+    margin-top: 0.5rem;
+  }
+}
+
+.subtitle {
+  font-size: clamp(1.125rem, 3vw, 1.5rem);
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 3rem;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+  font-weight: 300;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.search-container {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem; /* Dimensiune normală */
+  height: 1.25rem;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+/* Hover doar pe container, nu pe iconiță */
+.input-container:hover .icon {
+  transform: translateY(-50%) scale(1.1); /* Păstrăm poziția verticală */
+  color: #3b82f6;
+}
+
+.search-input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2.75rem; /* Padding normal */
+  border: 2px solid transparent;
+  background: rgba(243, 244, 246, 0.9);
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.3s ease;
+  
+  &::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  &:hover {
+    background: rgba(249, 250, 251, 0.95);
+  }
+}
+
+.search-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.125rem 2rem;
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  color: white;
+  border: none;
+  border-radius: 0.875rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 12px 40px rgba(249, 115, 22, 0.4);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.button-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.search-button:hover .button-icon {
+  transform: scale(1.15);
+}
+
+// Animations
+.animate-fade-in {
+  animation: fadeInUp 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

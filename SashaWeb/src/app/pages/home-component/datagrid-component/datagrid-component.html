@@ -54,36 +54,81 @@
             [nzTheme]="property.liked ? 'fill' : 'outline'"
           ></i>
         </button>
-
-        <div class="location-container">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 384 512"
-            class="location"
-          >
-            <path
-              d="M0 188.6C0 84.4 86 0 192 0S384 84.4 384 188.6c0 119.3-120.2 262.3-170.4 316.8-11.8 12.8-31.5 12.8-43.3 0-50.2-54.5-170.4-197.5-170.4-316.8zM192 256a64 64 0 1 0 0-128 64 64 0 1 0 0 128z"
-            />
-          </svg>
-          <b>{{ property.location }}</b>
-          <p class="rating"><b>{{property.rating}} ★</b></p>
-        </div>
       </div>
     </nz-card>
-    }
   </div>
 
-  <button class="scroll-up" (click)="scrollToTop()">
-    <nz-icon nzType="up" nzTheme="outline" />
-  </button>
+  <!-- Properties Grid -->
+  <div *ngIf="!loading() && !error()" class="properties-grid">
+    <!-- Header -->
+    <div class="grid-header">
+      <h2>Explore Properties</h2>
+      <p class="subtitle">{{ totalProperties() }} properties available</p>
+    </div>
 
-  <div class="pagination">
-    <nz-pagination
-      [nzPageIndex]="pageIndex"
-      [nzTotal]="total"
-      [nzPageSize]="pageSize"
-      [nzSimple]="true"
-      (nzPageIndexChange)="onPageChange($event)"
-    ></nz-pagination>
+    <!-- Properties Grid -->
+    <div class="properties-cards">
+      <div class="properties-grid-layout">
+        <nz-card
+          *ngFor="let property of paginatedProperties()"
+          class="property-card"
+          [nzHoverable]="true"
+          (click)="navigateToProperty(property.id)"
+        >
+          <!-- Property Image -->
+          <div class="property-image-container">
+            <img
+              [src]="property.images[0] || '/assets/images/placeholder-property.jpg'"
+              [alt]="property.title || property.title"
+              class="property-image"
+            />
+            
+          </div>
+
+          <!-- Property Content -->
+          <div class="property-content">
+            <div class="property-location">
+              <span class="location-text">{{ property.city }}, {{ property.country }}</span>
+              <nz-tag class="property-type-tag">
+                <nz-icon [nzType]="getPropertyTypeIcon(property.propertyType)"></nz-icon>
+                {{ getPropertyTypeLabel(property.propertyType) }}
+              </nz-tag>
+            </div>
+
+            <h3 class="property-name">{{ property.title || property.title }}</h3>
+
+            <div class="property-rating" *ngIf="property.averageRating > 0">
+              <nz-rate 
+                [ngModel]="property.averageRating" 
+                nzDisabled 
+                class="rating-stars"
+              ></nz-rate>
+              <span class="rating-value">{{ property.averageRating.toFixed(1) }} ({{ property.reviewCount }})</span>
+            </div>
+
+            <div class="property-rating" *ngIf="property.averageRating === 0">
+              <span class="no-reviews">No reviews</span>
+            </div>
+
+            <div class="property-price">
+              <span class="price-amount">{{ formatPrice(property.pricePerNight) }}</span>
+              <span class="price-period">night</span>
+            </div>
+          </div>
+        </nz-card>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="totalProperties() > pageSize()">
+      <nz-pagination
+        [nzPageIndex]="pageIndex()"
+        [nzTotal]="totalProperties()"
+        [nzPageSize]="pageSize()"
+        (nzPageIndexChange)="onPageChange($event)"
+        nzShowSizeChanger
+        [nzPageSizeOptions]="[12, 24, 48, 96]"
+      ></nz-pagination>
+    </div>
   </div>
-</nz-spin>
+</div>

@@ -1,0 +1,866 @@
+// properties-page-component.less
+
+//==========================================================================
+// VARIABLES
+//==========================================================================
+
+@primary-color: #007bff;     
+@primary-color-dark: #0056b3;
+@secondary-color: #ff6b6b;   
+@text-color: #212529;
+@text-color-light: #6c757d;
+@bg-color: #f8f9fa;
+@white: #ffffff;
+@border-color: #dee2e6;
+@star-color: #ffc107;      
+
+@font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+@font-size-base: 16px;
+@font-size-sm: 0.875rem;
+@font-size-lg: 1.25rem;
+@line-height-base: 1.5;
+
+// MODIFICAT: Ajustări layout
+@sidebar-width: 320px; 
+@border-radius: 12px;
+@shadow-base: 0 4px 16px rgba(0, 0, 0, 0.08);
+@transition-base: all 0.3s ease;
+
+@breakpoint-tablet: 768px;
+@breakpoint-desktop: 1024px;
+
+
+//==========================================================================
+// MIXINS
+//==========================================================================
+
+.flex-center(@justify: center) {
+  display: flex;
+  align-items: center;
+  justify-content: @justify;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.button-base(@bg: @primary-color, @color: @white) {
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background-color: @bg;
+  color: @color;
+  border: 1px solid @bg;
+  cursor: pointer;
+  transition: @transition-base;
+  text-align: center;
+  width: 100%;
+
+  &:hover {
+    background-color: darken(@bg, 8%);
+    border-color: darken(@bg, 8%);
+  }
+
+  &:disabled {
+    background-color: @border-color;
+    border-color: @border-color;
+    color: @text-color-light;
+    cursor: not-allowed;
+  }
+}
+
+.input-base {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border: 1px solid @border-color;
+  border-radius: 8px;
+  background-color: @white;
+  transition: @transition-base;
+  color: @text-color;
+
+  &:focus {
+    outline: none;
+    border-color: @primary-color;
+    box-shadow: 0 0 0 3px fade(@primary-color, 20%);
+  }
+}
+
+.icon-svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
+}
+.icon-svg-sm {
+  width: 16px;
+  height: 16px;
+  .icon-svg;
+}
+.icon-svg-lg {
+  width: 24px;
+  height: 24px;
+  .icon-svg;
+}
+.icon-svg-fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+
+//==========================================================================
+// STILURI DE BAZĂ
+//==========================================================================
+
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+//==========================================================================
+// STILUL PAGINII DE PROPRIETĂȚI
+//==========================================================================
+
+.properties-page {
+  .container {
+    // MODIFICAT: Container mai lat
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 15px;
+    max-height: 10px;
+    @media (min-width: @breakpoint-desktop) {
+      padding: 30px;
+    }
+  }
+
+  .page-content {
+    position: relative;
+
+    @media (min-width: @breakpoint-desktop) {
+      display: flex;
+      align-items: flex-start;
+      gap: 30px;
+    }
+  }
+
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+
+    &.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @media (min-width: @breakpoint-desktop) {
+      display: none;
+    }
+  }
+
+  // --- Sidebar-ul cu filtre ---
+  .filters-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: @sidebar-width;
+    max-width: 90%;
+    background: @white;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+
+    &.mobile-open {
+      transform: translateX(0);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (min-width: @breakpoint-desktop) {
+      position: sticky;
+      top: 20px;
+      transform: none !important;
+      height: auto;
+      max-height: calc(100vh - 40px);
+      flex-shrink: 0;
+      width: @sidebar-width;
+      z-index: 1;
+      border: 1px solid @border-color;
+      border-radius: @border-radius;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      .flex-between;
+      padding: 15px 20px;
+      border-bottom: 1px solid @border-color;
+      flex-shrink: 0;
+      
+      .header-title {
+        h2 { font-size: 1.4rem; margin-bottom: 0.1rem; }
+        p { font-size: @font-size-sm; color: @text-color-light; margin: 0; }
+      }
+
+      .mobile-close {
+        font-size: 1.8rem;
+        color: @text-color-light;
+        cursor: pointer;
+        padding: 5px;
+        
+        &:hover { color: @text-color; }
+        
+        @media (min-width: @breakpoint-desktop) {
+          display: none;
+        }
+      }
+    }
+
+    .search-section {
+      padding: 20px;
+      // border-bottom: 1px solid @border-color; // Eliminat
+
+      .search-container {
+        .search-input-wrapper {
+          position: relative;
+          .flex-center(flex-start);
+
+          .search-icon {
+            position: absolute;
+            left: 12px;
+            color: @text-color-light;
+            .icon-svg;
+          }
+
+          .search-input {
+            .input-base;
+            padding-left: 40px;
+            padding-right: 35px;
+          }
+
+          .clear-search {
+            position: absolute;
+            right: 8px;
+            color: @text-color-light;
+            cursor: pointer;
+            padding: 4px;
+            .icon-svg;
+            &:hover { color: @text-color; }
+          }
+        }
+      }
+    }
+
+    // MODIFICAT: Stil nou pentru filtre
+    .filters-content {
+      flex-grow: 1;
+      padding: 20px; // Adăugat padding general
+      border-top: 1px solid @border-color; // Adăugat separator
+
+      @media (min-width: @breakpoint-desktop) {
+        overflow-y: visible;
+      }
+
+      .filter-section {
+        // padding: 20px 0; // Eliminat
+        // border-bottom: 1px solid @border-color; // Eliminat
+        margin-bottom: 15px; // Adăugat spațiu între secțiuni
+        &:last-child { margin-bottom: 0; }
+
+        .section-header {
+          .flex-between;
+          cursor: pointer;
+          padding: 12px; // Adăugat padding
+          border-radius: 8px; // Adăugat radius
+          transition: background-color 0.2s ease;
+          
+          &:hover {
+            background-color: @bg-color; // Adăugat hover
+          }
+
+          .section-title {
+            .flex-center(flex-start);
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: @text-color;
+            
+            .title-icon {
+              color: @primary-color;
+              .icon-svg;
+            }
+          }
+          
+          .toggle-icon {
+            color: @text-color-light;
+            transition: transform 0.2s ease;
+            .icon-svg;
+          }
+        }
+
+        .section-content {
+          padding: 15px 10px 0 10px; // Ajustat padding
+          display: none; 
+        }
+
+        &.active {
+          .section-content { display: block; }
+          .toggle-icon { transform: rotate(180deg); }
+          .section-header {
+            background-color: fade(@primary-color, 10%); // Evidențiere activă
+          }
+        }
+
+        // --- Stiluri specifice pentru filtre (rămân neschimbate) ---
+
+        .date-range-picker {
+          .date-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            .date-input {
+              label {
+                display: block;
+                font-weight: 500;
+                margin-bottom: 5px;
+                font-size: @font-size-sm;
+              }
+              .date-input-field { .input-base; }
+            }
+          }
+        }
+
+        .guests-selector {
+          .guest-row {
+            .flex-between;
+            margin-bottom: 15px;
+            &:last-child { margin-bottom: 0; }
+
+            .guest-label { font-size: 1rem; }
+            .guest-counter {
+              .flex-center;
+              gap: 12px;
+
+              .counter-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 1px solid @border-color;
+                font-size: 1.2rem;
+                color: @primary-color;
+                cursor: pointer;
+                .flex-center;
+                
+                &:hover { background: fade(@primary-color, 10%); }
+                &:disabled { 
+                  color: @border-color; 
+                  cursor: not-allowed; 
+                  background: transparent;
+                }
+              }
+              .counter-value {
+                font-size: 1.1rem;
+                font-weight: 500;
+                min-width: 20px;
+                text-align: center;
+              }
+            }
+          }
+        }
+        
+        .price-range-section {
+          .price-display {
+            .flex-between;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border: 1px solid @border-color;
+            border-radius: 8px;
+            background: @white;
+          }
+          .price-slider-container {
+            .price-slider {
+              width: 100%;
+              cursor: pointer;
+            }
+          }
+        }
+        
+        .categories-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+
+          .category-card {
+            border: 1px solid @border-color;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: @transition-base;
+            
+            .category-icon { 
+              .icon-svg-lg;
+              margin: 0 auto 8px auto;
+              color: @primary-color;
+            }
+            .category-name { font-size: @font-size-sm; font-weight: 500; }
+            
+            &:hover {
+              box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+              transform: translateY(-2px);
+            }
+            &.active {
+              border-color: @primary-color;
+              background: fade(@primary-color, 5%);
+              box-shadow: 0 0 0 2px @primary-color;
+            }
+          }
+        }
+
+        .amenities-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          
+          .amenity-option {
+            .flex-center(flex-start);
+            gap: 10px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+
+            &:hover {
+              background: @bg-color;
+            }
+
+            .amenity-checkbox {
+              width: 20px;
+              height: 20px;
+              border: 2px solid @border-color;
+              border-radius: 4px;
+              transition: @transition-base;
+              flex-shrink: 0;
+              background: @white;
+              .flex-center;
+
+              .icon-svg {
+                width: 14px;
+                height: 14px;
+                color: @white;
+                opacity: 0;
+                transition: opacity 0.2s;
+              }
+            }
+            .amenity-label { font-size: @font-size-sm; }
+
+            &.active {
+              .amenity-checkbox {
+                background-color: @primary-color;
+                border-color: @primary-color;
+                
+                .icon-svg { opacity: 1; }
+              }
+            }
+          }
+        }
+        
+        .rating-options {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+
+          .rating-option {
+            .flex-center(flex-start);
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+
+            .rating-radio {
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              border: 2px solid @border-color;
+              flex-shrink: 0;
+              position: relative;
+              .flex-center;
+
+              .radio-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: @primary-color;
+                opacity: 0;
+                transition: opacity 0.2s;
+              }
+            }
+            .rating-stars {
+              .star {
+                color: @border-color;
+                font-size: 1.1rem;
+                .icon-svg;
+                .icon-svg-fill;
+                
+                &.filled { color: @star-color; }
+              }
+            }
+            .rating-label { font-size: @font-size-sm; }
+            
+            &:hover { background: fade(@primary-color, 5%); }
+            &.active {
+              border-color: @primary-color;
+              background: fade(@primary-color, 10%);
+              .rating-radio {
+                border-color: @primary-color;
+                .radio-dot { opacity: 1; }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .filter-actions {
+      padding: 20px;
+      border-top: 1px solid @border-color;
+      background: @white;
+      position: sticky;
+      bottom: 0;
+      flex-shrink: 0;
+      
+      @media (min-width: @breakpoint-desktop) {
+        position: static;
+      }
+      
+      .actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        
+        .clear-filters-btn {
+          .button-base(@bg: @white, @color: @text-color);
+          border-color: @border-color;
+          &:hover { background: @bg-color; }
+        }
+        
+        .apply-filters-btn {
+          .button-base;
+          @media (min-width: @breakpoint-desktop) {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+
+  // --- Conținutul principal (lista de proprietăți) ---
+  .properties-main {
+    flex-grow: 1;
+    min-width: 0; // Previne overflow-ul în flexbox
+    padding-bottom: 80px; 
+    
+    @media (min-width: @breakpoint-desktop) {
+      padding-bottom: 0;
+    }
+
+    .results-header {
+      .flex-between;
+      margin-bottom: 20px;
+      
+      .results-title { 
+        font-size: 1.5rem; 
+        word-break: break-word; // Siguranță
+      }
+      
+      .sort-options {
+        .sort-select {
+          .input-base;
+          padding-right: 30px;
+        }
+      }
+    }
+
+    .properties-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 25px;
+
+      .property-card {
+        display: flex;
+        flex-direction: column;
+        background: @white;
+        border: 1px solid @border-color;
+        border-radius: @border-radius;
+        box-shadow: @shadow-base;
+        overflow: hidden;
+        transition: @transition-base;
+
+        &:hover {
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+          transform: translateY(-3px);
+        }
+
+        @media (min-width: @breakpoint-tablet) {
+          flex-direction: row;
+        }
+
+        .card-image {
+          position: relative;
+          width: 100%;
+          height: 220px;
+          flex-shrink: 0;
+          
+          @media (min-width: @breakpoint-tablet) {
+            width: 300px;
+            height: auto;
+          }
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          
+          .card-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: @secondary-color;
+            color: @white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: @font-size-sm;
+            font-weight: 600;
+          }
+        }
+        
+        .card-details {
+          padding: 20px;
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+          min-width: 0; // Siguranță pentru flexbox
+
+          .card-location {
+            font-size: @font-size-sm;
+            color: @text-color-light;
+            font-weight: 500;
+            margin-bottom: 5px;
+          }
+          .card-title {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            word-break: break-word; // Siguranță
+          }
+          .card-info {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            color: @text-color-light;
+            font-size: @font-size-sm;
+            margin-bottom: 15px;
+            
+            .info-item {
+              .flex-center(flex-start);
+              gap: 6px;
+            }
+          }
+          .card-amenities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto; 
+            padding-top: 15px;
+            
+            .amenity-tag {
+              background: @bg-color;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 0.8rem;
+              color: @text-color-light;
+            }
+          }
+          .card-rating {
+            .flex-center(flex-start);
+            gap: 5px;
+            margin-top: 15px;
+            
+            .star-icon { 
+              color: @star-color; 
+              .icon-svg;
+              .icon-svg-fill;
+            }
+            strong { font-size: 1rem; }
+            span { font-size: @font-size-sm; color: @text-color-light; }
+          }
+        }
+        
+        .card-pricing {
+          padding: 20px;
+          flex-shrink: 0;
+          background: @bg-color;
+          display: flex;
+          flex-direction: row; 
+          justify-content: space-between;
+          align-items: center;
+
+          @media (min-width: @breakpoint-tablet) {
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            width: 220px;
+            border-left: 1px solid @border-color;
+          }
+
+          .price-info {
+            text-align: right;
+            .price-amount {
+              font-size: 1.6rem;
+              font-weight: 700;
+            }
+            .price-label {
+              font-size: @font-size-sm;
+              color: @text-color-light;
+            }
+          }
+          
+          .total-price-info {
+            text-align: right;
+            font-size: @font-size-sm;
+            color: @text-color-light;
+            margin-top: 5px;
+            
+            @media (max-width: @breakpoint-tablet) {
+              display: none;
+            }
+          }
+          
+          .book-now-btn {
+            .button-base;
+            padding: 10px 15px;
+            
+            @media (min-width: @breakpoint-tablet) {
+              margin-top: 15px;
+            }
+            @media (max-width: @breakpoint-tablet) {
+              width: auto;
+              flex-shrink: 0;
+            }
+          }
+        }
+      }
+      
+      .no-results {
+        text-align: center;
+        padding: 50px 20px;
+        background: @white;
+        border-radius: @border-radius;
+        border: 1px solid @border-color;
+        
+        h3 { font-size: 1.5rem; }
+        p { color: @text-color-light; }
+      }
+    }
+    
+    .load-more-container {
+      margin-top: 30px;
+      text-align: center;
+      
+      .load-more-btn {
+        .button-base(@bg: @white, @color: @primary-color);
+        border-color: @primary-color;
+        width: auto;
+        padding: 12px 30px;
+        
+        &:hover {
+          background: @primary-color;
+          color: @white;
+        }
+      }
+    }
+  }
+
+  .mobile-filters-trigger {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    
+    @media (min-width: @breakpoint-desktop) {
+      display: none;
+    }
+    
+    .filters-toggle-btn {
+      .button-base;
+      .flex-center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      width: auto;
+      padding: 12px 24px;
+      border-radius: 50px;
+      position: relative;
+
+      .filter-icon {
+        .icon-svg;
+      }
+
+      .filter-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: @secondary-color;
+        color: @white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        .flex-center;
+        border: 2px solid @white;
+      }
+    }
+  }
+}

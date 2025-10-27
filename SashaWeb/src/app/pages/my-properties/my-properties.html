@@ -1,0 +1,319 @@
+<div class="properties-container">
+  <div class="properties-header">
+    <h1><i class="fas fa-home"></i> My Properties</h1>
+    <p>Manage your rental properties and listings</p>
+    <button class="btn-add-property" (click)="addNewProperty()">
+      <i class="fas fa-plus"></i> Add New Property
+    </button>
+  </div>
+
+  <div class="properties-content">
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-icon active">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ activePropertiesCount }}</h3>
+          <span>Active Listings</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon pending">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ pendingPropertiesCount }}</h3>
+          <span>Pending Approval</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bookings">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ totalBookings }}</h3>
+          <span>Total Bookings</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon revenue">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ formatCurrency(totalRevenue) }}</h3>
+          <span>Total Revenue</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading your properties...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <div class="properties-list">
+      <div class="list-header">
+        <h2>Your Properties ({{ properties.length }})</h2>
+        <div class="filter-options">
+          <select [(ngModel)]="selectedFilter" (change)="onFilterChange(selectedFilter)">
+            <option value="all">All Properties</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="draft">Draft</option>
+            <option value="verified">Verified</option>
+            <option value="unverified">Unverified</option>
+          </select>
+        </div>
+      </div>
+      
+      <div *ngIf="!isLoading && properties.length === 0" class="empty-state">
+        <i class="fas fa-home"></i>
+        <h3>No Properties Found</h3>
+        <p>You haven't listed any properties yet. Start by adding your first property!</p>
+        <button class="btn-primary" (click)="addNewProperty()">
+          <i class="fas fa-plus"></i> Add Your First Property
+        </button>
+      </div>
+
+      <div *ngIf="!isLoading && properties.length > 0" class="properties-grid">
+        <div *ngFor="let property of filteredProperties" class="property-card" [class.pending]="property.status === 'pending'">
+          <div class="property-image" (click)="viewPropertyDetails(property)">
+            <img [src]="getCoverImage(property)" [alt]="property.title" />
+            <div class="property-status" [class]="property.status">
+              {{ getStatusText(property.status) }}
+            </div>
+            <div class="property-actions">
+              <button class="btn-action" [title]="'Edit ' + property.title" (click)="editProperty(property); $event.stopPropagation()">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-action" [title]="'View ' + property.title" (click)="viewProperty(property); $event.stopPropagation()">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn-action delete" [title]="'Delete ' + property.title" (click)="deleteProperty(property); $event.stopPropagation()">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="property-info">
+            <h3 class="property-title" (click)="viewPropertyDetails(property)">{{ property.title }}</h3>
+            <p class="property-location">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ property.city }}, {{ property.country }}
+            </p>
+            
+            <div class="property-details">
+              <div class="detail">
+                <i class="fas fa-bed"></i>
+                <span>{{ property.bedrooms }} beds</span>
+              </div>
+              <div class="detail">
+                <i class="fas fa-bath"></i>
+                <span>{{ property.bathrooms }} baths</span>
+              </div>
+              <div class="detail">
+                <i class="fas fa-user-friends"></i>
+                <span>Up to {{ property.maxGuests }} guests</span>
+              </div>
+            </div>
+            
+            <div class="property-meta">
+              <div class="price">
+                <strong>{{ formatCurrency(property.pricePerNight) }}</strong>
+                <span>/ night</span>
+              </div>
+              <div class="rating" *ngIf="property.averageRating > 0">
+                <i class="fas fa-star"></i>
+                <span>{{ property.averageRating | number:'1.1-1' }}</span>
+                <span>({{ property.reviewCount }})</span>
+              </div>
+            </div>
+            
+            <div class="property-footer">
+              <div class="dates">
+                <small>Created: {{ formatDate(property.createdAt) }}</small>
+              </div>
+              <div class="quick-stats">
+                <span class="bookings" *ngIf="property.totalBookings > 0">
+                  {{ property.totalBookings }} bookings
+                </span>
+                <span class="verification-badge" [class]="getVerificationBadgeClass(!!property.isVerified)">
+                  {{ getVerificationText(!!property.isVerified) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Property Details Modal -->
+  <div *ngIf="showPropertyModal" class="modal-overlay" (click)="closePropertyModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Property Details</h2>
+        <button class="modal-close" (click)="closePropertyModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Loading State for Details -->
+        <div *ngIf="isLoadingDetails" class="loading-details">
+          <div class="spinner"></div>
+          <p>Loading property details...</p>
+        </div>
+
+        <!-- Property Details Content -->
+        <div *ngIf="!isLoadingDetails && selectedProperty" class="property-details-content">
+          <!-- Images Gallery -->
+          <div class="property-gallery">
+            <div class="main-image">
+              <img [src]="getMainImage(selectedProperty)" [alt]="selectedProperty.title" />
+            </div>
+            <div class="image-thumbnails" *ngIf="getOtherImages(selectedProperty).length > 0">
+              <div *ngFor="let image of getOtherImages(selectedProperty)" class="thumbnail">
+                <img [src]="image" [alt]="selectedProperty.title" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Basic Info -->
+          <div class="details-section">
+            <h3>{{ selectedProperty.title }}</h3>
+            <p class="property-location">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ selectedProperty.address }}, {{ selectedProperty.city }}, {{ selectedProperty.country }}
+            </p>
+            <p class="property-description">{{ selectedProperty.description }}</p>
+          </div>
+
+          <!-- Property Stats -->
+          <div class="details-grid">
+            <div class="detail-item">
+              <i class="fas fa-home"></i>
+              <span>Type: {{ selectedProperty.propertyType || selectedProperty.locationType }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-ruler-combined"></i>
+              <span>Living Space: {{ selectedProperty.livingSpace || 0 }} m²</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-user-friends"></i>
+              <span>Max Guests: {{ selectedProperty.maxGuests }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-bath"></i>
+              <span>Bathrooms: {{ selectedProperty.bathrooms }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-bed"></i>
+              <span>Bedrooms: {{ calculateBedroomsFromDetails(selectedProperty) }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-calendar"></i>
+              <span>Min Nights: {{ selectedProperty.minNights }}</span>
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="price-section">
+            <h4>Price</h4>
+            <div class="price-detail">
+              <strong>{{ formatCurrency(selectedProperty.pricePerNight) }}</strong>
+              <span>per night</span>
+            </div>
+          </div>
+
+          <!-- Amenities -->
+          <div class="amenities-section" *ngIf="getSelectedAmenities(selectedProperty).length > 0">
+            <h4>Amenities</h4>
+            <div class="amenities-list">
+              <span *ngFor="let amenity of getSelectedAmenities(selectedProperty)" class="amenity-tag">
+                {{ amenity }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Activities -->
+          <div class="activities-section" *ngIf="getSelectedActivities(selectedProperty).length > 0">
+            <h4>Nearby Activities</h4>
+            <div class="activities-list">
+              <span *ngFor="let activity of getSelectedActivities(selectedProperty)" class="activity-tag">
+                {{ activity }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Check-in/Check-out -->
+          <div class="checkin-section">
+            <h4>Check-in & Check-out</h4>
+            <div class="checkin-details">
+              <div class="checkin-time">
+                <strong>Check-in:</strong> {{ selectedProperty.checkInTime }}
+              </div>
+              <div class="checkout-time">
+                <strong>Check-out:</strong> {{ selectedProperty.checkOutTime }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Safety Features -->
+          <div class="safety-section" *ngIf="selectedProperty.smokeDetector || selectedProperty.fireExtinguisher || selectedProperty.carbonMonoxideDetector">
+            <h4>Safety Features</h4>
+            <div class="safety-features">
+              <span *ngIf="selectedProperty.smokeDetector" class="safety-tag">
+                <i class="fas fa-smoke"></i> Smoke Detector
+              </span>
+              <span *ngIf="selectedProperty.fireExtinguisher" class="safety-tag">
+                <i class="fas fa-fire-extinguisher"></i> Fire Extinguisher
+              </span>
+              <span *ngIf="selectedProperty.carbonMonoxideDetector" class="safety-tag">
+                <i class="fas fa-gas-pump"></i> CO Detector
+              </span>
+            </div>
+          </div>
+
+          <!-- Status & Verification -->
+          <div class="status-section">
+            <div class="status-badge" [class]="getStatusBadgeClass(getPropertyStatusFromDetails(selectedProperty))">
+              {{ getStatusText(getPropertyStatusFromDetails(selectedProperty)) }}
+            </div>
+            <div class="verification-badge" [class]="getVerificationBadgeClass(selectedProperty.isVerified)">
+              {{ getVerificationText(selectedProperty.isVerified) }}
+            </div>
+          </div>
+
+          <!-- Additional Details -->
+          <div class="additional-details">
+            <div class="detail-row">
+              <strong>Pet Friendly:</strong> {{ selectedProperty.petFriendly ? 'Yes' : 'No' }}
+            </div>
+            <div class="detail-row">
+              <strong>Instant Book:</strong> {{ selectedProperty.instantBook ? 'Yes' : 'No' }}
+            </div>
+            <div class="detail-row">
+              <strong>Lock Type:</strong> {{ selectedProperty.lockType || 'Standard' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closePropertyModal()">Close</button>
+        <button class="btn-primary" (click)="editProperty(selectedProperty)" *ngIf="selectedProperty">
+          <i class="fas fa-edit"></i> Edit Property
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

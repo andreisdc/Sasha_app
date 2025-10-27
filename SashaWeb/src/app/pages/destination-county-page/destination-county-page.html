@@ -1,0 +1,216 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<app-navbar></app-navbar>
+
+<div class="destination-finder-page" [@fadeIn]>
+  <!-- Header -->
+  <header class="page-header" *ngIf="!showResults">
+    <div class="header-content">
+      <h1 class="page-title">Find Your Perfect Destination</h1>
+      <p class="page-subtitle">
+        Answer a few simple questions and we'll help you discover the ideal locations for you
+      </p>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-section" *ngIf="!showResults">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+    </div>
+    <div class="progress-text">
+      Step {{ currentStep }} of {{ totalSteps }}
+    </div>
+  </div>
+
+  <!-- Main Content - Selection Process -->
+  <main class="selection-process" *ngIf="!showResults && !isLoading">
+    
+    <!-- Step 1: Preferences -->
+    <section class="step-content" *ngIf="currentStep === 1">
+      <h2 class="step-title">{{ currentStepTitle }}</h2>
+      <p class="step-description">{{ currentStepDescription }}</p>
+      
+      <div class="preferences-grid" [@staggerAnimation]>
+        <div 
+          *ngFor="let preference of preferences"
+          class="preference-card"
+          [class.selected]="preference.selected"
+          (click)="togglePreference(preference.id)">
+          <div class="preference-icon" [style.background-color]="preference.color">
+            <i [class]="preference.icon"></i>
+          </div>
+          <h3 class="preference-name">{{ preference.name }}</h3>
+          <p class="preference-description">{{ preference.description }}</p>
+          <div class="selection-indicator">
+            <i class="fa-solid fa-check" *ngIf="preference.selected"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Travel Style -->
+    <section class="step-content" *ngIf="currentStep === 2">
+      <h2 class="step-title">{{ currentStepTitle }}</h2>
+      <p class="step-description">{{ currentStepDescription }}</p>
+      
+      <div class="travel-styles-grid" [@staggerAnimation]>
+        <div 
+          *ngFor="let style of travelStyles"
+          class="travel-style-card"
+          [class.selected]="style.selected"
+          (click)="selectTravelStyle(style.id)">
+          <div class="style-icon" [style.background-color]="style.color">
+            <i [class]="style.icon"></i>
+          </div>
+          <h3 class="style-name">{{ style.name }}</h3>
+          <p class="style-description">{{ style.description }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Season -->
+    <section class="step-content" *ngIf="currentStep === 3">
+      <h2 class="step-title">{{ currentStepTitle }}</h2>
+      <p class="step-description">{{ currentStepDescription }}</p>
+      
+      <div class="seasons-grid" [@staggerAnimation]>
+        <div 
+          *ngFor="let season of seasons"
+          class="season-card"
+          [class.selected]="season.selected"
+          (click)="selectSeason(season.id)">
+          <div class="season-icon" [style.background-color]="season.color">
+            <i [class]="season.icon"></i>
+          </div>
+          <h3 class="season-name">{{ season.name }}</h3>
+          <p class="season-description">{{ season.description }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Duration -->
+    <section class="step-content" *ngIf="currentStep === 4">
+      <h2 class="step-title">{{ currentStepTitle }}</h2>
+      <p class="step-description">{{ currentStepDescription }}</p>
+      
+      <div class="durations-grid" [@staggerAnimation]>
+        <div 
+          *ngFor="let duration of durations"
+          class="duration-card"
+          [class.selected]="duration.selected"
+          (click)="selectDuration(duration.id)">
+          <div class="duration-badge">
+            {{ duration.days }} days
+          </div>
+          <h3 class="duration-name">{{ duration.name }}</h3>
+          <p class="duration-description">{{ duration.description }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step Navigation -->
+    <div class="step-navigation">
+      <button 
+        class="nav-button secondary" 
+        (click)="previousStep()"
+        [disabled]="currentStep === 1">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back
+      </button>
+      
+      <button 
+        class="nav-button primary" 
+        (click)="currentStep === 4 ? generateRecommendations() : nextStep()"
+        [disabled]="!isStepComplete()">
+        {{ currentStep === 4 ? 'See Recommendations' : 'Continue' }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </main>
+
+  <!-- Loading State -->
+  <div class="loading-section" *ngIf="isLoading">
+    <div class="loading-spinner">
+      <i class="fa-solid fa-compass fa-spin"></i>
+    </div>
+    <h2 class="loading-title">Finding the best destinations for you...</h2>
+    <p class="loading-description">Analyzing your preferences to find the perfect locations</p>
+  </div>
+
+  <!-- Results -->
+  <section class="results-section" *ngIf="showResults && !isLoading">
+    <div class="results-header">
+      <h2 class="results-title">Recommended Destinations for You</h2>
+      <p class="results-subtitle">
+        We found {{ recommendations.length }} destinations that perfectly match your preferences
+      </p>
+      
+      <button class="restart-button" (click)="restartSelection()">
+        <i class="fa-solid fa-rotate"></i>
+        Search Again
+      </button>
+    </div>
+
+    <div class="recommendations-grid" [@staggerAnimation]>
+      <div 
+        *ngFor="let rec of recommendations; let i = index"
+        class="recommendation-card"
+        [style.animation-delay.ms]="i * 100">
+        <div class="card-header">
+          <div class="match-badge" [style.background-color]="getMatchColor(rec.matchScore)">
+            {{ rec.matchScore }}% match
+          </div>
+          <div class="card-image">
+            <img [src]="rec.image" [alt]="rec.name">
+            <div class="card-overlay">
+              <span class="card-type">{{ rec.type }}</span>
+              <span class="card-county">{{ rec.county }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-content">
+          <h3 class="destination-name">{{ rec.name }}</h3>
+          <p class="destination-description">{{ rec.description }}</p>
+          
+          <div class="reasons-section" *ngIf="rec.reasons.length > 0">
+            <h4>Why it's perfect for you:</h4>
+            <ul class="reasons-list">
+              <li *ngFor="let reason of rec.reasons">
+                <i class="fa-solid fa-check"></i>
+                {{ reason }}
+              </li>
+            </ul>
+          </div>
+          
+          <div class="highlights-section" *ngIf="rec.highlights.length > 0">
+            <h4>Main attractions:</h4>
+            <div class="highlights-tags">
+              <span *ngFor="let highlight of rec.highlights" class="highlight-tag">
+                {{ highlight }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-actions">
+          <button class="explore-button" (click)="navigateToDestination(rec.id)">
+            <i class="fa-solid fa-map-location-dot"></i>
+            Explore
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" *ngIf="recommendations.length === 0">
+      <i class="fa-solid fa-map fa-3x"></i>
+      <h3>No perfect destinations found</h3>
+      <p>Try adjusting some preferences to find more options</p>
+      <button class="restart-button primary" (click)="restartSelection()">
+        <i class="fa-solid fa-rotate"></i>
+        Try Again
+      </button>
+    </div>
+  </section>
+</div>

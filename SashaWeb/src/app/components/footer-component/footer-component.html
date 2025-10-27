@@ -1,0 +1,98 @@
+<footer class="footer">
+  <!-- Main Footer Section -->
+  <div class="footer-main">
+    <div class="footer-container">
+      
+      <!-- Company Info -->
+      <div class="footer-section">
+        <div class="logo-section">
+          <div class="logo">
+            <span class="logo-icon">🏰</span>
+            <span class="logo-text">Romania Travel</span>
+          </div>
+          <p class="company-description">
+            Discover Romania's beauty with expert guides. Authentic experiences from mountains to Danube Delta.
+          </p>
+          <div class="contact-info">
+            <div *ngFor="let contact of contactInfo" class="contact-item">
+              <span class="contact-icon">{{contact.icon}}</span>
+              <span class="contact-text">{{contact.text}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h3 class="section-title">Quick Links</h3>
+        <ul class="links-list">
+          <li *ngFor="let link of quickLinks">
+            <a [routerLink]="link.path" class="footer-link">
+              {{link.name}}
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Services -->
+      <div class="footer-section">
+        <h3 class="section-title">Services</h3>
+        <ul class="services-list">
+          <li *ngFor="let service of services" class="service-item">
+            <span class="service-icon">•</span>
+            {{service}}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Newsletter & Social -->
+      <div class="footer-section">
+        <h3 class="section-title">Newsletter</h3>
+        <p class="newsletter-text">
+          Get exclusive offers and travel guides.
+        </p>
+        
+        <div class="newsletter-form">
+          <input 
+            type="email" 
+            placeholder="Your email" 
+            class="newsletter-input"
+          >
+          <button class="newsletter-button">
+            Subscribe
+          </button>
+        </div>
+
+        <div class="social-section">
+          <h4 class="social-title">Follow Us</h4>
+          <div class="social-links">
+            <a 
+              *ngFor="let social of socialLinks" 
+              [href]="social.url" 
+              class="social-link"
+            >
+              <span class="social-icon">{{social.icon}}</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Footer -->
+  <div class="footer-bottom">
+    <div class="footer-container">
+      <div class="footer-bottom-content">
+        <div class="copyright">
+          © {{currentYear}} Romania Travel. All rights reserved.
+        </div>
+        <div class="legal-links">
+          <a href="/privacy" class="legal-link">Privacy</a>
+          <a href="/terms" class="legal-link">Terms</a>
+          <a href="/cookies" class="legal-link">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

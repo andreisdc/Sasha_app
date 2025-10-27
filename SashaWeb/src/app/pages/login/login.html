@@ -1,57 +1,268 @@
-<div class="signin-container">
-  <div class="signin-form">
-    <h2>Log in</h2>
-
-    <!-- Server error message -->
-    <div *ngIf="serverError" class="alert error">{{ serverError }}</div>
-
-    <form class="form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <input
-          type="email"
-          placeholder="Email"
-          class="form-input"
-          formControlName="email"
-          [class.error]="email.invalid && email.touched"
-        />
-      </div>
-
-      <div class="form-group password-group">
-        <input
-          [type]="showPassword ? 'text' : 'password'"
-          placeholder="Password"
-          class="form-input"
-          formControlName="password"
-          [class.error]="password.invalid && password.touched"
-        />
-        <button
-          type="button"
-          class="password-toggle"
-          (click)="togglePasswordVisibility()"
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <svg 
+          class="logo-icon"
+          width="32" 
+          height="32" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
         >
-          <span *ngIf="!showPassword">Show</span>
-          <span *ngIf="showPassword">Hide</span>
+          <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+        </svg>
+        <span class="logo-text">Wanderlust</span>
+      </div>
+      <h1>Welcome to Wanderlust</h1>
+      <p>Sign in to your account or create a new one</p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="tab-buttons">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'signin'"
+          (click)="setActiveTab('signin')">
+          Sign In
         </button>
-      </div>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'signup'"
+          (click)="setActiveTab('signup')">
+          Sign Up
+        </button>
+      </div>    
 
-      <div class="form-group remember-me">
-        <label>
-          <input type="checkbox" formControlName="rememberMe" /> Remember Me
-        </label>
-      </div>
+      <!-- Success message for signup -->
+      @if (signupSuccess && activeTab === 'signup') {
+        <div class="alert success">
+          {{ successMessage }} (Redirecting in {{ countdown }}s…)
+        </div>
+      }
 
-      <button type="submit" class="btn-primary" [disabled]="loginForm.invalid">
-        Log In
-      </button>
+      <form class="auth-form" [formGroup]="authForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Sign Up Fields -->
+        @if (activeTab === 'signup') {
+          <div class="form-row">
+            <div class="form-group">
+              <input
+                type="text"
+                placeholder="First Name"
+                class="form-input"
+                formControlName="firstName"
+                [class.error]="firstName.invalid && firstName.touched"
+              />
+              @if (firstName.invalid && firstName.touched) {
+                <div class="error-message">
+                  @if (firstName.errors?.['required']) {
+                    <span>First name is required</span>
+                  }
+                  @if (firstName.errors?.['minlength']) {
+                    <span>Minimum 2 characters</span>
+                  }
+                  @if (firstName.errors?.['pattern']) {
+                    <span>Letters only</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="form-group">
+              <input
+                type="text"
+                placeholder="Last Name"
+                class="form-input"
+                formControlName="lastName"
+                [class.error]="lastName.invalid && lastName.touched"
+              />
+              @if (lastName.invalid && lastName.touched) {
+                <div class="error-message">
+                  @if (lastName.errors?.['required']) {
+                    <span>Last name is required</span>
+                  }
+                  @if (lastName.errors?.['minlength']) {
+                    <span>Minimum 2 characters</span>
+                  }
+                  @if (lastName.errors?.['pattern']) {
+                    <span>Letters only</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
 
-      <div class="login-link">
-        <span>Don't have an account? </span>
-        <a routerLink="/signup" class="link">Sign up</a>
-      </div>
+        <!-- Email Field -->
+        <div class="form-group">
+          <input
+            type="email"
+            placeholder="Email"
+            class="form-input"
+            formControlName="email"
+            [class.error]="email.invalid && email.touched"
+          />
+          @if (email.invalid && email.touched) {
+            <div class="error-message">
+              @if (email.errors?.['required']) {
+                <span>Email is required</span>
+              }
+              @if (email.errors?.['email']) {
+                <span>Invalid email format</span>
+              }
+            </div>
+          }
+        </div>
 
-      <div class="divider"><span>or</span></div>
+        <!-- Phone Field (Sign Up only) -->
+        @if (activeTab === 'signup') {
+          <div class="form-row">
+            <div class="form-group">
+              <select class="form-input country-code" formControlName="countryCode">
+                @for (code of countryCodes; track code) {
+                  <option [value]="code">{{ code }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                class="form-input"
+                formControlName="phoneNumber"
+                [class.error]="phoneNumber.invalid && phoneNumber.touched"
+              />
+              @if (phoneNumber.invalid && phoneNumber.touched) {
+                <div class="error-message">
+                  @if (phoneNumber.errors?.['required']) {
+                    <span>Phone number is required</span>
+                  }
+                  @if (phoneNumber.errors?.['pattern']) {
+                    <span>Invalid phone number</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
 
-      <button type="button" class="btn-google">Sign up with Google</button>
-    </form>
+        <!-- Password Field -->
+        <div class="form-group">
+          <div class="password-input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              [placeholder]="activeTab === 'signin' ? 'Password' : 'Create a password'"
+              class="form-input"
+              formControlName="password"
+              [class.error]="password.invalid && password.touched"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePasswordVisibility()"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          @if (password.invalid && password.touched) {
+            <div class="error-message">
+              @if (password.errors?.['required']) {
+                <span>Password is required</span>
+              }
+              @if (password.errors?.['minlength']) {
+                <span>
+                  Minimum {{ activeTab === 'signin' ? '6' : '8' }} characters
+                </span>
+              }
+              @if (authForm.errors?.['weakPassword']) {
+                <span>
+                  Must include uppercase and special character
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Confirm Password (Sign Up only) -->
+        @if (activeTab === 'signup') {
+          <div class="form-group">
+            <div class="password-input-wrapper">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                placeholder="Confirm Password"
+                class="form-input"
+                formControlName="confirmPassword"
+                [class.error]="confirmPassword.invalid && confirmPassword.touched"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+              >
+                {{ showPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+            @if (confirmPassword.invalid && confirmPassword.touched) {
+              <div class="error-message">
+                @if (confirmPassword.errors?.['required']) {
+                  <span>Please confirm password</span>
+                }
+                @if (authForm.errors?.['mismatch']) {
+                  <span>Passwords do not match</span>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Remember Me (Sign In only) -->
+        @if (activeTab === 'signin') {
+          <div class="form-group remember-me">
+            <label>
+              <input type="checkbox" formControlName="rememberMe" /> Remember Me
+            </label>
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          class="btn-primary" 
+          [disabled]="authForm.invalid || isLoading">
+          {{ isLoading ? 'Please wait...' : (activeTab === 'signin' ? 'Sign In' : 'Create Account') }}
+        </button>
+
+        <!-- Switch between tabs -->
+        <div class="auth-switch">
+          <span>
+            {{ activeTab === 'signin' ? "Don't have an account?" : "Already have an account?" }}
+          </span>
+          <a 
+            class="link" 
+            (click)="setActiveTab(activeTab === 'signin' ? 'signup' : 'signin')">
+            {{ activeTab === 'signin' ? 'Sign up' : 'Log in' }}
+          </a>
+        </div>
+
+        <!-- Divider for additional options -->
+        @if (activeTab === 'signin') {
+          <div class="divider">
+            <span>or</span>
+          </div>
+        }
+
+        <!-- Google Sign In -->
+        @if (activeTab === 'signin') {
+          <button type="button" class="btn-google">
+            Sign in with Google
+          </button>
+        }
+      </form>
+    </div>
   </div>
 </div>
+
+<app-toast></app-toast>

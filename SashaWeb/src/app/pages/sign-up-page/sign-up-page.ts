@@ -12,6 +12,7 @@ import {
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth-service';
 import { SignupRequest } from '../../core/interfaces/signupRequest';
+import { CountryCode } from '../../const/countryCode';
 
 @Component({
   selector: 'app-signup',
@@ -23,12 +24,12 @@ import { SignupRequest } from '../../core/interfaces/signupRequest';
 export class SignUpComponent implements OnInit {
   signupForm!: FormGroup;
   showPassword = false;
-
   signupSuccess = false;
   successMessage = '';
   errorMessage = '';
   successEmail = '';
   countdown = 5;
+  countryCodes = Object.values(CountryCode);
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -54,9 +55,10 @@ export class SignUpComponent implements OnInit {
           ],
         ],
         email: ['', [Validators.required, Validators.email]],
+        countryCode: [CountryCode.RO, Validators.required],
         phoneNumber: [
           '',
-          [Validators.required, Validators.pattern(/^\+?\d{7,15}$/)],
+          [Validators.required, Validators.pattern(/^\d{7,15}$/)],
         ],
         password: [
           '',
@@ -78,17 +80,16 @@ export class SignUpComponent implements OnInit {
 
   onSubmit() {
     if (this.signupForm.valid) {
-      const { firstName, lastName, email, password, phoneNumber } =
+      const { firstName, lastName, email, password, countryCode, phoneNumber } =
         this.signupForm.value;
       const username = `${firstName} ${lastName}`;
-
       const payload: SignupRequest = {
         firstName,
         lastName,
         username,
         email,
         password,
-        phoneNumber,
+        phoneNumber: `${countryCode}${phoneNumber}`,
       };
 
       this.authService.signup(payload).subscribe({
@@ -124,9 +125,7 @@ export class SignUpComponent implements OnInit {
     );
   }
 
-  private passwordMatchValidator(
-    group: AbstractControl,
-  ): ValidationErrors | null {
+  private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
     const password = group.get('password')?.value;
     const confirm = group.get('confirmPassword')?.value;
     return password && confirm && password === confirm
@@ -134,31 +133,18 @@ export class SignUpComponent implements OnInit {
       : { mismatch: true };
   }
 
-  private passwordStrengthValidator(
-    control: AbstractControl,
-  ): ValidationErrors | null {
+  private passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value || '';
     const hasUpperCase = /[A-Z]/.test(value);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
     return hasUpperCase && hasSpecialChar ? null : { weakPassword: true };
   }
 
-  get firstName() {
-    return this.signupForm.get('firstName')!;
-  }
-  get lastName() {
-    return this.signupForm.get('lastName')!;
-  }
-  get email() {
-    return this.signupForm.get('email')!;
-  }
-  get phoneNumber() {
-    return this.signupForm.get('phoneNumber')!;
-  }
-  get password() {
-    return this.signupForm.get('password')!;
-  }
-  get confirmPassword() {
-    return this.signupForm.get('confirmPassword')!;
-  }
+  get firstName() { return this.signupForm.get('firstName')!; }
+  get lastName() { return this.signupForm.get('lastName')!; }
+  get email() { return this.signupForm.get('email')!; }
+  get countryCode() { return this.signupForm.get('countryCode')!; }
+  get phoneNumber() { return this.signupForm.get('phoneNumber')!; }
+  get password() { return this.signupForm.get('password')!; }
+  get confirmPassword() { return this.signupForm.get('confirmPassword')!; }
 }

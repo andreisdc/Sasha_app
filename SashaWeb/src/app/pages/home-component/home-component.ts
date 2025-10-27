@@ -13,10 +13,14 @@ import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
 import { Navbar } from "../../components/navbar/navbar";
+import { HeroSectionComponent } from "../../components/hero-section-component/hero-section-component";
+import { PropertiesSectionComponent } from "../../components/properties-section-component/properties-section-component";
+import { ActivitiesSectionComponent } from "../../components/activities-section-component/activities-section-component";
+import { FooterComponent } from "../../components/footer-component/footer-component";
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, SearchSection, Navbar],
+  imports: [CommonModule, DatagridComponent, SearchSection, Navbar, HeroSectionComponent, PropertiesSectionComponent, ActivitiesSectionComponent, FooterComponent],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
