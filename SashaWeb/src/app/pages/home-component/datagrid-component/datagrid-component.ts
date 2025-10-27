@@ -13,10 +13,9 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzRateModule } from 'ng-zorro-antd/rate';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { NzCarouselModule } from 'ng-zorro-antd/carousel';
+import { Property } from '../../../core/interfaces/property.interface';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-datagrid-component',
@@ -30,8 +29,8 @@ import { FormsModule } from '@angular/forms';
     NzIconModule,
     NzButtonModule,
     NzSpinModule,
-    NzTagModule,
-    NzRateModule,
+    NzCarouselModule,
+    RouterModule
   ],
   templateUrl: './datagrid-component.html',
   styleUrl: './datagrid-component.less',
@@ -41,19 +40,39 @@ export class DatagridComponent implements OnInit {
   private propertyService = inject(PropertyService);
   private router = inject(Router);
 
-  // Signals - folosim Property din serviciu
-  properties = signal<Property[]>([]);
-  loading = signal(true);
-  error = signal<string | null>(null);
-  pageIndex = signal(1);
-  pageSize = signal(12);
-  totalProperties = signal(0);
+  // local UI state as signals
+  private readonly _currentIndex = signal<Record<number, number>>({});
+  get currentIndex(): Record<number, number> {
+    return this._currentIndex();
+  }
 
-  // Computed
-  paginatedProperties = computed(() => {
-    const startIndex = (this.pageIndex() - 1) * this.pageSize();
-    const endIndex = startIndex + this.pageSize();
-    return this.properties().slice(startIndex, endIndex);
+  private readonly _hovered = signal<number | null>(null);
+  get hovered(): number | null {
+    return this._hovered();
+  }
+  set hovered(value: number | null) {
+    this._hovered.set(value);
+  }
+
+  private readonly _pageIndex = signal(1);
+  private readonly _pageSize = signal(15);
+
+  // data streams bridged to signals
+  private readonly _allProperties = toSignal<Property[] | null>(
+    this.propertyService.getProperties(),
+    { initialValue: null },
+  );
+
+  private readonly _selectedCategory = toSignal(
+    this.propertyService.selectedCategory$,
+    { initialValue: 'All Categories' },
+  );
+
+  // derived state
+  private readonly _filteredProperties = computed(() => {
+    const all = this._allProperties();
+    const category = this._selectedCategory();
+    return all ? this.propertyService.getFilteredProperties(all, category) : [];
   });
 
   ngOnInit() {
@@ -87,8 +106,18 @@ export class DatagridComponent implements OnInit {
     this.router.navigate(['/property', propertyId]);
   }
 
-  toggleLike(property: Property, event: Event): void {
-    event.stopPropagation();
+  onCardClick(id: number) 
+  {
+    this.router.navigate(['/property', id]);
+    console.log('Navigating to property with ID: ${id}');
+  }
+
+  next(prop: Property) {
+    const id = prop.id;
+    this._currentIndex.update((ci) => {
+      const cur = ci[id] ?? 0;
+      return { ...ci, [id]: (cur + 1) % prop.images.length };
+    });
   }
 
   formatPrice(price: number): string {

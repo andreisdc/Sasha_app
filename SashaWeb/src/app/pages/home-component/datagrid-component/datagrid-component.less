@@ -4,20 +4,17 @@
   margin: 0 auto;
 }
 
-.error-state {
-  text-align: center;
-  padding: 40px;
-
-  .error-content {
-    nz-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-
-    h3 {
-      color: #ff4d4f;
-      margin-bottom: 16px;
-    }
+.datagrid-card {
+  border-radius: 0.6rem;
+  border-color: rgb(5, 30, 78);
+  border-style: solid;
+  margin: clamp(0.5rem, 1.9vw, 1.6rem);
+  padding: clamp(0.5rem, 2vw, 1rem);
+  position: relative;
+  cursor: pointer;
+  &:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.574);
+    transform: scale(1.05);
   }
 }
 
@@ -38,11 +35,14 @@
   }
 }
 
-.properties-grid-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+.price {
+  position: absolute;
+  bottom: 0.01rem;
+  right: 0.7rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 30rem;
+  padding: 0.2rem 0.6rem;
+  font-size: clamp(0.8rem, 1vw, 1rem);
 }
 
 .property-card {

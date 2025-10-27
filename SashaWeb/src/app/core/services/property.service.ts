@@ -21,6 +21,12 @@ export class PropertyService {
     );
   }
 
+  getPropertyById(id: number): Observable<any> {
+    const property = properties.find(prop => prop.id === id);
+     return of(property);
+  }
+
+  
   getFilteredProperties(
     allProperties: Property[],
     category: string,

@@ -1,337 +1,51 @@
-<div class="property-details-container" *ngIf="!isLoading; else loadingTemplate">
-  <!-- Header cu butoane de acțiune -->
-  <div class="property-header">
-    <button class="btn-back" (click)="goBack()">
-      <i class="fas fa-arrow-left"></i> Back to Properties
-    </button>
-    
-    <div class="property-actions" *ngIf="isOwner">
-      <button class="btn-secondary" (click)="editProperty()">
-        <i class="fas fa-edit"></i> Edit
-      </button>
-      <button class="btn-danger" (click)="deleteProperty()">
-        <i class="fas fa-trash"></i> Delete
-      </button>
-    </div>
-  </div>
+<div class="property-details-container">
+    @if(property$ | async; as property)
+    {
+        <h2 class="property-name">{{property.name}}</h2>
 
-  <!-- Container principal cu layout side-by-side -->
-  <div class="main-layout-container">
-    <!-- Coloana stângă - Conținut principal -->
-    <div class="left-content-column">
-      <!-- Galerie imagini -->
-      <div class="property-gallery-section">
-        <div class="gallery-container">
-          <!-- Imaginea principală -->
-          <div class="main-image">
-            <img [src]="property.images[currentMainImageIndex] || 'assets/default-property.jpg'" 
-                 [alt]="property.title"
-                 (click)="openImageModal(currentMainImageIndex)">
+        <div class="location-container"> 
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" class="location">
+              <path d="M0 188.6C0 84.4 86 0 192 0S384 84.4 384 188.6c0 119.3-120.2 262.3-170.4 316.8-11.8 12.8-31.5 12.8-43.3 0-50.2-54.5-170.4-197.5-170.4-316.8zM192 256a64 64 0 1 0 0-128 64 64 0 1 0 0 128z"/>
+            </svg>
+            <b>{{ property.location }}</b>
+            <p class="rating"><b>{{property.rating}} ★</b></p>
           </div>
-          
-          <!-- Thumbnails și controale -->
-          <div class="gallery-controls" *ngIf="property.images && property.images.length > 1">
-            <div class="thumbnails-container">
-              <div *ngFor="let image of property.images; let i = index" 
-                   class="thumbnail"
-                   [class.active]="i === currentMainImageIndex"
-                   (click)="setMainImage(i)">
-                <img [src]="image" [alt]="property.title + ' image ' + (i + 1)">
-              </div>
-            </div>
-            
-            <!-- Butoane de navigare -->
-            <div class="gallery-nav-buttons" *ngIf="property.images.length > 4">
-              <button class="nav-btn prev" (click)="scrollThumbnails(-1)" [disabled]="thumbnailScrollOffset >= 0">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button class="nav-btn next" (click)="scrollThumbnails(1)" 
-                      [disabled]="thumbnailScrollOffset <= -(property.images.length - 4) * 80">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-          
-          <!-- Contor poze -->
-          <div class="image-counter" *ngIf="property.images && property.images.length > 1">
-            {{ currentMainImageIndex + 1 }} / {{ property.images.length }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Toate detaliile proprietății -->
-      <div class="property-details-content">
-        <!-- Titlu și locație -->
-        <div class="property-header-info">
-          <h1>{{ property.title }}</h1>
-          <div class="property-location">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>{{ property.city }}, {{ property.country }}</span>
-            <button class="btn-map" (click)="showOnMap()">
-              <i class="fas fa-map"></i> Show on map
-            </button>
-          </div>
-        </div>
-
-        <!-- Detalii rapide -->
-        <div class="property-highlights">
-          <div class="highlight-item">
-            <i class="fas fa-star"></i>
-            <div>
-              <strong>{{ property.averageRating || 'New' }}</strong>
-              <span>{{ property.reviewCount ? '(' + property.reviewCount + ' reviews)' : 'No reviews yet' }}</span>
-            </div>
-          </div>
-          <div class="highlight-item">
-            <i class="fas fa-home"></i>
-            <div>
-              <strong>{{ property.propertyType || property.locationType | titlecase }}</strong>
-              <span>Property type</span>
-            </div>
-          </div>
-          <div class="highlight-item">
-            <i class="fas fa-user-friends"></i>
-            <div>
-              <strong>{{ property.maxGuests }}</strong>
-              <span>Guests</span>
-            </div>
-          </div>
-          <div class="highlight-item">
-            <i class="fas fa-bed"></i>
-            <div>
-              <strong>{{ property.bedrooms }}</strong>
-              <span>Bedrooms</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Descriere -->
-        <div class="property-description">
-          <h2>About this property</h2>
-          <p>{{ property.description }}</p>
-        </div>
-
-        <!-- Dotări organizate pe categorii -->
-        <div class="property-amenities" *ngIf="getAmenitiesList().length > 0">
-          <h2>Dotări și facilități</h2>
-          <div *ngFor="let category of getAmenitiesByCategory() | keyvalue" class="amenity-category">
-            <h3>{{ category.key }}</h3>
-            <div class="amenities-grid">
-              <div *ngFor="let amenity of category.value" class="amenity-item">
-                <i [class]="amenity.icon"></i>
-                <span>{{ amenity.name }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mesaj dacă nu sunt dotări -->
-        <div class="no-amenities" *ngIf="getAmenitiesList().length === 0">
-          <h2>Dotări și facilități</h2>
-          <p class="no-data-message">Nu sunt dotări disponibile pentru această proprietate.</p>
-        </div>
-
-        <!-- Caracteristici de siguranță -->
-        <div class="property-safety" *ngIf="getSafetyFeatures().length > 0">
-          <h2>Siguranță</h2>
-          <div class="safety-features">
-            <div *ngFor="let feature of getSafetyFeatures()" class="safety-item">
-              <i [class]="feature.icon"></i>
-              <span>{{ feature.name }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Activitați în apropiere organizate pe categorii -->
-        <div class="property-activities" *ngIf="getActivitiesList().length > 0">
-          <h2>Activități în apropiere</h2>
-          <div *ngFor="let category of getActivitiesByCategory() | keyvalue" class="activity-category">
-            <h3>{{ category.key }}</h3>
-            <div class="activities-list">
-              <div *ngFor="let activity of category.value" class="activity-item">
-                <div class="activity-icon">
-                  <i [class]="activity.icon"></i>
+        <div class="image-gallery">
+            @if(property.images && property.images.length > 0)
+            {
+                <div class="first-image">
+                    <img [src]="property.images[currentIndex[property.id] || 0]" alt="Main Image" class="main-image"/>
+                    <button class="prev" (click)="prev(property)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <button class="next" (click)="next(property)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2">
+                            <path d="M9 6l6 6-6 6"/>
+                        </svg>
+                    </button>
                 </div>
-                <div class="activity-info">
-                  <h4>{{ activity.name }}</h4>
+
+                <div class="thumbnails">
+                    @for(thumbnail of getThumbnails(property); track trackByIndex($index, thumbnail); let i=$index) 
+                    {
+                        <div class="thumbnail-container">
+                            <img [src]="thumbnail.src" alt="n" class="thumbnail"/>
+                            @if(property.images.length > 5 && i === getThumbnails(property).length - 1)
+                            {
+                                <div class="more-images-overlay">
+                                    +{{property.images.length - 5}} more
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            }
+        </div>   
 
-        <!-- Mesaj dacă nu sunt activități -->
-        <div class="no-activities" *ngIf="getActivitiesList().length === 0">
-          <h2>Activități în apropiere</h2>
-          <p class="no-data-message">Nu sunt activități înregistrate în apropierea acestei proprietăți.</p>
-        </div>
-
-        <!-- Detalii locație -->
-        <div class="property-location-details">
-          <h2>Detalii locație</h2>
-          <div class="location-info">
-            <div class="location-item" *ngIf="property.address">
-              <i class="fas fa-location-dot"></i>
-              <span>{{ property.address }}</span>
-            </div>
-            <div class="location-item" *ngIf="property.city">
-              <i class="fas fa-city"></i>
-              <span>{{ property.city }}</span>
-            </div>
-            <div class="location-item" *ngIf="property.county">
-              <i class="fas fa-map"></i>
-              <span>{{ property.county }} County</span>
-            </div>
-            <div class="location-item" *ngIf="property.country">
-              <i class="fas fa-globe"></i>
-              <span>{{ property.country }}</span>
-            </div>
-            <div class="location-item" *ngIf="property.postalCode">
-              <i class="fas fa-envelope"></i>
-              <span>Cod poștal: {{ property.postalCode }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Reguli proprietate -->
-        <div class="property-rules">
-          <h2>Reguli de cazare</h2>
-          <div class="rules-grid">
-            <div class="rule-item">
-              <i class="fas fa-door-open"></i>
-              <div>
-                <strong>Check-in</strong>
-                <span>{{ property.checkInTime || '15:00' }}</span>
-              </div>
-            </div>
-            <div class="rule-item">
-              <i class="fas fa-door-closed"></i>
-              <div>
-                <strong>Check-out</strong>
-                <span>{{ property.checkOutTime || '11:00' }}</span>
-              </div>
-            </div>
-            <div class="rule-item">
-              <i class="fas fa-moon"></i>
-              <div>
-                <strong>Sejur minim</strong>
-                <span>{{ property.minNights || 1 }} nopți</span>
-              </div>
-            </div>
-            <div class="rule-item">
-              <i class="fas fa-calendar"></i>
-              <div>
-                <strong>Sejur maxim</strong>
-                <span>{{ property.maxNights || 30 }} nopți</span>
-              </div>
-            </div>
-            <div class="rule-item">
-              <i class="fas fa-paw"></i>
-              <div>
-                <strong>Animale de companie</strong>
-                <span>{{ property.petFriendly ? 'Permise' : 'Nu sunt permise' }}</span>
-              </div>
-            </div>
-            <div class="rule-item">
-              <i class="fas fa-bolt"></i>
-              <div>
-                <strong>Rezervare instantă</strong>
-                <span>{{ property.instantBook ? 'Disponibilă' : 'Doar la cerere' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Coloana dreaptă - Booking Card (sticky) -->
-    <div class="right-booking-column">
-      <div class="booking-card-sticky">
-        <div class="booking-card">
-          <div class="price-section">
-            <span class="price">{{ formatCurrency(property.pricePerNight) }}</span>
-            <span class="period">pe noapte</span>
-          </div>
-          
-          <div class="booking-dates">
-            <div class="date-input">
-              <label>Check-in</label>
-              <input type="date" [min]="minDate" [(ngModel)]="checkInDate" (change)="onDateChange()">
-            </div>
-            <div class="date-input">
-              <label>Check-out</label>
-              <input type="date" [min]="checkInDate || minDate" [(ngModel)]="checkOutDate" (change)="onDateChange()">
-            </div>
-          </div>
-
-          <div class="guests-selector">
-            <label>Oaspeți</label>
-            <select [(ngModel)]="selectedGuests" (change)="onGuestsChange()">
-              <option *ngFor="let guest of guestOptions" [value]="guest">
-                {{ guest }} {{ guest === 1 ? 'oaspete' : 'oaspeți' }}
-              </option>
-            </select>
-          </div>
-
-          <div class="price-breakdown" *ngIf="checkInDate && checkOutDate">
-            <div class="price-item">
-              <span>{{ formatCurrency(property.pricePerNight) }} x {{ nightsCount }} nopți</span>
-              <span>{{ formatCurrency(property.pricePerNight * nightsCount) }}</span>
-            </div>
-            <div class="price-item">
-              <span>Taxă curățenie</span>
-              <span>{{ formatCurrency(cleaningFee) }}</span>
-            </div>
-            <div class="price-item">
-              <span>Taxă serviciu</span>
-              <span>{{ formatCurrency(serviceFee) }}</span>
-            </div>
-            <div class="price-total">
-              <strong>Total</strong>
-              <strong>{{ formatCurrency(totalPrice) }}</strong>
-            </div>
-          </div>
-
-          <button class="btn-book" 
-                  [disabled]="!canBook" 
-                  (click)="bookProperty()">
-            <i class="fas fa-calendar-check"></i>
-            {{ isOwner ? 'Gestionează rezervări' : 'Rezervă acum' }}
-          </button>
-
-          <div class="booking-note" *ngIf="!isOwner">
-            <i class="fas fa-info-circle"></i>
-            <span>Nu vei fi taxat imediat</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <p class="property-description">{{property.description}}</p>
+        
+    } 
 </div>
 
-<!-- Loading Template -->
-<ng-template #loadingTemplate>
-  <div class="loading-container">
-    <div class="spinner"></div>
-    <p>Se încarcă detaliile proprietății...</p>
-  </div>
-</ng-template>
-
-<!-- Image Modal -->
-<div *ngIf="isImageModalOpen" class="image-modal" (click)="closeImageModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <button class="modal-close" (click)="closeImageModal()">
-      <i class="fas fa-times"></i>
-    </button>
-    <button class="modal-nav prev" (click)="prevImage()" *ngIf="currentImageIndex > 0">
-      <i class="fas fa-chevron-left"></i>
-    </button>
-    <img [src]="property.images[currentImageIndex] || 'assets/default-property.jpg'" [alt]="property.title">
-    <button class="modal-nav next" (click)="nextImage()" *ngIf="currentImageIndex < property.images.length - 1">
-      <i class="fas fa-chevron-right"></i>
-    </button>
-    <div class="image-counter">
-      {{ currentImageIndex + 1 }} / {{ property.images.length }}
-    </div>
-  </div>
-</div>

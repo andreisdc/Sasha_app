@@ -1,18 +1,58 @@
-<div class="properties-container">
-  <!-- Loading State -->
-  <nz-spin nzTip="Loading properties..." [nzSpinning]="loading()" *ngIf="loading()">
-    <div style="height: 200px;"></div>
-  </nz-spin>
+<nz-spin [nzSpinning]="loading">
+  <div class="datagrid-container">
+    @for(property of properties; track property.id) {
+    <nz-card
+      class="datagrid-card"
+      (mouseenter)="hovered = property.id"
+      (mouseleave)="hovered = null"
+      [routerLink]="['/property', property.id]"
+    >
+      <div class="image-container">
+        @if(property.images && property.images.length > 0) {
+        <img
+          [ngSrc]="property.images[currentIndex[property.id]]"
+          alt="Property Image"
+          class="property-image fade"
+        />
+        } @else{
+        <ng-template #noImage>
+          <div class="no-image-placeholder">No image available</div>
+        </ng-template>
+        }
 
-  <!-- Error State -->
-  <div *ngIf="error() && !loading()" class="error-state">
-    <nz-card>
-      <div class="error-content">
-        <nz-icon nzType="exclamation-circle" nzTheme="twotone" [nzTwotoneColor]="'#ff4d4f'"></nz-icon>
-        <h3>{{ error() }}</h3>
-        <button nz-button nzType="primary" (click)="loadProperties()">
-          <span nz-icon nzType="reload"></span>
-          Try Again
+        <p class="type"><b>{{property.type}}</b></p>
+        <div class="arrows">
+          @if(hovered===property.id) {
+           <button class="prev" (click)="prev(property); $event.stopPropagation()">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2">
+               <path d="M15 18l-6-6 6-6"/>
+             </svg>
+            </button>
+
+            <button class="next" (click)="next(property); $event.stopPropagation()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2">
+                <path d="M9 6l6 6-6 6"/>
+              </svg>
+            </button>
+          }
+        </div>
+        <p class="price">
+          <b>{{ property.pricePerNight | currency:'EUR':'symbol':'1.0-0' }}</b>
+        </p>
+      </div>
+
+      <div class="info">
+        <h3 class="title">{{ property.name }}</h3>
+        <button
+          class="like-button"
+          [class.liked]="property.liked"
+          (click)="toggleLike(property)"
+        >
+          <i
+            nz-icon
+            nzType="heart"
+            [nzTheme]="property.liked ? 'fill' : 'outline'"
+          ></i>
         </button>
       </div>
     </nz-card>
