@@ -8,7 +8,6 @@ import {
   signal,
 } from '@angular/core';
 import { HomeService } from '../../core/home/home-service';
-import { DatagridComponent } from './datagrid-component/datagrid-component';
 import { CommonModule } from '@angular/common';
 import { PropertyService } from '../../core/services/property.service';
 import { SearchSection } from './search-section/search-section';
@@ -20,7 +19,7 @@ import { FooterComponent } from "../../components/footer-component/footer-compon
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule, DatagridComponent, SearchSection, Navbar, HeroSectionComponent, PropertiesSectionComponent, ActivitiesSectionComponent, FooterComponent],
+  imports: [CommonModule, SearchSection, Navbar, HeroSectionComponent, PropertiesSectionComponent, ActivitiesSectionComponent, FooterComponent],
   templateUrl: './home-component.html',
   styleUrls: ['./home-component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

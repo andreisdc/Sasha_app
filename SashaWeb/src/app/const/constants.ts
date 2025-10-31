@@ -1,5 +1,5 @@
 export const SERVER = {
-  BASE_URL: 'http://localhost:5043',
+  BASE_URL: 'http://195.181.240.75:5043',
 
   // ================================
   // 1️⃣ AUTH ENDPOINTS

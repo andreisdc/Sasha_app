@@ -80,6 +80,9 @@ Console.WriteLine($"gcs-key is null or empty: {string.IsNullOrEmpty(gcsKeyPath)}
 Console.WriteLine($"DefaultConnection is null or empty: {string.IsNullOrEmpty(connectionString)}");
 Console.WriteLine($"GCP AssetsBucket from appsettings: {assetsBucket}");
 
+System.Console.WriteLine(connectionString);
+
+
 // Dacă gcsKeyPath conține JSON (începe cu '{'), salvează-l într-un fișier temporar
 if (!string.IsNullOrEmpty(gcsKeyPath) && gcsKeyPath.Trim().StartsWith('{'))
 {
@@ -89,7 +92,7 @@ if (!string.IsNullOrEmpty(gcsKeyPath) && gcsKeyPath.Trim().StartsWith('{'))
         File.WriteAllText(tempCredentialsPath, gcsKeyPath);
         gcsKeyPath = tempCredentialsPath;
         Console.WriteLine($"Saved GCP credentials to temporary file: {tempCredentialsPath}");
-        
+
         // Verifică dacă fișierul a fost creat cu succes
         if (File.Exists(tempCredentialsPath))
         {
@@ -180,13 +183,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(
+                "http://localhost:4200",  // Pentru dezvoltare locală
+                "https://skymango.eu"     // Pentru site-ul live (producție)
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
-
 // --- Build App ---
 var app = builder.Build();
 

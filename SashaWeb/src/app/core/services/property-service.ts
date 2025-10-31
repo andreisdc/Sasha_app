@@ -344,7 +344,7 @@ export interface UploadPhotosResponse {
   providedIn: 'root'
 })
 export class PropertyService {
-  private apiUrl = 'http://localhost:5043/properties';
+  private apiUrl = 'http://195.181.240.75/properties';
   private http = inject(HttpClient);
 
   // Helper method to convert PropertyDetails to Property (pentru compatibilitate)

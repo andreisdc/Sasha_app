@@ -71,18 +71,6 @@ export const routes: Routes = [
       import('./pages/add-property/add-property').then((m) => m.AddPropertyComponent),
     canActivate: [AuthGuard],
   },
-  {
-    path: 'edit-property/:id',
-    loadComponent: () =>
-      import('./pages/edit-property/edit-property').then((m) => m.EditProperty),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'property/:id',
-    loadComponent: () =>
-      import('./pages/property-details/property-details').then((m) => m.PropertyDetails),
-  },
-
   // ✅ Ruta de admin securizată
   {
     path: 'admin/dashboard',
@@ -101,3 +89,4 @@ export const routes: Routes = [
     redirectTo: 'home',
     pathMatch: 'full',
   }
+]
