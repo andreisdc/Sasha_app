@@ -14,11 +14,13 @@ import { SignupRequest } from '../../core/interfaces/signupRequest';
 import { CountryCode } from '../../const/countryCode';
 import { ToastService } from '../../core/services/toast';
 import { ToastComponent } from '../../components/toast/toast';
+import { CommonModule } from '@angular/common'; // Am adăugat CommonModule, s-ar putea să fie nevoie
 
 @Component({
   selector: 'login',
   standalone: true,
   imports: [
+    CommonModule, // Adăugat
     FormsModule, 
     ReactiveFormsModule, 
     RouterModule,
@@ -157,23 +159,47 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ===========================================
+  // ✅ FUNCȚIA handleSignIn CORECTATĂ
+  // ===========================================
   private handleSignIn(): void {
     const { email, password, rememberMe } = this.authForm.value;
 
     this.authService.login(email, password, rememberMe).subscribe({
-      next: () => {
+      // PASUL 1: Acceptă răspunsul de la server
+      next: (response: any) => { 
+        // PASUL 2: Adaugă un log pentru a confirma că ai intrat în 'next'
+        console.log('Login successful, in NEXT block:', response); 
+  
         this.isLoading = false;
         this.toastService.success('Welcome back! Login successful.');
-        this.router.navigate(['/home']);
+  
+        // PASUL 3: Gestionează erorile de navigare separat
+        this.router.navigate(['/home']).catch(navError => {
+          console.error('Navigation to /home failed!', navError);
+          this.toastService.error('Login OK, but navigation to home page failed.');
+        });
       },
       error: (err) => {
+        // PASUL 4: Adaugă un log aici pentru a vedea eroarea reală
+        console.error('Login failed, in ERROR block:', err); 
+  
         this.isLoading = false;
-        const errorMessage = err?.error?.message || 'Login failed. Please check your credentials.';
-        this.serverError = errorMessage;
-        this.toastService.error(errorMessage);
+        
+        // Verifică dacă este o eroare de parsing (200 OK dar JSON invalid)
+        if (err.status === 200 && err.error?.text) {
+            this.serverError = 'Server returned OK, but response was not valid JSON.';
+        } else {
+            this.serverError = err?.error?.message || 'Login failed. Please check your credentials.';
+        }
+        
+        this.toastService.error(this.serverError);
       }
     });
   }
+  // ===========================================
+  // 
+  // ===========================================
 
   private handleSignUp(): void {
     const { firstName, lastName, email, password, countryCode, phoneNumber } = this.authForm.value;

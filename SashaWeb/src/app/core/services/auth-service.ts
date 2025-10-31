@@ -1,14 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SERVER } from '../../const/constants';
-import { tap, map, catchError } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { SignupRequest } from '../interfaces/signupRequest';
 import { AuthUser } from '../interfaces/authUser';
-import { LoginRequest } from '../interfaces/loginRequest';
-import { UpdateUserRequest } from '../interfaces/UpdateUserRequest';
 
 const isBrowser = typeof window !== 'undefined';
+
+// ====================================================================
+// ✅ NOU: Definim un tip pentru obiectul "mic" pe care îl stocăm.
+// Este totul din AuthUser, CU EXCEPȚIA pozei de profil.
+// ====================================================================
+type StoredUser = Omit<AuthUser, 'profilePicture'>;
 
 @Injectable({
   providedIn: 'root',
@@ -16,10 +20,10 @@ const isBrowser = typeof window !== 'undefined';
 export class AuthService {
   private baseUrl = SERVER.BASE_URL + SERVER.AUTH_PATH;
 
+  // ✅ currentUserSubject va ține obiectul COMPLET (cu poză) în memorie
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
   
-  // ✅ Subject nou pentru a ști când am terminat verificarea inițială
   private authCheckedSubject = new BehaviorSubject<boolean>(false);
   authChecked$ = this.authCheckedSubject.asObservable();
 
@@ -28,8 +32,7 @@ export class AuthService {
     this.initializeAuthState();
   }
 
-  /** 
-   * ✅ Verificare ASINCRONĂ și NEBLOCHANTĂ a stării de autentificare
+  /** * ✅ Verificare ASINCRONĂ și NEBLOCHANTĂ - Actualizată
    */
   private initializeAuthState(): void {
     if (!isBrowser) {
@@ -38,22 +41,27 @@ export class AuthService {
       return;
     }
 
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    // Căutăm user-ul "MIC" (fără poză) în storage
+    const storedUserJson = localStorage.getItem('user') || sessionStorage.getItem('user');
     
-    if (storedUser) {
+    if (storedUserJson) {
       try {
-        const user = JSON.parse(storedUser);
-        console.log('🔄 AuthService - User găsit în storage, verificare validitate...');
+        // Acesta este user-ul "MIC"
+        const user: StoredUser = JSON.parse(storedUserJson);
+        console.log('🔄 AuthService - User (mic) găsit în storage, verificare validitate...');
         
-        // ✅ Setează user-ul imediat (pentru UI) dar verifică în background
-        this.currentUserSubject.next(user);
+        // Setează user-ul (fără poză) imediat pentru UI, ca să nu aștepte
+        // @ts-ignore
+        this.currentUserSubject.next({ ...user, profilePicture: null });
         
-        // ✅ Verificare în background fără a bloca aplicația
+        // Acum, cerem de la /me user-ul COMPLET (cu poză)
         this.http.get<AuthUser>(`${this.baseUrl}/me`, { withCredentials: true })
           .subscribe({
             next: (freshUser) => {
-              console.log('✅ /me request successful - User valid:', freshUser.email);
-              this.currentUserSubject.next(freshUser); // ✅ Actualizează cu datele fresh
+              console.log('✅ /me request successful - User COMPLET (cu poză) primit:', freshUser.email);
+              // Acum apelăm setCurrentUser, care va salva user-ul COMPLET în memorie
+              // și pe cel MIC (fără poză) înapoi în storage.
+              this.setCurrentUser(freshUser, !!localStorage.getItem('user')); // Verificăm dacă era în localStorage
               this.authCheckedSubject.next(true);
             },
             error: (error) => {
@@ -75,30 +83,53 @@ export class AuthService {
     }
   }
 
-  /** 
-   * ✅ METODĂ NOUĂ - Așteaptă finalizarea verificării inițiale
-   */
   waitForAuthCheck(): Observable<boolean> {
     return this.authChecked$.pipe(
       tap(checked => console.log('⏳ WaitForAuthCheck - Verificare completă:', checked))
     );
   }
 
-  /** Setează user-ul curent în BehaviorSubject și storage */
+  // ===========================================
+  // ✅ FUNCȚIA setCurrentUser CORECTATĂ
+  // ===========================================
+  /** * Setează user-ul. 
+   * 1. Salvează user-ul COMPLET (cu poză) în BehaviorSubject (memorie).
+   * 2. Salvează user-ul MIC (fără poză) în localStorage/sessionStorage.
+   */
   setCurrentUser(user: AuthUser | null, rememberMe?: boolean): void {
     console.log('👤 setCurrentUser - Actualizare user:', user ? `User ID: ${user.id}` : 'null');
+    
+    // PASUL 1: Salvează user-ul COMPLET (cu poză) în memorie
     this.currentUserSubject.next(user);
 
     if (!isBrowser) return;
 
     if (user) {
+      // PASUL 2: Creează un obiect "mic" FĂRĂ POZĂ pentru storage
+      const userToStore: StoredUser = {
+        id: user.id,
+        token: user.token,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        expiresAt: user.expiresAt,
+        isAdmin: user.isAdmin,
+        isSeller: user.isSeller,
+        phoneNumber: user.phoneNumber,
+        rating: user.rating
+        // Am exclus intenționat 'profilePicture'
+      };
+
+      // PASUL 3: Salvează doar obiectul MIC în storage
+      // Aceasta nu va mai da eroarea QuotaExceededError
       if (rememberMe) {
-        console.log('💾 setCurrentUser - Salvare în localStorage (rememberMe)');
-        localStorage.setItem('user', JSON.stringify(user));
+        console.log('💾 setCurrentUser - Salvare user MIC în localStorage (rememberMe)');
+        localStorage.setItem('user', JSON.stringify(userToStore));
         sessionStorage.removeItem('user');
       } else {
-        console.log('💾 setCurrentUser - Salvare în sessionStorage');
-        sessionStorage.setItem('user', JSON.stringify(user));
+        console.log('💾 setCurrentUser - Salvare user MIC în sessionStorage');
+        sessionStorage.setItem('user', JSON.stringify(userToStore));
         localStorage.removeItem('user');
       }
     } else {
@@ -118,8 +149,9 @@ export class AuthService {
     return this.http
       .post<AuthUser>(`${this.baseUrl}/login`, { email, password, rememberMe }, { withCredentials: true })
       .pipe(
-        tap(user => {
+        tap(user => { // 'user' este obiectul MARE de la backend
           console.log('✅ Login successful - User autentificat:', user.email);
+          // Trimitem obiectul MARE (cu poză) către setCurrentUser
           this.setCurrentUser(user, rememberMe);
         })
       );
@@ -159,12 +191,12 @@ export class AuthService {
       .pipe(
         tap(user => {
           console.log('✅ Me request successful - User:', user.email);
+          // /me trimite obiectul MARE (cu poză)
           this.setCurrentUser(user);
         })
       );
   }
 
-  // ✅ METODĂ NOUĂ - Verifică acces admin cu backend-ul
   checkAdminAccess(): Observable<{ hasAccess: boolean }> {
     console.log('👮 CheckAdminAccess - Verificare drepturi admin');
     return this.http.get<{ hasAccess: boolean }>(`${this.baseUrl}/check-admin`, { 
@@ -180,13 +212,11 @@ export class AuthService {
       }),
       catchError(error => {
         console.error('❌ CheckAdminAccess - Eroare la verificare admin:', error);
-        // Returnează un răspuns default în caz de eroare
         return of({ hasAccess: false });
       })
     );
   }
 
-  // ✅ METODĂ NOUĂ - Verifică acces seller cu backend-ul
   checkSellerAccess(): Observable<{ hasAccess: boolean }> {
     console.log('🏪 CheckSellerAccess - Verificare drepturi seller');
     return this.http.get<{ hasAccess: boolean }>(`${this.baseUrl}/check-seller`, { 

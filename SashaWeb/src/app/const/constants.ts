@@ -1,5 +1,7 @@
 export const SERVER = {
-  BASE_URL: 'http://195.181.240.75:5043',
+  // ✅ Schimbat în domeniul tău securizat HTTPS.
+  // Nginx va redirecționa automat cererile /auth și /api.
+  BASE_URL: 'https://skymango.eu',
 
   // ================================
   // 1️⃣ AUTH ENDPOINTS
